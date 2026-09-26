@@ -1,5 +1,6 @@
 import type { GameEventName, GameEvents } from '../core/events';
 import type { SaveData } from '../core/save';
+import type { StoryState } from '../core/story';
 
 /** Snapshot of the current run exposed to achievement conditions. */
 export interface RunSnapshot {
@@ -15,6 +16,8 @@ export interface RunSnapshot {
 export interface AchievementContext {
   save: SaveData;
   run: RunSnapshot;
+  /** Moral memory of the current run (karma, flags, deeds). */
+  story: StoryState;
 }
 
 export interface AchievementDef {
@@ -94,5 +97,30 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     on: 'run_won',
     check: (p) => (p as GameEvents['run_won']).timeMs < 8 * 60 * 1000,
     secret: true,
+  },
+  {
+    id: 'saint',
+    title: 'Saint',
+    description: 'Spare 10 innocents across your descents.',
+    on: 'npc_spared',
+    check: (_p, ctx) => (ctx.save.counters['npc_spares'] ?? 0) >= 10,
+  },
+  {
+    id: 'butcher',
+    title: 'Butcher',
+    description: 'Kill 10 innocents across your descents.',
+    on: 'npc_killed',
+    check: (_p, ctx) => (ctx.save.counters['npc_kills'] ?? 0) >= 10,
+    secret: true,
+  },
+  {
+    id: 'oathbreaker',
+    title: 'Oathbreaker',
+    description: 'Swear to fight a boss with honour, then slay it with a secret wrung from an innocent.',
+    on: 'boss_killed',
+    check: (p, ctx) => {
+      const { enemyId, floor } = p as GameEvents['boss_killed'];
+      return ctx.story.hasFlagOnFloor(`swore_oath_to_${enemyId}`, floor) && ctx.story.hasFlagOnFloor('knows_boss_weakness', floor);
+    },
   },
 ];

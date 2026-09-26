@@ -25,6 +25,21 @@ export class MenuScene extends Phaser.Scene {
   create(): void {
     achievements.start();
     this.index = Math.max(0, CHARACTERS.findIndex((c) => !this.locked(c)));
+    const frame = this.add.graphics();
+    frame.lineStyle(2, COLORS.uiBorder, 0.65);
+    frame.lineBetween(170, 84, 790, 84);
+    frame.lineBetween(170, 116, 790, 116);
+    for (const x of [70, 890]) {
+      frame.fillStyle(COLORS.uiBorder, 0.16).fillRect(x, 165, 2, 225);
+      frame.fillRect(x - 12, 160, 26, 5).fillRect(x - 12, 390, 26, 5);
+    }
+    const title = this.add.text(GAME_WIDTH / 2, 48, 'N E K Y I A', {
+      fontFamily: 'monospace', fontSize: '52px', color: COLORS.text,
+    }).setOrigin(0.5).setShadow(0, 3, '#000000', 8);
+    this.tweens.add({ targets: title, alpha: { from: 0.82, to: 1 }, duration: 2400, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    this.add.text(GAME_WIDTH / 2, 100, '✦  A DESCENT THROUGH THE GREEK UNDERWORLD  ✦', {
+      fontFamily: 'monospace', fontSize: '14px', color: COLORS.textDim,
+    }).setOrigin(0.5);
     this.root = this.add.container(0, 0);
     this.render();
 
@@ -72,23 +87,31 @@ export class MenuScene extends Phaser.Scene {
     const mono = 'monospace';
     const add = (o: Phaser.GameObjects.GameObject) => this.root.add(o);
 
-    add(this.add.text(GAME_WIDTH / 2, 48, 'N E K Y I A', { fontFamily: mono, fontSize: '52px', color: COLORS.text }).setOrigin(0.5));
-    add(this.add.text(GAME_WIDTH / 2, 100, 'a descent through the Greek underworld', { fontFamily: mono, fontSize: '16px', color: COLORS.textDim }).setOrigin(0.5));
-
-    // Character carousel.
     const c = CHARACTERS[this.index];
     const locked = this.locked(c);
     const cx = GAME_WIDTH / 2;
     const cy = 205;
-    add(this.add.text(cx - 200, cy, '◀', { fontFamily: mono, fontSize: '40px', color: COLORS.textDim }).setOrigin(0.5));
-    add(this.add.text(cx + 200, cy, '▶', { fontFamily: mono, fontSize: '40px', color: COLORS.textDim }).setOrigin(0.5));
+    const card = this.add.graphics();
+    card.fillStyle(COLORS.uiPanel, 0.85).fillRoundedRect(cx - 248, 134, 496, 310, 8);
+    card.lineStyle(1, COLORS.uiBorder, 0.8).strokeRoundedRect(cx - 248, 134, 496, 310, 8);
+    card.lineStyle(2, c.color, locked ? 0.2 : 0.55).strokeCircle(cx, cy, 55);
+    add(card);
+    for (const [dir, x, symbol] of [[-1, cx - 290, '◀'], [1, cx + 290, '▶']] as const) {
+      const arrow = this.add.text(x, cy, symbol, { fontFamily: mono, fontSize: '36px', color: COLORS.textDim })
+        .setOrigin(0.5).setInteractive({ useHandCursor: true });
+      arrow.on('pointerover', () => arrow.setColor(COLORS.uiIvory).setScale(1.15));
+      arrow.on('pointerout', () => arrow.setColor(COLORS.textDim).setScale(1));
+      arrow.on('pointerdown', () => this.move(dir));
+      add(arrow);
+    }
     const portrait = this.add.image(cx, cy, `player_${c.id}`).setScale(2);
     if (locked) portrait.setTint(0x333333);
     add(portrait);
-    add(this.add.text(cx, cy + 70, locked ? '???' : c.name, { fontFamily: mono, fontSize: '30px', color: locked ? '#666' : '#fff' }).setOrigin(0.5));
-    add(this.add.text(cx, cy + 100, locked ? `Locked — ${c.unlockHint ?? ''}` : c.title, { fontFamily: mono, fontSize: '15px', color: COLORS.textDim }).setOrigin(0.5));
+    this.tweens.add({ targets: portrait, scale: { from: 2.18, to: 2 }, duration: 260, ease: 'Sine.Out' });
+    add(this.add.text(cx, cy + 70, locked ? '???' : c.name.toUpperCase(), { fontFamily: mono, fontSize: '28px', color: locked ? COLORS.textDim : COLORS.uiIvory }).setOrigin(0.5));
+    add(this.add.text(cx, cy + 100, locked ? `Locked — ${c.unlockHint ?? ''}` : c.title, { fontFamily: mono, fontSize: '15px', color: COLORS.textDim, wordWrap: { width: 450 }, align: 'center' }).setOrigin(0.5));
     if (!locked) {
-      add(this.add.text(cx, cy + 128, c.description, { fontFamily: mono, fontSize: '14px', color: '#bbb', wordWrap: { width: 520 }, align: 'center' }).setOrigin(0.5, 0));
+      add(this.add.text(cx, cy + 128, c.description, { fontFamily: mono, fontSize: '14px', color: COLORS.uiIvory, wordWrap: { width: 450 }, align: 'center' }).setOrigin(0.5, 0));
       const s = c.stats;
       const line = `♥ ${s.maxHp / 2}   dmg ${s.damage}   spd ${s.speed}   rof ${s.fireRate}   range ${s.range}`;
       add(this.add.text(cx, cy + 172, line, { fontFamily: mono, fontSize: '14px', color: COLORS.text }).setOrigin(0.5, 0));
@@ -97,31 +120,33 @@ export class MenuScene extends Phaser.Scene {
         add(this.add.text(cx, cy + 194, `starts with: ${names}`, { fontFamily: mono, fontSize: '13px', color: COLORS.textDim }).setOrigin(0.5, 0));
       }
     }
-    add(this.add.text(cx, cy + 226, `${this.index + 1} / ${CHARACTERS.length}`, { fontFamily: mono, fontSize: '12px', color: '#555' }).setOrigin(0.5, 0));
+    add(this.add.text(cx, cy + 220, `${this.index + 1} / ${CHARACTERS.length}`, { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(0.5, 0));
 
-    // Challenges panel.
-    const px = 40;
-    let py = GAME_HEIGHT - 160;
-    add(this.add.text(px, py, 'CHALLENGES', { fontFamily: mono, fontSize: '14px', color: COLORS.text }));
-    py += 22;
-    for (const a of ACHIEVEMENTS) {
+    const divider = this.add.graphics();
+    divider.lineStyle(1, COLORS.uiBorder, 0.7).lineBetween(40, 450, GAME_WIDTH - 40, 450);
+    add(divider);
+    const px = 52;
+    let py = 457;
+    add(this.add.text(px, py, 'CHALLENGES', { fontFamily: mono, fontSize: '13px', color: COLORS.text }));
+    py += 18;
+    const challenges = ACHIEVEMENTS.filter((a) => !a.secret || save.hasAchievement(a.id));
+    for (const a of challenges) {
       const done = save.hasAchievement(a.id);
-      if (a.secret && !done) continue;
       const mark = done ? '■' : '□';
       const reward = a.rewardLabel ? `  → ${a.rewardLabel}` : '';
-      add(this.add.text(px, py, `${mark} ${a.title}: ${a.description}${reward}`, { fontFamily: mono, fontSize: '12px', color: done ? '#ffe08a' : '#777' }));
-      py += 16;
+      add(this.add.text(px, py, `${mark} ${a.title}: ${a.description}${reward}`, { fontFamily: mono, fontSize: '11px', color: done ? COLORS.text : COLORS.textDim }));
+      py += challenges.length > 7 ? 12 : 14;
     }
 
-    const stats = `runs ${save.data.runs}   wins ${save.data.wins}   best floor ${save.data.bestFloor}   kills ${save.counter('kills')}`;
-    add(this.add.text(GAME_WIDTH - 40, GAME_HEIGHT - 160, stats, { fontFamily: mono, fontSize: '12px', color: '#777' }).setOrigin(1, 0));
-    add(this.add.text(GAME_WIDTH - 40, GAME_HEIGHT - 138, `seed ${this.seed}   (R to re-roll)`, { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(1, 0));
+    const stats = `RUNS ${save.data.runs}   WINS ${save.data.wins}   BEST ${save.data.bestFloor}`;
+    add(this.add.text(GAME_WIDTH - 40, 457, stats, { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(1, 0));
+    add(this.add.text(GAME_WIDTH - 40, 477, `KILLS ${save.counter('kills')}   SEED ${this.seed}`, { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(1, 0));
 
     add(
       this.add
-        .text(GAME_WIDTH - 40, GAME_HEIGHT - 100, ['← →  choose', 'ENTER  start', 'WASD  move', 'ARROWS  shoot'], {
+        .text(GAME_WIDTH - 40, GAME_HEIGHT - 72, ['← →  CHOOSE     R  RE-ROLL', 'ENTER  DESCEND', 'WASD  MOVE     ARROWS  SHOOT'], {
           fontFamily: mono,
-          fontSize: '13px',
+          fontSize: '12px',
           color: COLORS.textDim,
           align: 'right',
           lineSpacing: 4,

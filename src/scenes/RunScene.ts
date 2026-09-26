@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { COLORS, Dir, DIR_VECTORS, GAME_HEIGHT, GAME_WIDTH, GRID_COLS, GRID_ROWS, OPPOSITE, ROOM_COLS, ROOM_ROWS, TILE } from '../config';
 import { events } from '../core/events';
 import type { RunState } from '../core/run';
+import { KARMA } from '../core/story';
 import { EnemyDef, getEnemy } from '../data/enemies';
 import { getItem } from '../data/items';
 import { factionOf, makeShade } from '../data/war';
@@ -14,7 +15,33 @@ import { Pickup, PickupKind } from '../entities/Pickup';
 import { Player } from '../entities/Player';
 import { Projectile, ProjectilePool } from '../entities/Projectile';
 import { achievements } from '../systems/achievements';
-import { BEHAVIOURS } from '../systems/behaviours';
+import { BEHAVIOURS, threaten } from '../systems/behaviours';
+
+/** Distance (px) at which an innocent NPC shows its "!" talk bubble. */
+const TALK_RANGE = 150;
+/** A player shot passing this close to an innocent scares it. */
+const SCARE_RANGE = 90;
+/** Spared innocents before bosses start calling you merciful (`spared_many`). */
+const SPARED_MANY = 3;
+
+/** Who a dialogue is with: an Enemy (boss/NPC) or a static prop such as the altar. */
+interface DialogueSpeaker {
+  id: string;
+  name: string;
+  persona: string;
+  x: number;
+  y: number;
+  /** The live sprite, when the speaker is an enemy still in the room. */
+  enemy?: Enemy;
+}
+
+const speakerOf = (e: Enemy): DialogueSpeaker => ({ id: e.def.id, name: e.def.name, persona: e.def.persona ?? '', x: e.x, y: e.y, enemy: e });
+
+const ALTAR_SPEAKER: Omit<DialogueSpeaker, 'x' | 'y'> = {
+  id: 'altar',
+  name: 'Altar of the Gods',
+  persona: 'A silent altar; the gods speak through it in turns, weighing what the hero has done and what they offer.',
+};
 
 const DOOR_TILES: Record<Dir, { col: number; row: number }> = {
   up: { col: Math.floor(GRID_COLS / 2), row: 0 },
@@ -47,9 +74,12 @@ export class RunScene extends Phaser.Scene {
   private enemyShots!: ProjectilePool;
   private pedestal: Phaser.Physics.Arcade.Image | null = null;
   private trapdoor: Phaser.Physics.Arcade.Image | null = null;
+  private altar: Phaser.Physics.Arcade.Image | null = null;
   private transitioning = false;
   private dead = false;
   private dialogueOpen = false;
+  /** Delays room completion while a boss outro is pending/showing. */
+  private holdClear = false;
 
   constructor() {
     super('run');
@@ -62,6 +92,8 @@ export class RunScene extends Phaser.Scene {
     this.doorSprites = {};
     this.pedestal = null;
     this.trapdoor = null;
+    this.altar = null;
+    this.holdClear = false;
 
     this.run = this.registry.get('run') as RunState;
     achievements.attachRun(this.run);
@@ -101,7 +133,10 @@ export class RunScene extends Phaser.Scene {
 
     if (this.room.type === 'boss' && !this.room.cleared && !this.room.dialogueDone) {
       const boss = this.hostiles().find((e) => e.def.isBoss);
-      if (boss) this.time.delayedCall(250, () => this.startDialogue('boss_intro', boss));
+      if (boss) {
+        this.room.dialogueDone = true;
+        this.time.delayedCall(250, () => this.startDialogue('boss_intro', speakerOf(boss)));
+      }
     }
   }
 
@@ -128,6 +163,7 @@ export class RunScene extends Phaser.Scene {
         enemy.body.setVelocity(0, 0);
         continue;
       }
+      if (enemy.def.innocent) this.watchInnocent(enemy, time);
       BEHAVIOURS[enemy.def.behaviour]({
         enemy,
         player: this.player,
@@ -139,7 +175,26 @@ export class RunScene extends Phaser.Scene {
       });
     }
 
-    if (!this.room.cleared && !alive.some((e) => !e.def.innocent) && this.roomHadEnemies()) this.clearRoom();
+    if (!this.room.cleared && !this.holdClear && !alive.some((e) => !e.def.innocent) && this.roomHadEnemies()) this.clearRoom();
+  }
+
+  /** Talk bubble when in range; panic when a player shot flies close by. */
+  private watchInnocent(npc: Enemy, now: number): void {
+    const near = Phaser.Math.Distance.Between(npc.x, npc.y, this.player.x, this.player.y) < TALK_RANGE;
+    npc.showBubble(near && !npc.getData('talked'));
+    if (npc.isPanicking) return;
+    for (const child of this.playerShots.getChildren()) {
+      const shot = child as Projectile;
+      if (shot.active && Phaser.Math.Distance.Between(shot.x, shot.y, npc.x, npc.y) < SCARE_RANGE) {
+        threaten(npc, now);
+        return;
+      }
+    }
+  }
+
+  private scareAllInnocents(): void {
+    const now = this.time.now;
+    for (const e of this.enemies.getChildren() as Enemy[]) if (e.active) threaten(e, now, 4000);
   }
 
   // ---------------------------------------------------------------- dialogue
@@ -147,36 +202,44 @@ export class RunScene extends Phaser.Scene {
   /**
    * Ask the provider for a script, pause the room, show it, then apply the
    * chosen option to the story/run/speaker. Never throws: on any failure the
-   * room simply resumes.
+   * room simply resumes. Callers decide whether the room's one-shot
+   * `dialogueDone` flag applies (boss outros play regardless).
    */
-  private async startDialogue(kind: DialogueKind, speaker: Enemy): Promise<void> {
-    if (this.dead || this.transitioning || this.dialogueOpen || this.room.dialogueDone) return;
-    this.room.dialogueDone = true;
+  private async startDialogue(kind: DialogueKind, speaker: DialogueSpeaker): Promise<void> {
+    if (this.dead || this.transitioning || this.dialogueOpen) return;
     this.dialogueOpen = true;
     const room = this.room;
     this.scene.pause();
+    const waiting = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT - 120, `${speaker.name} is about to speak…`, { fontFamily: 'monospace', fontSize: '14px', color: COLORS.textDim })
+      .setOrigin(0.5)
+      .setDepth(1000);
     let script: DialogueScript;
     try {
       script = await dialogueProvider.generate({
         kind,
-        speakerId: speaker.def.id,
-        speakerName: speaker.def.name,
-        persona: speaker.def.persona ?? '',
-        story: this.run.storySnapshot(speaker.def.id),
-        seed: `${this.run.seed}:${this.run.floor}:${this.room.gx},${this.room.gy}`,
+        speakerId: speaker.id,
+        speakerName: speaker.name,
+        persona: speaker.persona,
+        story: this.run.storySnapshot(speaker.id),
+        seed: `${this.run.seed}:${this.run.floor}:${this.room.gx},${this.room.gy}:${kind}`,
       });
     } catch (err) {
+      waiting.destroy();
       console.warn('[dialogue] skipped:', err);
       this.dialogueOpen = false;
+      this.holdClear = false;
       this.scene.resume();
       return;
     }
+    if (waiting.active) waiting.destroy();
     // Scene restarted (new room) or run ended while we were waiting.
     if (this.room !== room || this.dead) return;
     const data: DialogueSceneData = {
       script,
       onDone: (option) => {
         this.dialogueOpen = false;
+        this.holdClear = false;
         this.scene.resume();
         this.applyChoice(script, option, speaker);
       },
@@ -185,9 +248,21 @@ export class RunScene extends Phaser.Scene {
     this.scene.bringToTop('dialogue');
   }
 
-  private applyChoice(script: DialogueScript, option: DialogueOption | null, speaker: Enemy): void {
+  private applyChoice(script: DialogueScript, option: DialogueOption | null, speaker: DialogueSpeaker): void {
+    if (option && option.effects.coins && option.effects.coins < 0 && this.run.coins < -option.effects.coins) {
+      this.toast('Not enough coins', 'The offering is refused.');
+      option = null;
+    }
+    if (option && option.effects.hp && option.effects.hp < 0 && this.run.hp <= -option.effects.hp) {
+      this.toast('Too weak', 'You have no blood left to give.');
+      option = null;
+    }
     if (option) {
       const fx = option.effects;
+      if (fx.hp && fx.hp < 0 && this.run.takeDamage(-fx.hp, 'oath')) {
+        this.die();
+        return;
+      }
       this.run.story.record({
         kind: 'dialogue_choice',
         subject: option.id,
@@ -197,7 +272,6 @@ export class RunScene extends Phaser.Scene {
       });
       fx.flags?.forEach((f) => this.run.story.addFlag(f));
       if (fx.hp && fx.hp > 0) this.run.heal(fx.hp);
-      if (fx.hp && fx.hp < 0) this.hurtPlayer(-fx.hp, 'oath', speaker.x, speaker.y);
       if (fx.coins) this.run.addCoins(fx.coins);
       if (fx.itemId) {
         try {
@@ -211,19 +285,42 @@ export class RunScene extends Phaser.Scene {
       events.emit('dialogue_choice', { dialogueId: script.id, kind: script.kind, optionId: option.id, karmaDelta: fx.karma ?? 0 });
     }
 
-    if (script.kind === 'boss_intro' && speaker.active) {
-      speaker.applyMods(this.run.story.takeBossMods(factionOf(speaker.def.lore)));
-    } else if (script.kind === 'npc' && speaker.active) {
-      this.spareNpc(speaker);
+    const enemy = speaker.enemy;
+    if (script.kind === 'boss_intro' && enemy?.active) {
+      enemy.applyMods(this.run.story.takeBossMods(factionOf(enemy.def.lore)));
+    } else if (script.kind === 'npc' && enemy?.active) {
+      this.spareNpc(enemy, option?.effects.npcOutcome === 'wronged');
+    } else if (script.kind === 'shrine') {
+      this.extinguishAltar();
     }
     events.emit('hud_update', {});
   }
 
-  /** The NPC walks away alive; counts as spared. */
-  private spareNpc(npc: Enemy): void {
+  private tryShrine(): void {
+    if (this.room.dialogueDone || !this.altar) return;
+    this.room.dialogueDone = true;
+    void this.startDialogue('shrine', { ...ALTAR_SPEAKER, x: this.altar.x, y: this.altar.y });
+  }
+
+  /** The altar's flame dies down once the offering has been made. */
+  private extinguishAltar(): void {
+    if (!this.altar) return;
+    const glow = this.altar.getData('glow') as Phaser.GameObjects.Arc | undefined;
+    glow?.destroy();
+    this.altar.setTint(0x8a8090);
+    this.burst(this.altar.x, this.altar.y - 16, COLORS.doorFrame, 12);
+  }
+
+  /** The NPC walks away alive; counts as spared unless the player wronged them. */
+  private spareNpc(npc: Enemy, wronged: boolean): void {
     this.room.npcs = this.room.npcs.filter((id) => id !== npc.def.id);
-    this.run.story.record({ kind: 'npc_spared', subject: npc.def.id, floor: this.run.floor, karmaDelta: 5, summary: `Spared the ${npc.def.name} on floor ${this.run.floor}` });
-    events.emit('npc_spared', { npcId: npc.def.id, floor: this.run.floor });
+    if (wronged) {
+      this.run.story.record({ kind: 'custom', subject: `wronged_${npc.def.id}`, floor: this.run.floor, karmaDelta: 0, summary: `Wronged the ${npc.def.name} on floor ${this.run.floor}` });
+    } else {
+      this.run.story.record({ kind: 'npc_spared', subject: npc.def.id, floor: this.run.floor, karmaDelta: KARMA.npcSpared, summary: `Spared the ${npc.def.name} on floor ${this.run.floor}` });
+      if (this.run.story.count('npc_spared') >= SPARED_MANY) this.run.story.addFlag('spared_many');
+      events.emit('npc_spared', { npcId: npc.def.id, floor: this.run.floor });
+    }
     this.tweens.add({ targets: npc, alpha: 0, duration: 500, onComplete: () => npc.destroy() });
     npc.body.enable = false;
   }
@@ -317,7 +414,28 @@ export class RunScene extends Phaser.Scene {
       this.physics.add.overlap(this.player, this.pedestal, () => this.takeItem());
     }
 
+    if (room.type === 'shrine') this.spawnAltar();
+
     if (room.type === 'boss' && room.cleared) this.spawnTrapdoor();
+  }
+
+  private spawnAltar(): void {
+    const slot = this.slots('A')[0] ?? { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 };
+    this.altar = this.physics.add.staticImage(slot.x, slot.y, 'altar').setDepth(2);
+    (this.altar.body as Phaser.Physics.Arcade.StaticBody).setSize(TILE - 20, TILE - 24, true);
+    this.physics.add.collider(this.player, this.altar);
+    this.physics.add.collider(this.enemies, this.altar);
+    if (this.room.dialogueDone) {
+      this.altar.setTint(0x8a8090);
+      return;
+    }
+    const glow = this.add.circle(slot.x, slot.y - 14, 26, 0xffb060, 0.18).setDepth(1);
+    this.tweens.add({ targets: glow, scale: 1.35, alpha: 0.05, yoyo: true, repeat: -1, duration: 900, ease: 'Sine.InOut' });
+    this.altar.setData('glow', glow);
+    // Slightly larger trigger zone than the solid body so touching the altar opens the shrine.
+    const zone = this.add.zone(slot.x, slot.y, TILE + 16, TILE + 16);
+    this.physics.add.existing(zone, true);
+    this.physics.add.overlap(this.player, zone, () => this.tryShrine());
   }
 
   private spawnEnemy(id: string, x: number, y: number): Enemy {
@@ -364,7 +482,10 @@ export class RunScene extends Phaser.Scene {
       const enemy = e as Enemy;
       if (enemy.isSpawning) return;
       if (enemy.def.innocent) {
-        if (!this.room.dialogueDone) void this.startDialogue('npc', enemy);
+        if (!enemy.getData('talked') && !enemy.isPanicking && !this.dialogueOpen) {
+          enemy.setData('talked', true);
+          void this.startDialogue('npc', speakerOf(enemy));
+        }
         return;
       }
       this.hurtPlayer(enemy.contactDamage, enemy.def.id, enemy.x, enemy.y);
@@ -423,21 +544,43 @@ export class RunScene extends Phaser.Scene {
     if (isBoss) {
       this.cameras.main.shake(300, 0.012);
       this.run.story.record({ kind: 'boss_killed', subject: enemy.def.id, lore: enemy.def.lore, floor: this.run.floor, karmaDelta: 0, summary: `Slew ${enemy.def.name} on floor ${this.run.floor}` });
+      this.run.story.addFlag(`slew_${enemy.def.id}`);
       events.emit('boss_killed', { enemyId: enemy.def.id, floor: this.run.floor });
+      this.bossOutro({ ...speakerOf(enemy), enemy: undefined });
     } else if (this.run.dropRng.chance(enemy.def.dropChance ?? 0)) {
       this.dropPickup(enemy.x, enemy.y, this.run.dropRng.chance(0.4) ? 'heart' : 'coin');
     }
     enemy.destroy();
   }
 
+  /**
+   * Boss last words: hold the room-clear flow, let the death burst play, then
+   * show the option-less `boss_outro` script. If the provider has nothing to
+   * say the hold is released and the floor completes as usual.
+   */
+  private bossOutro(speaker: DialogueSpeaker): void {
+    this.holdClear = true;
+    this.time.delayedCall(450, () => {
+      if (this.dead || this.transitioning) {
+        this.holdClear = false;
+        return;
+      }
+      void this.startDialogue('boss_outro', speaker);
+    });
+  }
+
   private killNpc(npc: Enemy): void {
     const def: EnemyDef = npc.def;
     this.room.npcs = this.room.npcs.filter((id) => id !== def.id);
+    this.scareAllInnocents();
     this.burst(npc.x, npc.y, def.color, 10);
     const shade = makeShade(this.run.storyRng, def.id, def.name, this.run.floor, this.run.stage.name, this.run.story.shades.length);
-    this.run.story.record({ kind: 'npc_killed', subject: def.id, lore: def.lore, floor: this.run.floor, karmaDelta: -15, summary: `Killed ${shade.name}, an innocent ${def.name}, on floor ${this.run.floor}` });
+    this.run.story.record({ kind: 'npc_killed', subject: def.id, lore: def.lore, floor: this.run.floor, karmaDelta: KARMA.npcKilled, summary: `Killed ${shade.name}, an innocent ${def.name}, on floor ${this.run.floor}` });
     this.run.story.addFlag('blood_on_hands');
     this.run.story.addShade(shade);
+    for (const flag of [...this.run.story.flags]) {
+      if (flag.startsWith('swore_oath_to_')) this.run.story.addFlag(flag.replace('swore_oath_to_', 'broke_oath_to_'));
+    }
     events.emit('npc_killed', { npcId: def.id, floor: this.run.floor });
     this.toast(`Shade collected: ${shade.name}`, `${shade.epitaph} The gods have seen this.`);
     npc.destroy();

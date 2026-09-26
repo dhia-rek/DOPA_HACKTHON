@@ -47,6 +47,8 @@ export interface DialogueEffects {
   coins?: number;
   /** Item id granted (must exist in data/items.ts). */
   itemId?: string;
+  /** NPC dialogues only: how the player treated the NPC. Omitted means spared. */
+  npcOutcome?: 'spared' | 'wronged';
 }
 
 export interface DialogueOption {
@@ -103,6 +105,7 @@ export function validateScript(raw: unknown, req: DialogueRequest): DialogueScri
         flags: Array.isArray(fx.flags) ? fx.flags.filter((f): f is string => typeof f === 'string').slice(0, 4) : undefined,
         itemId: typeof fx.itemId === 'string' ? fx.itemId : undefined,
         favor: Object.keys(favor).length ? favor : undefined,
+        npcOutcome: fx.npcOutcome === 'spared' || fx.npcOutcome === 'wronged' ? fx.npcOutcome : undefined,
         boss: {
           hpMul: num(boss.hpMul, 0.5, 2),
           damageMul: num(boss.damageMul, 0.5, 2),

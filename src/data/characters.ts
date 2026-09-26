@@ -20,6 +20,10 @@ export interface CharacterDef {
   unlockHint?: string;
   /** Entry in data/lore.ts: the hero's divine parentage, given to dialogue generation. */
   lore?: string;
+  /** Initial story karma; default 0. */
+  startingKarma?: number;
+  /** Story flags set at the start of the run (e.g. 'godslayer'). */
+  storyFlags?: string[];
 }
 
 export const CHARACTERS: CharacterDef[] = [
@@ -72,7 +76,7 @@ export const CHARACTERS: CharacterDef[] = [
     id: 'kratos',
     name: 'Kratos',
     title: 'Ghost of Sparta',
-    description: 'Spartan Rage: taking damage massively boosts damage for a few seconds.',
+    description: 'Spartan Rage: taking damage massively boosts damage for a few seconds. The gods despise him.',
     color: 0xe8e0d0,
     shadeColor: 0xb03030,
     stats: { maxHp: 8, speed: 280, damage: 4.5, fireRate: 2.2, shotSpeed: 460, range: 300, luck: 0 },
@@ -81,6 +85,8 @@ export const CHARACTERS: CharacterDef[] = [
     unlock: 'character:kratos',
     unlockHint: 'Complete the Ghost of Sparta challenges',
     lore: 'kratos',
+    startingKarma: -40,
+    storyFlags: ['godslayer'],
   },
 ];
 

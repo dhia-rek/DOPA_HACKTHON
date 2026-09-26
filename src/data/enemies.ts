@@ -45,6 +45,12 @@ export interface EnemyDef {
   persona?: string;
   /** Entry in data/lore.ts: decides the faction whose war this enemy fights and what the LLM knows about it. */
   lore?: string;
+  /**
+   * Story flags (`StorySnapshot.flags`, e.g. `blood_on_hands`, `defied_<bossId>`)
+   * this speaker's dialogue should react to. Purely a hint for prompts and
+   * behaviours; the full list lives in ROADMAP.md ("Boss flags").
+   */
+  reactsTo?: string[];
 }
 
 export const ENEMIES: EnemyDef[] = [
@@ -137,8 +143,11 @@ export const ENEMIES: EnemyDef[] = [
     radius: 34,
     chargeSpeed: 520,
     isBoss: true,
-    persona: 'Proud, wounded, hates being called a monster; respects honour, despises cowards. Kept by Minos for the Olympian order he despises.',
+    persona:
+      'Asterion, a proud exile with a low, grinding voice; still bleeding from the day Athens caged him and called him a monster. ' +
+      'Respects an honest duel and a kept oath, despises cowards and oathbreakers: he taunts a cruel player as a fellow beast, and offers a heroic one a clean fight. Kept by Minos for the Olympian order he despises.',
     lore: 'minotaur',
+    reactsTo: ['blood_on_hands', 'defied_minotaur', 'swore_oath_to_minotaur', 'broke_oath_to_minotaur', 'knows_boss_weakness', 'spared_many'],
   },
   {
     id: 'hydra',
@@ -153,8 +162,11 @@ export const ENEMIES: EnemyDef[] = [
     fireInterval: 900,
     shotSpeed: 300,
     isBoss: true,
-    persona: "Many-voiced, ancient, speaks in riddles; each head interrupts the others. Hera's creature, Typhon's daughter, grows a head for every innocent buried.",
+    persona:
+      'Ancient and many-voiced, each head finishing or contradicting the last in hissing riddles; still aches where Heracles burned her severed necks. ' +
+      'Respects patience and cunning, despises fire and rash heroes: she flatters a cruel player as kin and mocks a heroic one as another Heracles doomed to fail. Hera\'s creature, Typhon\'s daughter, grows a head for every innocent buried.',
     lore: 'hydra',
+    reactsTo: ['blood_on_hands', 'defied_hydra', 'spared_many', 'knows_boss_weakness', 'bargained_with_hydra', 'slew_minotaur'],
   },
   {
     id: 'menoetius',
@@ -288,6 +300,45 @@ export const ENEMIES: EnemyDef[] = [
     innocent: true,
     persona: "The ghost of an innocent the hero killed this run (the most recent one in story.shades). Speaks their own epitaph, asks why, wants to be remembered or avenged; can't be hurt worse than it was.",
     lore: 'hades',
+  },
+  {
+    id: 'priestess',
+    name: 'Priestess of Athena',
+    hp: 4,
+    speed: 120,
+    damage: 0,
+    behaviour: 'flee',
+    shape: 'diamond',
+    color: 0xe8e0f0,
+    radius: 15,
+    innocent: true,
+    persona: 'Serene, devout servant of Athena; does not beg, judges deeds in the name of the gods and offers blessings or curses accordingly.',
+  },
+  {
+    id: 'child',
+    name: 'Lost Child',
+    hp: 2,
+    speed: 170,
+    damage: 0,
+    behaviour: 'flee',
+    shape: 'circle',
+    color: 0xf0d0b0,
+    radius: 11,
+    innocent: true,
+    persona: 'Orphan hiding from the monsters; curious, trusting, mistakes the hero for a parent; killing them is the darkest deed.',
+  },
+  {
+    id: 'wounded_soldier',
+    name: 'Wounded Hoplite',
+    hp: 3,
+    speed: 60,
+    damage: 0,
+    behaviour: 'flee',
+    shape: 'square',
+    color: 0xb08060,
+    radius: 17,
+    innocent: true,
+    persona: 'Dying veteran of a lost battle; gruff, proud, asks for a merciful end or water, knows the layout of the floor ahead.',
   },
 ];
 

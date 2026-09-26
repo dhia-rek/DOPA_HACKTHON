@@ -93,7 +93,7 @@ POST {VITE_DIALOGUE_API}            body: DialogueRequest   (src/dialogue/types.
   on failure — the client then falls back to the mock automatically.
 * Never ship the API key to the browser. Client reads only `VITE_DIALOGUE_API`.
 * Nice-to-have: cache by `request.seed` (replays), prefetch the boss intro
-  when the floor starts, 8 s timeout (client already aborts at 8 s).
+  when the floor starts, 15 s client timeout (server LLM timeout 12 s; Gemini minimum is 10 s).
 
 ### Stream B — first tasks (Julien)
 * Make `DialogueScene` pretty: portrait box for the speaker (`def.shape/color`
@@ -106,7 +106,40 @@ POST {VITE_DIALOGUE_API}            body: DialogueRequest   (src/dialogue/types.
 * More NPCs (`priestess`, `child`, `wounded_soldier`) with personas; per-stage pools.
 * Boss personas + which `flags` each boss should react to.
 * Achievements for the moral axis (`saint`, `butcher`, `oathbreaker`).
-* Tune karma values / `takeBossMods()` curve.
+* Tune karma values / `takeBossMods()` curve. **Done** — all knobs live in
+  `KARMA` (`src/core/story.ts`); `karmaBossFactor(karma)` is the pure curve
+  (smoothstep from the ±10 neutral band to the caps at ±100), multiplied with
+  dialogue `bossMods` and clamped to [0.5, 2] in `takeBossMods()`:
+
+  | karma | boss hp | boss damage | boss speed | note |
+  |---|---|---|---|---|
+  | −100 | ×1.30 | ×1.30 | ×1 | cruel cap |
+  | −60 | ×1.17 | ×1.17 | ×1 | |
+  | −25 | ×1.02 | ×1.02 | ×1 | `cruel` threshold |
+  | −10 … +10 | ×1 | ×1 | ×1 | neutral band, no change |
+  | +25 | ×0.99 | ×1 | ×0.996 | `heroic` threshold |
+  | +60 | ×0.94 | ×1 | ×0.97 | |
+  | +100 | ×0.90 | ×1 | ×0.95 | heroic cap |
+
+  Contact damage is rounded to whole half-hearts by `Enemy.applyMods`, so a
+  2-dmg boss (Minotaur, Hydra) hits for 3 once karma ≤ ≈−77; boss projectiles
+  are a fixed 1 (`behaviours.ts:shootAt`) and ignore `damageMul` for now.
+
+  Deltas: NPC killed −15 (`KARMA.npcKilled`), NPC spared +5 (`KARMA.npcSpared`);
+  dialogue options stay in −30..30 (see `SYSTEM_PROMPT`).
+
+#### Boss flags
+`EnemyDef.reactsTo` lists the `StorySnapshot.flags` a boss's dialogue should
+react to. Set by: `blood_on_hands` (`RunScene.killNpc`), `defied_<bossId>` and
+`knows_boss_weakness` (mock/LLM option effects); the rest are for future
+dialogue options. Cerberus and Medusa are planned (behaviours TBD, Julien).
+
+| Boss (id) | Reacts to | Intended reaction |
+|---|---|---|
+| Minotaur (`minotaur`) | `blood_on_hands`, `defied_minotaur`, `swore_oath_to_minotaur`, `broke_oath_to_minotaur`, `knows_boss_weakness`, `spared_many` | Cruel → "we are both beasts", angrier (dmg↑); oath kept → honourable duel (speed↓); oath broken → enraged, no bargain option; weakness known → charges shorter |
+| Hydra (`hydra`) | `blood_on_hands`, `defied_hydra`, `spared_many`, `knows_boss_weakness`, `bargained_with_hydra`, `slew_minotaur` | Cruel → flatters as kin, offers a pact; merciful → mocks softness (hp↑); `slew_minotaur` → fears you, heads bicker; bargain → fewer shots, coins taken |
+| Cerberus (`cerberus`, planned) | `blood_on_hands`, `defied_cerberus`, `fed_cerberus`, `stole_from_hades`, `spared_many` | Three heads = three moods; fed → one head sleeps (hp↓); thief → all heads awake, faster; merciful → lets you pass one gate for free |
+| Medusa (`medusa`, planned) | `blood_on_hands`, `defied_medusa`, `looked_away`, `knows_boss_weakness`, `slew_hydra`, `swore_oath_to_minotaur` | Cruel → recognises Poseidon's cruelty in you, pities you; averted gaze → petrify slower; weakness → mirror shield hint; oath-keeper → offers a truce |
 
 ---
 
