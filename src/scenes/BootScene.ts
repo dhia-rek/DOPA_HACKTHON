@@ -6,6 +6,7 @@ import { CHARACTERS } from '../data/characters';
 import { ENEMIES, EnemyDef } from '../data/enemies';
 import { GODS } from '../data/gods';
 import { ITEMS } from '../data/items';
+import { CHARACTER_SPRITES, ENEMY_SPRITES, SpriteDef } from '../data/sprites';
 import { WEAPONS } from '../data/weapons';
 import { ART_SCALE, artKeys, artUrl } from '../art/manifest';
 import { GAME_HEIGHT, GAME_WIDTH } from '../config';
@@ -50,8 +51,16 @@ export class BootScene extends Phaser.Scene {
     this.makeVignette();
     this.makeAltar();
     this.makeTalkBubble();
-    for (const c of CHARACTERS) this.makePlayer(`player_${c.id}`, c.color, c.shadeColor);
-    for (const e of ENEMIES) this.makeEnemy(e);
+    for (const c of CHARACTERS) {
+      const sprite = CHARACTER_SPRITES[c.id];
+      if (sprite && this.missing(`player_${c.id}`)) this.makeSprite(`player_${c.id}`, sprite, PLAYER.radius * 2 + 8);
+      else this.makePlayer(`player_${c.id}`, c.color, c.shadeColor);
+    }
+    for (const e of ENEMIES) {
+      const sprite = ENEMY_SPRITES[e.id];
+      if (sprite && this.missing(`enemy_${e.id}`)) this.makeSprite(`enemy_${e.id}`, sprite, e.radius * 2 + 8);
+      else this.makeEnemy(e);
+    }
     for (const i of ITEMS) this.makeItemIcon(`item_${i.id}`, i.color);
     for (const g of GODS) this.makeGod(`god_${g.id}`, g.color);
     for (const w of WEAPONS) this.makeWeapon(`weapon_${w.id}`);
@@ -356,6 +365,36 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(COLORS.playerEye);
     g.fillCircle(cx - 7, cx - 4, 3);
     g.fillCircle(cx + 7, cx - 4, 3);
+    this.bake(g, key, size, size);
+  }
+
+  /** Draws a pixel-art sprite scaled to fill a `size`×`size` texture, with a dark outline and ground shadow. */
+  private makeSprite(key: string, sprite: SpriteDef, size: number): void {
+    const n = sprite.rows.length;
+    const px = size / n;
+    const g = this.gfx();
+    const at = (v: number): number => Math.round(v * px);
+    const rect = (x: number, y: number): void => {
+      g.fillRect(at(x), at(y), at(x + 1) - at(x), at(y + 1) - at(y));
+    };
+    const solid = (x: number, y: number): boolean => sprite.rows[y]?.[x] !== undefined && sprite.rows[y][x] !== '.';
+
+    g.fillStyle(0x000000, 0.3).fillEllipse(size / 2, size - px * 1.5, size * 0.7, px * 2.5);
+    g.fillStyle(0x120e16);
+    for (let y = 0; y < n; y++) {
+      for (let x = 0; x < n; x++) {
+        if (solid(x, y)) continue;
+        if (solid(x - 1, y) || solid(x + 1, y) || solid(x, y - 1) || solid(x, y + 1)) rect(x, y);
+      }
+    }
+    for (let y = 0; y < n; y++) {
+      for (let x = 0; x < n; x++) {
+        const color = sprite.palette[sprite.rows[y][x]];
+        if (color === undefined) continue;
+        g.fillStyle(color);
+        rect(x, y);
+      }
+    }
     this.bake(g, key, size, size);
   }
 
