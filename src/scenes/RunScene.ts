@@ -150,7 +150,8 @@ export class RunScene extends Phaser.Scene {
     const chapter = this.run.takeChapter();
     if (chapter) this.toast(chapter.title, chapter.body, 4200);
 
-    if (this.room.type === 'boss') director.prefetch(this.run, this.run.floor + 1);
+    // The next floor is judged once the boss intro choice is on record (see applyChoice); this covers re-entries.
+    if (this.room.type === 'boss' && this.room.dialogueDone) director.prefetch(this.run, this.run.floor + 1);
     if (this.room.type === 'boss' && !this.room.cleared && !this.room.dialogueDone) {
       const boss = this.hostiles().find((e) => e.def.isBoss);
       if (boss) {
@@ -352,8 +353,9 @@ export class RunScene extends Phaser.Scene {
     }
 
     const enemy = speaker.enemy;
-    if (script.kind === 'boss_intro' && enemy?.active) {
-      enemy.applyMods(this.run.story.takeBossMods(factionOf(enemy.def.lore)));
+    if (script.kind === 'boss_intro') {
+      if (enemy?.active) enemy.applyMods(this.run.story.takeBossMods(factionOf(enemy.def.lore)));
+      director.prefetch(this.run, this.run.floor + 1);
     } else if (script.kind === 'npc' && enemy?.active) {
       this.spareNpc(enemy, option?.effects.npcOutcome === 'wronged');
     } else if (script.kind === 'shrine') {

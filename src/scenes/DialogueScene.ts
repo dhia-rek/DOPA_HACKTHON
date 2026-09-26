@@ -176,10 +176,15 @@ export class DialogueScene extends Phaser.Scene {
   private showOptions(): void {
     this.phase = 'options';
     this.body.setText('');
-    const top = GAME_HEIGHT - BOX_H - 16 + 28;
+    const top = GAME_HEIGHT - BOX_H - 16 + 24;
+    const width = GAME_WIDTH - TEXT_X - 64;
+    const longest = Math.max(...this.data_.script.options.map((o) => o.text.length));
+    const fontSize = longest > 60 || this.data_.script.options.length > 3 ? '14px' : '16px';
+    let y = top;
     this.data_.script.options.forEach((o, i) => {
-      const t = this.add.text(TEXT_X + 8, top + i * 30, `${i + 1}. ${o.text}`, { fontFamily: mono, fontSize: '16px', color: '#ccc' });
+      const t = this.add.text(TEXT_X + 8, y, `  ${i + 1}. ${o.text}`, { fontFamily: mono, fontSize, color: '#ccc', wordWrap: { width } });
       this.optionTexts.push(t);
+      y += t.height + 6;
     });
     this.hint.setText('↑↓ / 1-4 choose · ENTER confirm');
     this.paintSelection();

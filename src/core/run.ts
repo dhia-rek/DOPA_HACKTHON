@@ -189,7 +189,7 @@ export class RunState {
         return id;
       },
     });
-    if (this.directive) applyDirective(this.floorMap, this.directive, this.stage, this.floorRng.fork(`director-${this.floor}`));
+    if (this.directive) applyDirective(this.floorMap, this.directive, front, this.floorRng.fork(`director-${this.floor}`));
     this.room = this.floorMap.start;
     events.emit('floor_started', { floor: this.floor, stageId: this.stage.id });
     return this.floorMap;

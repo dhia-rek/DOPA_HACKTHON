@@ -148,14 +148,18 @@ export function legendOf(run: RunState, stage: StageDef = run.stage): string {
 
 /**
  * Profile for the floor the Director is judging. `floor` may be `run.floor + 1`
- * (prefetch at boss-room entry): stage catalogs, stageName and budget follow
- * the target floor; deeds, build and performance are the live run.
+ * (prefetched once the boss intro choice is made): front catalogs, stageName
+ * and budget follow the target floor; deeds, build and performance are the
+ * live run. The boss the player is fighting (or just slew) is never offered
+ * again, mirroring `generateFloor`'s `avoidBossId`.
  */
 export function buildProfile(run: RunState, floor = run.floor): PlayerProfile {
   const hpPct = run.hp / run.stats.maxHp;
   const skill = skillOf(run, hpPct);
   const stage = stageForFloor(floor);
   const front = floor === run.floor ? run.currentFront : resolveFront(stage, run.story);
+  const avoidBoss = floor > run.floor ? run.floorMap?.boss.bossId : run.story.deeds.filter((d) => d.kind === 'boss_killed' && d.floor === floor - 1).pop()?.subject;
+  const bosses = front.bossPool.filter((id) => id !== avoidBoss);
   return {
     story: run.story.snapshot({
       characterId: run.character.id,
@@ -188,16 +192,16 @@ export function buildProfile(run: RunState, floor = run.floor): PlayerProfile {
       abilities: [...ABILITY_IDS],
       weaknesses: [...WEAKNESS_IDS],
       quests: [...QUEST_TEMPLATE_IDS],
-      enemies: [...stage.enemyPool],
-      bosses: [...stage.bossPool],
-      npcs: [...(stage.npcPool ?? [])].filter((id) => ENEMIES.some((e) => e.id === id && e.innocent)),
+      enemies: [...new Set(front.enemyPool)],
+      bosses: bosses.length ? bosses : [...front.bossPool],
+      npcs: [...new Set(front.npcPool)].filter((id) => ENEMIES.some((e) => e.id === id && e.innocent)),
       items: ITEMS.map((i) => i.id),
       earnedWeaknesses: earnedWeaknesses(run),
     },
   };
 }
 
-/** Request for the floor the player is about to enter (call at boss-room entry to prefetch floor+1). */
+/** Request for the floor the player is about to enter (call after the boss intro choice to prefetch floor+1). */
 export function directorRequest(run: RunState, floor = run.floor): DirectorRequest {
   return {
     profile: buildProfile(run, floor),

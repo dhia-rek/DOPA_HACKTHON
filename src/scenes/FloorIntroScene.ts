@@ -48,10 +48,11 @@ export class FloorIntroScene extends Phaser.Scene {
     lines.push(
       this.add.text(cx, 150, d.floorTitle, { fontFamily: mono, fontSize: '40px', color: COLORS.text, align: 'center', wordWrap: { width: 820 } }).setOrigin(0.5).setShadow(0, 3, '#000000', 8),
     );
-    lines.push(
-      this.add.text(cx, 236, `“${d.verdict}”`, { fontFamily: mono, fontSize: '19px', color: COLORS.uiIvory, align: 'center', wordWrap: { width: 760 }, lineSpacing: 6 }).setOrigin(0.5, 0),
-    );
-    let y = 340;
+    const verdict = this.add
+      .text(cx, 236, `“${d.verdict}”`, { fontFamily: mono, fontSize: d.verdict.length > 200 ? '16px' : '19px', color: COLORS.uiIvory, align: 'center', wordWrap: { width: 760 }, lineSpacing: 6 })
+      .setOrigin(0.5, 0);
+    lines.push(verdict);
+    let y = verdict.y + verdict.height + 28;
     if (d.epithet) {
       lines.push(this.add.text(cx, y, `They call you ${run.character.name} ${d.epithet}.`, { fontFamily: mono, fontSize: '16px', color: '#ffe08a' }).setOrigin(0.5));
       y += 30;
@@ -73,13 +74,18 @@ export class FloorIntroScene extends Phaser.Scene {
       lines.push(this.add.text(cx, y, `${getGod(god).name} is watching.`, { fontFamily: mono, fontSize: '14px', color: COLORS.textDim }).setOrigin(0.5));
       y += 26;
     }
-    lines.push(
-      this.add.text(cx, y + 12, `Below waits ${d.boss.title}${d.boss.grudge ? ` — “${d.boss.grudge}”` : ''}`, { fontFamily: mono, fontSize: '14px', color: '#e08080', align: 'center', wordWrap: { width: 800 } }).setOrigin(0.5, 0),
-    );
+    const bossLine = this.add
+      .text(cx, y + 12, `Below waits ${d.boss.title}${d.boss.grudge ? ` — “${d.boss.grudge}”` : ''}`, { fontFamily: mono, fontSize: '14px', color: '#e08080', align: 'center', wordWrap: { width: 800 } })
+      .setOrigin(0.5, 0);
+    lines.push(bossLine);
     if (DIRECTOR_DEBUG) {
-      this.add.text(16, GAME_HEIGHT - 120, `[director] ${d.reason}\nabilities ${d.boss.abilities.join(', ')} · weakness ${d.boss.weakness} · spent ${d.spent}`, {
-        fontFamily: mono, fontSize: '12px', color: '#6a8a6a', wordWrap: { width: GAME_WIDTH - 32 },
-      });
+      const debug = this.add
+        .text(16, GAME_HEIGHT - 60, `[director] ${d.reason}\nabilities ${d.boss.abilities.join(', ')} · weakness ${d.boss.weakness} · spent ${d.spent}`, {
+          fontFamily: mono, fontSize: '12px', color: '#6a8a6a', wordWrap: { width: GAME_WIDTH - 32 },
+        })
+        .setOrigin(0, 1);
+      const bossBottom = bossLine.y + bossLine.height + 8;
+      if (debug.y - debug.height < bossBottom) debug.setOrigin(0, 0).setY(bossBottom);
     }
     for (const [i, o] of lines.entries()) {
       const t = o as Phaser.GameObjects.Text;
