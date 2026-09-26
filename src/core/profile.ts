@@ -5,7 +5,7 @@ import { MUTATOR_IDS } from '../data/mutators';
 import { QUEST_TEMPLATE_IDS } from '../data/quests';
 import { STAGES, StageDef } from '../data/stages';
 import type { DirectorRequest, PlayerProfile, Skill, Style, Traits, Voice } from '../director/types';
-import { loreFor, resolveFront, warSnapshot } from '../systems/chronicle';
+import { loreFor, resolveFront, warSnapshot, type ResolvedFront } from '../systems/chronicle';
 import { events } from './events';
 import type { RunState } from './run';
 import { save } from './save';
@@ -155,7 +155,7 @@ export function buildProfile(run: RunState, floor = run.floor): PlayerProfile {
   const hpPct = run.hp / run.stats.maxHp;
   const skill = skillOf(run, hpPct);
   const stage = stageForFloor(floor);
-  const front = floor === run.floor ? run.currentFront : resolveFront(stage, run.story);
+  const front = frontForFloor(run, floor);
   const avoid = run.bossToAvoid(floor);
   const bosses = front.bossPool.filter((id) => id !== avoid);
   return {
@@ -199,12 +199,21 @@ export function buildProfile(run: RunState, floor = run.floor): PlayerProfile {
   };
 }
 
-/** Request for the floor the player is about to enter (call at boss-room entry to prefetch floor+1). */
+/** Who holds `floor` right now (the current floor's front is fixed once its map exists). */
+export function frontForFloor(run: RunState, floor = run.floor): ResolvedFront {
+  return floor === run.floor ? run.currentFront : resolveFront(stageForFloor(floor), run.story);
+}
+
+/**
+ * Request for the floor the player is about to enter (call at boss-room entry to
+ * prefetch floor+1). The seed carries the holding faction so a directive
+ * prefetched before the war tide turned is not reused for a different front.
+ */
 export function directorRequest(run: RunState, floor = run.floor): DirectorRequest {
   return {
     profile: buildProfile(run, floor),
     floor,
     stageId: stageForFloor(floor).id,
-    seed: `${run.seed}:${floor}`,
+    seed: `${run.seed}:${floor}:${frontForFloor(run, floor).def.faction}`,
   };
 }

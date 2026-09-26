@@ -17,10 +17,11 @@ class DirectorRuntime {
   }
 
   forFloor(run: RunState, floor: number): Promise<FloorDirective> {
-    const key = `${run.seed}:${floor}`;
+    const req = directorRequest(run, floor);
+    const key = req.seed;
     let p = this.pending.get(key);
     if (!p) {
-      p = directorProvider.direct(directorRequest(run, floor));
+      p = directorProvider.direct(req);
       this.pending.set(key, p);
       p.catch(() => this.pending.delete(key));
     }
