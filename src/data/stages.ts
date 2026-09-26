@@ -61,7 +61,7 @@ export const STAGES: StageDef[] = [
     bossPool: ['talos'],
     roomCount: [10, 13],
     enemiesPerRoom: [3, 6],
-    npcPool: ['villager'],
+    npcPool: ['villager', 'child'],
     npcChance: 0.15,
     palette: { floor: 0x6a5a6a, wall: 0x3a2a3a, accent: 0xff9a3a },
   },
