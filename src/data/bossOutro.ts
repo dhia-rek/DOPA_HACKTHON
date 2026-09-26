@@ -138,7 +138,7 @@ export function bossOutroLines(req: Pick<DialogueRequest, 'speakerId' | 'speaker
   const mood = bossOutroMood(req.speakerId, s);
   const moodLines = voice.moods[mood] ?? GENERIC_BOSS_OUTRO.moods[mood] ?? GENERIC_BOSS_OUTRO.moods.neutral!;
   const n = Math.max(1, s.npcsKilled);
-  const fill = (t: string): string =
+  const fill = (t: string): string =>
     t
       .replace(/\{you\}/g, s.characterName)
       .replace(/\{name\}/g, req.speakerName)
