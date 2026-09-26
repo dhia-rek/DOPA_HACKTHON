@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import { OK_KEY } from '../core/input';
+import { music } from '../core/music';
 import type { RunState } from '../core/run';
 import { judge } from '../data/war';
 
@@ -10,6 +11,7 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   create(): void {
+    music.play('menu', 'lament');
     const run = this.registry.get('run') as RunState;
     const mono = 'monospace';
     const cx = GAME_WIDTH / 2;
