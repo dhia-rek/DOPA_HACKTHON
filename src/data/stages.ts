@@ -1,6 +1,10 @@
+import type { WarFaction } from './lore';
+
 export interface StageDef {
   id: string;
   name: string;
+  /** Who holds the place when the war is even; rivals take it over via data/war.ts FRONTS. */
+  holder: WarFaction;
   /** Enemy ids that can spawn in normal rooms. */
   enemyPool: string[];
   /** Boss ids; one is picked per floor. */
@@ -28,6 +32,7 @@ export const STAGES: StageDef[] = [
   {
     id: 'polis',
     name: 'Ruined Polis',
+    holder: 'olympian',
     enemyPool: ['bandit', 'harpy', 'centaur_archer', 'boar'],
     bossPool: ['minotaur'],
     roomCount: [5, 7],
@@ -39,12 +44,25 @@ export const STAGES: StageDef[] = [
   {
     id: 'labyrinth',
     name: 'Labyrinth of Knossos',
+    holder: 'olympian',
     enemyPool: ['skeleton', 'living_statue', 'boar', 'centaur_archer', 'harpy'],
-    bossPool: ['hydra', 'minotaur'],
+    bossPool: ['minotaur', 'talos'],
     roomCount: [9, 12],
     enemiesPerRoom: [3, 5],
     npcPool: ['wounded_soldier', 'priestess', 'child'],
     npcChance: 0.2,
     palette: { floor: 0x9fb4d8, wall: 0x8898c0, accent: 0x7fd0ff },
+  },
+  {
+    id: 'tartarus',
+    name: 'Gates of Tartarus',
+    holder: 'olympian',
+    enemyPool: ['skeleton', 'living_statue', 'centaur_archer', 'harpy', 'boar'],
+    bossPool: ['talos'],
+    roomCount: [10, 13],
+    enemiesPerRoom: [3, 6],
+    npcPool: ['villager'],
+    npcChance: 0.15,
+    palette: { floor: 0x6a5a6a, wall: 0x3a2a3a, accent: 0xff9a3a },
   },
 ];

@@ -4,8 +4,10 @@ import { DEBUG, DEBUG_HELP, debugState } from '../core/debug';
 import { events } from '../core/events';
 import type { RunState } from '../core/run';
 import { KARMA } from '../core/story';
+import { earnedWeaknesses } from '../core/profile';
 import { EnemyDef, getEnemy } from '../data/enemies';
 import { getItem, ITEMS } from '../data/items';
+import { factionOf, makeShade } from '../data/war';
 import { dialogueProvider } from '../dialogue/provider';
 import type { DialogueKind, DialogueOption, DialogueScript } from '../dialogue/types';
 import type { DialogueSceneData } from './DialogueScene';
@@ -16,11 +18,16 @@ import { Player } from '../entities/Player';
 import { Projectile, ProjectilePool } from '../entities/Projectile';
 import { achievements } from '../systems/achievements';
 import { BEHAVIOURS, threaten } from '../systems/behaviours';
+import { weaknessDamageMul } from '../systems/bossAbilities';
+import { director } from '../systems/director';
+import { getGod, type GodId } from '../data/gods';
 
 /** Distance (px) at which an innocent NPC shows its "!" talk bubble. */
 const TALK_RANGE = 150;
 /** A player shot passing this close to an innocent scares it. */
 const SCARE_RANGE = 90;
+/** Spared innocents before bosses start calling you merciful (`spared_many`). */
+const SPARED_MANY = 3;
 
 /** Who a dialogue is with: an Enemy (boss/NPC) or a static prop such as the altar. */
 interface DialogueSpeaker {
@@ -40,6 +47,9 @@ const ALTAR_SPEAKER: Omit<DialogueSpeaker, 'x' | 'y'> = {
   name: 'Altar of the Gods',
   persona: 'A silent altar; the gods speak through it in turns, weighing what the hero has done and what they offer.',
 };
+
+/** Which god hears each shrine offering (mock + LLM option ids). */
+const OFFERING_GOD: Record<string, GodId> = { blood: 'ares', gold: 'hermes', nothing: 'hades', honour: 'athena', pray: 'apollo', water: 'poseidon' };
 
 const DOOR_TILES: Record<Dir, { col: number; row: number }> = {
   up: { col: Math.floor(GRID_COLS / 2), row: 0 },
@@ -78,6 +88,12 @@ export class RunScene extends Phaser.Scene {
   private dialogueOpen = false;
   /** Delays room completion while a boss outro is pending/showing. */
   private holdClear = false;
+  /** `flooded` mutator: everyone wades. */
+  private speedMul = 1;
+  /** `darkness` mutator: mask that follows the player. */
+  private darknessLight: Phaser.GameObjects.Graphics | null = null;
+  /** `plague` mutator: enemies burst into poison on death. */
+  private plague = false;
 
   constructor() {
     super('run');
@@ -92,6 +108,9 @@ export class RunScene extends Phaser.Scene {
     this.trapdoor = null;
     this.altar = null;
     this.holdClear = false;
+    this.speedMul = 1;
+    this.darknessLight = null;
+    this.plague = false;
 
     this.run = this.registry.get('run') as RunState;
     achievements.attachRun(this.run);
@@ -110,6 +129,7 @@ export class RunScene extends Phaser.Scene {
 
     this.buildBorder();
     this.buildInterior();
+    this.applyRoomMutators();
 
     const spawn = this.spawnPoint(data?.enterFrom);
     this.player = new Player(this, spawn.x, spawn.y, this.run, this.playerShots);
@@ -121,6 +141,8 @@ export class RunScene extends Phaser.Scene {
 
     events.emit('room_entered', { roomType: this.room.type, floor: this.run.floor });
     events.emit('hud_update', {});
+    events.on('quest_settled', this.onQuestSettled, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => events.off('quest_settled', this.onQuestSettled, this));
     this.cameras.main.fadeIn(180, 0, 0, 0);
 
     if (DEBUG) this.bindDebugKeys();
@@ -128,13 +150,57 @@ export class RunScene extends Phaser.Scene {
     if (!this.scene.isActive('hud')) this.scene.launch('hud');
     this.scene.bringToTop('hud');
 
+    const chapter = this.run.takeChapter();
+    if (chapter) this.toast(chapter.title, chapter.body, 4200);
+
+    if (this.room.type === 'boss') director.prefetch(this.run, this.run.floor + 1);
     if (this.room.type === 'boss' && !this.room.cleared && !this.room.dialogueDone) {
       const boss = this.hostiles().find((e) => e.def.isBoss);
       if (boss) {
         this.room.dialogueDone = true;
-        this.time.delayedCall(250, () => this.startDialogue('boss_intro', speakerOf(boss)));
+        this.time.delayedCall(250, () => this.startDialogue('boss_intro', this.bossSpeaker(boss)));
       }
     }
+  }
+
+  /** Boss dialogue speaker: the Director's title, persona and grudge on top of the authored persona. */
+  private bossSpeaker(boss: Enemy): DialogueSpeaker {
+    const bp = boss.blueprint;
+    const base = speakerOf(boss);
+    if (!bp) return base;
+    return {
+      ...base,
+      name: bp.title,
+      persona: `${base.persona} ${bp.persona} Grudge against this hero: ${bp.grudge}`,
+    };
+  }
+
+  /** Floor-wide mutators that change how the room looks/feels (spawns are handled by director/apply.ts). */
+  private applyRoomMutators(): void {
+    const d = this.run.directive;
+    if (!d) return;
+    const god = this.run.story.patron;
+    if (d.mutators.includes('palette_shift') && god) {
+      const tint = Phaser.Display.Color.IntegerToColor(getGod(god).color).lighten(35).color;
+      for (const w of this.walls.getChildren()) (w as Phaser.Physics.Arcade.Image).setTint(tint);
+    }
+    if (d.mutators.includes('flooded')) {
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x2050a0, 0.18).setDepth(5);
+      this.speedMul = 0.85;
+    }
+    if (d.mutators.includes('darkness')) {
+      const veil = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.74).setDepth(50);
+      const light = this.make.graphics({}, false);
+      light.fillStyle(0xffffff, 1).fillCircle(0, 0, 200);
+      veil.setMask(light.createGeometryMask().setInvertAlpha(true));
+      this.darknessLight = light;
+    }
+    if (d.mutators.includes('plague')) this.plague = true;
+  }
+
+  private onQuestSettled(p: { outcome: 'done' | 'failed'; reward: string }): void {
+    if (p.outcome === 'done') this.toast('Quest fulfilled', p.reward ? `Reward: ${p.reward.replace('coins:', '')}${p.reward.startsWith('coins:') ? ' coins' : ''}` : 'The gods take note.');
+    else this.toast('Quest failed', 'The gods take note.');
   }
 
   /** Enemies that must die for the room to clear (innocents excluded). */
@@ -146,6 +212,8 @@ export class RunScene extends Phaser.Scene {
     if (this.dead) return;
     this.player.nearestEnemy = this.nearestEnemy();
     this.player.update(time, delta);
+    if (this.speedMul !== 1) this.player.body.velocity.scale(this.speedMul);
+    this.darknessLight?.setPosition(this.player.x, this.player.y);
     this.playerShots.step();
     this.enemyShots.step();
 
@@ -161,7 +229,7 @@ export class RunScene extends Phaser.Scene {
         continue;
       }
       if (enemy.def.innocent) this.watchInnocent(enemy, time);
-      BEHAVIOURS[enemy.def.behaviour]({
+      BEHAVIOURS[enemy.blueprint ? 'boss_directed' : enemy.def.behaviour]({
         enemy,
         player: this.player,
         enemyShots: this.enemyShots,
@@ -169,6 +237,9 @@ export class RunScene extends Phaser.Scene {
         now: time,
         delta,
         difficulty: this.run.difficulty,
+        spawn: (id, x, y) => this.spawnEnemy(id, x, y),
+        summonPool: this.run.stage.enemyPool,
+        announce: (title, text) => this.toast(title, text),
       });
     }
 
@@ -178,7 +249,7 @@ export class RunScene extends Phaser.Scene {
   /** Talk bubble when in range; panic when a player shot flies close by. */
   private watchInnocent(npc: Enemy, now: number): void {
     const near = Phaser.Math.Distance.Between(npc.x, npc.y, this.player.x, this.player.y) < TALK_RANGE;
-    npc.showBubble(near && !this.room.dialogueDone);
+    npc.showBubble(near && !npc.getData('talked'));
     if (npc.isPanicking) return;
     for (const child of this.playerShots.getChildren()) {
       const shot = child as Projectile;
@@ -218,7 +289,7 @@ export class RunScene extends Phaser.Scene {
         speakerId: speaker.id,
         speakerName: speaker.name,
         persona: speaker.persona,
-        story: this.run.storySnapshot(),
+        story: this.run.storySnapshot(speaker.id),
         seed: `${this.run.seed}:${this.run.floor}:${this.room.gx},${this.room.gy}:${kind}`,
       });
     } catch (err) {
@@ -250,6 +321,10 @@ export class RunScene extends Phaser.Scene {
       this.toast('Not enough coins', 'The offering is refused.');
       option = null;
     }
+    if (option && option.effects.hp && option.effects.hp < 0 && this.run.hp <= -option.effects.hp) {
+      this.toast('Too weak', 'You have no blood left to give.');
+      option = null;
+    }
     if (option) {
       const fx = option.effects;
       if (fx.hp && fx.hp < 0 && this.run.takeDamage(-fx.hp, 'oath')) {
@@ -274,18 +349,42 @@ export class RunScene extends Phaser.Scene {
         }
       }
       if (fx.boss) this.run.story.applyBossMods(fx.boss);
+      if (fx.favor) this.run.story.pushTide(fx.favor);
+      if (script.kind === 'shrine') this.offerTo(option.id, fx.karma ?? 0);
       events.emit('dialogue_choice', { dialogueId: script.id, kind: script.kind, optionId: option.id, karmaDelta: fx.karma ?? 0 });
     }
 
     const enemy = speaker.enemy;
     if (script.kind === 'boss_intro' && enemy?.active) {
-      enemy.applyMods(this.run.story.takeBossMods());
+      enemy.applyMods(this.run.story.takeBossMods(factionOf(enemy.def.lore)));
     } else if (script.kind === 'npc' && enemy?.active) {
-      this.spareNpc(enemy);
+      this.spareNpc(enemy, option?.effects.npcOutcome === 'wronged');
     } else if (script.kind === 'shrine') {
       this.extinguishAltar();
     }
     events.emit('hud_update', {});
+  }
+
+  /**
+   * A shrine offering draws a god's attention and makes a prophecy the Director
+   * must honour next floor: a boss weakness the player has earned, a boon, or
+   * (Hermes, once) a lie.
+   */
+  private offerTo(optionId: string, karma: number): void {
+    const story = this.run.story;
+    const god = OFFERING_GOD[optionId] ?? (karma < 0 ? 'ares' : karma > 0 ? 'athena' : 'hades');
+    story.favour(god, optionId === 'nothing' ? 0 : 1);
+    if (optionId === 'nothing') return;
+    const earned = earnedWeaknesses(this.run);
+    const lie = god === 'hermes' && !story.hasFlag('hermes_lied') && this.run.rng.chance(0.35);
+    if (lie) story.addFlag('hermes_lied');
+    if (earned.length && this.run.rng.chance(0.6)) {
+      story.promise({ kind: 'boss_weakness', god, payload: this.run.rng.pick(earned), madeOnFloor: this.run.floor, truthful: !lie });
+      this.toast(getGod(god).name, lie ? 'The god smiles too easily. "The beast below fears what you carry."' : `"The beast below fears what you carry. Strike with it."`);
+    } else {
+      story.promise({ kind: 'boon_next_floor', god, payload: `boon_${god}`, madeOnFloor: this.run.floor, truthful: !lie });
+      this.toast(getGod(god).name, `"Descend. A gift waits on the next floor."`);
+    }
   }
 
   private tryShrine(): void {
@@ -303,11 +402,16 @@ export class RunScene extends Phaser.Scene {
     this.burst(this.altar.x, this.altar.y - 16, COLORS.doorFrame, 12);
   }
 
-  /** The NPC walks away alive; counts as spared. */
-  private spareNpc(npc: Enemy): void {
+  /** The NPC walks away alive; counts as spared unless the player wronged them. */
+  private spareNpc(npc: Enemy, wronged: boolean): void {
     this.room.npcs = this.room.npcs.filter((id) => id !== npc.def.id);
-    this.run.story.record({ kind: 'npc_spared', subject: npc.def.id, floor: this.run.floor, karmaDelta: KARMA.npcSpared, summary: `Spared the ${npc.def.name} on floor ${this.run.floor}` });
-    events.emit('npc_spared', { npcId: npc.def.id, floor: this.run.floor });
+    if (wronged) {
+      this.run.story.record({ kind: 'custom', subject: `wronged_${npc.def.id}`, floor: this.run.floor, karmaDelta: 0, summary: `Wronged the ${npc.def.name} on floor ${this.run.floor}` });
+    } else {
+      this.run.story.record({ kind: 'npc_spared', subject: npc.def.id, floor: this.run.floor, karmaDelta: KARMA.npcSpared, summary: `Spared the ${npc.def.name} on floor ${this.run.floor}` });
+      if (this.run.story.count('npc_spared') >= SPARED_MANY) this.run.story.addFlag('spared_many');
+      events.emit('npc_spared', { npcId: npc.def.id, floor: this.run.floor });
+    }
     this.tweens.add({ targets: npc, alpha: 0, duration: 500, onComplete: () => npc.destroy() });
     npc.body.enable = false;
   }
@@ -330,14 +434,14 @@ export class RunScene extends Phaser.Scene {
           if (doorDir === 'down') door.setAngle(180);
           this.doorSprites[doorDir] = door;
         } else {
-          (this.walls.create(x, y, 'wall') as Phaser.Physics.Arcade.Image).setTint(this.run.stage.palette.wall);
+          (this.walls.create(x, y, 'wall') as Phaser.Physics.Arcade.Image).setTint(this.run.palette.wall);
         }
       }
     }
   }
 
   private buildInterior(): void {
-    const tint = this.run.stage.palette.floor;
+    const tint = this.run.palette.floor;
     for (let r = 0; r < ROOM_ROWS; r++) {
       for (let c = 0; c < ROOM_COLS; c++) {
         const { x, y } = this.tileCenter(c + 1, r + 1);
@@ -426,7 +530,14 @@ export class RunScene extends Phaser.Scene {
   }
 
   private spawnEnemy(id: string, x: number, y: number): Enemy {
-    return new Enemy(this, this.enemies, x, y, getEnemy(id), this.run.difficulty);
+    const enemy = new Enemy(this, this.enemies, x, y, getEnemy(id), this.run.difficulty);
+    const bp = this.run.directive?.boss;
+    if (enemy.def.isBoss && bp && bp.archetype === id) {
+      enemy.blueprint = bp;
+      enemy.applyMods(bp.mods);
+      if (bp.weakness === 'known_secret') enemy.applyMods({ hpMul: 0.85, damageMul: 1, speedMul: 1 });
+    }
+    return enemy;
   }
 
   private spawnTrapdoor(): void {
@@ -469,13 +580,18 @@ export class RunScene extends Phaser.Scene {
       const enemy = e as Enemy;
       if (enemy.isSpawning) return;
       if (enemy.def.innocent) {
-        if (!this.room.dialogueDone && !enemy.isPanicking) {
-          this.room.dialogueDone = true;
+        if (!enemy.getData('talked') && !enemy.isPanicking && !this.dialogueOpen) {
+          enemy.setData('talked', true);
           void this.startDialogue('npc', speakerOf(enemy));
         }
         return;
       }
+      const before = this.run.hp;
       this.hurtPlayer(enemy.contactDamage, enemy.def.id, enemy.x, enemy.y);
+      if (this.run.hp < before && enemy.blueprint?.abilities.includes('steal_hearts')) {
+        enemy.hp = Math.min(enemy.maxHp, enemy.hp + 6);
+        this.burst(enemy.x, enemy.y, COLORS.heart, 6);
+      }
     });
     this.physics.add.overlap(this.player, this.pickups, (_p, pk) => this.collect(pk as Pickup));
     this.physics.add.overlap(this.player, this.doors, (_p, door) => {
@@ -511,7 +627,9 @@ export class RunScene extends Phaser.Scene {
     if (!shot.active || !enemy.active || enemy.isSpawning) return;
     if (shot.hitSet.has(enemy)) return;
     shot.hitSet.add(enemy);
-    enemy.takeHit(shot.damage, shot.x, shot.y, shot.flags.knockback ?? 1, shot.flags.poison ?? false);
+    const mul = enemy.blueprint ? weaknessDamageMul(enemy.blueprint.weakness, shot.flags) : 1;
+    enemy.takeHit(shot.damage * mul, shot.x, shot.y, (shot.flags.knockback ?? 1) * (mul > 1 ? 1.5 : 1), shot.flags.poison ?? false);
+    if (mul > 1) this.burst(shot.x, shot.y, 0xffe08a, 3);
     if (!shot.flags.piercing) shot.kill();
   }
 
@@ -528,9 +646,16 @@ export class RunScene extends Phaser.Scene {
     const isBoss = !!enemy.def.isBoss;
     this.burst(enemy.x, enemy.y, enemy.def.color, isBoss ? 24 : 8);
     events.emit('enemy_killed', { enemyId: enemy.def.id, isBoss });
+    if (this.plague && !isBoss) {
+      for (let i = 0; i < 6; i++) {
+        const a = (Math.PI * 2 * i) / 6;
+        this.enemyShots.shoot({ x: enemy.x, y: enemy.y, dx: Math.cos(a), dy: Math.sin(a), speed: 90, damage: 1, range: 80, owner: 'enemy', flags: { poison: true } });
+      }
+    }
     if (isBoss) {
       this.cameras.main.shake(300, 0.012);
-      this.run.story.record({ kind: 'boss_killed', subject: enemy.def.id, floor: this.run.floor, karmaDelta: 0, summary: `Slew ${enemy.def.name} on floor ${this.run.floor}` });
+      this.run.story.record({ kind: 'boss_killed', subject: enemy.def.id, lore: enemy.def.lore, floor: this.run.floor, karmaDelta: 0, summary: `Slew ${enemy.def.name} on floor ${this.run.floor}` });
+      this.run.story.addFlag(`slew_${enemy.def.id}`);
       events.emit('boss_killed', { enemyId: enemy.def.id, floor: this.run.floor });
       this.bossOutro({ ...speakerOf(enemy), enemy: undefined });
     } else if (this.run.dropRng.chance(enemy.def.dropChance ?? 0)) {
@@ -560,10 +685,15 @@ export class RunScene extends Phaser.Scene {
     this.room.npcs = this.room.npcs.filter((id) => id !== def.id);
     this.scareAllInnocents();
     this.burst(npc.x, npc.y, def.color, 10);
-    this.run.story.record({ kind: 'npc_killed', subject: def.id, floor: this.run.floor, karmaDelta: KARMA.npcKilled, summary: `Killed the innocent ${def.name} on floor ${this.run.floor}` });
+    const shade = makeShade(this.run.storyRng, def.id, def.name, this.run.floor, this.run.stage.name, this.run.story.shades.length);
+    this.run.story.record({ kind: 'npc_killed', subject: def.id, lore: def.lore, floor: this.run.floor, karmaDelta: KARMA.npcKilled, summary: `Killed ${shade.name}, an innocent ${def.name}, on floor ${this.run.floor}` });
     this.run.story.addFlag('blood_on_hands');
+    this.run.story.addShade(shade);
+    for (const flag of [...this.run.story.flags]) {
+      if (flag.startsWith('swore_oath_to_')) this.run.story.addFlag(flag.replace('swore_oath_to_', 'broke_oath_to_'));
+    }
     events.emit('npc_killed', { npcId: def.id, floor: this.run.floor });
-    this.toast('Innocent blood', 'The gods have seen this.');
+    this.toast(`Shade collected: ${shade.name}`, `${shade.epitaph} The gods have seen this.`);
     npc.destroy();
   }
 
@@ -646,7 +776,10 @@ export class RunScene extends Phaser.Scene {
     this.player.body.stop();
     this.run.nextFloor();
     this.cameras.main.fadeOut(300, 0, 0, 0);
-    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.scene.restart({}));
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      this.scene.stop('hud');
+      this.scene.start('floor_intro');
+    });
   }
 
   private die(): void {
@@ -737,7 +870,7 @@ export class RunScene extends Phaser.Scene {
     }
   }
 
-  private toast(title: string, body: string): void {
+  private toast(title: string, body: string, holdMs = 2200): void {
     const t = this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT - 120, `${title}\n${body}`, {
         fontFamily: 'monospace',
@@ -750,7 +883,7 @@ export class RunScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(200);
-    this.tweens.add({ targets: t, alpha: 0, delay: 2200, duration: 500, onComplete: () => t.destroy() });
+    this.tweens.add({ targets: t, alpha: 0, delay: holdMs, duration: 500, onComplete: () => t.destroy() });
   }
 
   private doorAt(col: number, row: number): Dir | null {

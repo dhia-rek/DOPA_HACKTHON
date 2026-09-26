@@ -14,8 +14,14 @@ export interface FloorGenOptions {
   pickItem: () => string;
   /** Share of normal rooms that use the procedural generator instead of templates. */
   proceduralShare?: number;
+  /** Overrides from whoever holds the floor in the war (systems/chronicle.ts); default to the stage's pools. */
+  bossPool?: string[];
+  enemyPool?: string[];
+  npcPool?: string[];
   /** Chance (0..1) that a floor with a spare dead end gets a shrine room. Default 0.75. */
   shrineChance?: number;
+  /** Boss to skip when the stage pool offers another (e.g. the one slain on the previous floor). */
+  avoidBossId?: string;
 }
 
 export interface RoomNode {
@@ -71,6 +77,9 @@ export function doorsOf(map: FloorMap, room: RoomNode): Dir[] {
 export function generateFloor(rng: Rng, opts: FloorGenOptions): FloorMap {
   const { stage, loop, pickItem } = opts;
   const proceduralShare = opts.proceduralShare ?? 0.6;
+  const bossPool = opts.bossPool ?? stage.bossPool;
+  const enemyPool = opts.enemyPool ?? stage.enemyPool;
+  const npcPool = opts.npcPool ?? stage.npcPool ?? [];
   const width = 9;
   const height = 7;
   const target = Math.min(width * height, rng.int(stage.roomCount[0], stage.roomCount[1]) + loop * 2);
@@ -142,10 +151,11 @@ export function generateFloor(rng: Rng, opts: FloorGenOptions): FloorMap {
     if (type === 'normal') {
       const slots = countChar(template, 'E');
       const wanted = Math.min(slots, rng.int(stage.enemiesPerRoom[0], stage.enemiesPerRoom[1]) + Math.floor(loop / 2));
-      for (let i = 0; i < wanted; i++) node.enemies.push(rng.pick(stage.enemyPool));
-      if (stage.npcPool?.length && rng.chance(stage.npcChance ?? 0)) node.npcs.push(rng.pick(stage.npcPool));
+      for (let i = 0; i < wanted; i++) node.enemies.push(rng.pick(enemyPool));
+      if (npcPool.length && rng.chance(stage.npcChance ?? 0)) node.npcs.push(rng.pick(npcPool));
     } else if (type === 'boss') {
-      node.bossId = rng.pick(stage.bossPool);
+      const pool = bossPool.filter((id) => id !== opts.avoidBossId);
+      node.bossId = rng.pick(pool.length ? pool : bossPool);
     } else if (type === 'treasure') {
       node.itemId = pickItem();
     }
