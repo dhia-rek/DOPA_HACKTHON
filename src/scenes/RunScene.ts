@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { COLORS, Dir, DIR_VECTORS, GAME_HEIGHT, GAME_WIDTH, GRID_COLS, GRID_ROWS, OPPOSITE, ROOM_COLS, ROOM_ROWS, TILE } from '../config';
 import { events } from '../core/events';
 import type { RunState } from '../core/run';
+import { KARMA } from '../core/story';
 import { EnemyDef, getEnemy } from '../data/enemies';
 import { getItem } from '../data/items';
 import { dialogueProvider } from '../dialogue/provider';
@@ -217,7 +218,7 @@ export class RunScene extends Phaser.Scene {
   /** The NPC walks away alive; counts as spared. */
   private spareNpc(npc: Enemy): void {
     this.room.npcs = this.room.npcs.filter((id) => id !== npc.def.id);
-    this.run.story.record({ kind: 'npc_spared', subject: npc.def.id, floor: this.run.floor, karmaDelta: 5, summary: `Spared the ${npc.def.name} on floor ${this.run.floor}` });
+    this.run.story.record({ kind: 'npc_spared', subject: npc.def.id, floor: this.run.floor, karmaDelta: KARMA.npcSpared, summary: `Spared the ${npc.def.name} on floor ${this.run.floor}` });
     events.emit('npc_spared', { npcId: npc.def.id, floor: this.run.floor });
     this.tweens.add({ targets: npc, alpha: 0, duration: 500, onComplete: () => npc.destroy() });
     npc.body.enable = false;
@@ -428,7 +429,7 @@ export class RunScene extends Phaser.Scene {
     const def: EnemyDef = npc.def;
     this.room.npcs = this.room.npcs.filter((id) => id !== def.id);
     this.burst(npc.x, npc.y, def.color, 10);
-    this.run.story.record({ kind: 'npc_killed', subject: def.id, floor: this.run.floor, karmaDelta: -15, summary: `Killed the innocent ${def.name} on floor ${this.run.floor}` });
+    this.run.story.record({ kind: 'npc_killed', subject: def.id, floor: this.run.floor, karmaDelta: KARMA.npcKilled, summary: `Killed the innocent ${def.name} on floor ${this.run.floor}` });
     this.run.story.addFlag('blood_on_hands');
     events.emit('npc_killed', { npcId: def.id, floor: this.run.floor });
     this.toast('Innocent blood', 'The gods have seen this.');

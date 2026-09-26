@@ -24,7 +24,7 @@ changes to it need review from all three.
 - [x] New NPCs with personas: `priestess`, `child`, `wounded_soldier` (`src/data/enemies.ts`, `innocent: true`), add to stage `npcPool`s
 - [ ] Boss personas + list of `flags` each boss reacts to (Minotaur, Hydra, next bosses)
 - [ ] Moral achievements: `saint`, `butcher`, `oathbreaker` (`src/data/achievements.ts`)
-- [ ] Tune karma values and the `takeBossMods()` curve in `src/core/story.ts`
+- [x] Tune karma values and the `takeBossMods()` curve in `src/core/story.ts`
 - [ ] Kratos hook: starts at karma −40, gods refuse his shrine offerings
 - [ ] Boss outro dialogue kind (`boss_outro`) content in the mock provider
 
