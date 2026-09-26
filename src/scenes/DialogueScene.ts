@@ -3,6 +3,7 @@ import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import { CHARS_PER_SEC, settings } from '../core/settings';
 import { blip } from '../core/sfx';
 import type { DialogueOption, DialogueScript } from '../dialogue/types';
+import { music } from '../core/music';
 import { voice, voiceSettings } from '../voice/provider';
 import type { VoiceProfile } from '../voice/types';
 
@@ -44,6 +45,7 @@ export class DialogueScene extends Phaser.Scene {
   create(data: DialogueSceneData): void {
     this.data_ = data;
     this.lineIndex = 0;
+    music.duck(true);
     this.selected = 0;
     this.phase = 'lines';
     this.optionTexts = [];
@@ -215,6 +217,7 @@ export class DialogueScene extends Phaser.Scene {
   private finish(option: DialogueOption | null): void {
     this.typer?.remove(false);
     voice.stop();
+    music.duck(false);
     const cb = this.data_.onDone;
     this.scene.stop();
     cb(option);

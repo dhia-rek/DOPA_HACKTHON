@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_WIDTH } from '../config';
 import { events } from '../core/events';
+import { music } from '../core/music';
 import { Rng } from '../core/rng';
 import { RunState } from '../core/run';
 import { save } from '../core/save';
@@ -42,6 +43,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   create(data?: { view?: View }): void {
+    music.play('menu', 'menu');
     achievements.start();
     this.view = data?.view ?? 'main';
     this.menuIndex = 0;

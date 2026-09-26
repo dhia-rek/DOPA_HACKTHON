@@ -4,14 +4,20 @@ export type Blip = 'move' | 'confirm' | 'advance' | 'deny';
 
 let audioCtx: AudioContext | undefined;
 
+/** Shared WebAudio context (blips + music), created lazily. */
+export function audioContext(): AudioContext | undefined {
+  if (typeof window === 'undefined') return undefined;
+  const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (Ctx) audioCtx ??= new Ctx();
+  return audioCtx;
+}
+
 /** Tiny synthesised UI blip; silent when SFX are disabled or audio is unavailable. */
 export function blip(kind: Blip): void {
   if (!settings.data.sfx) return;
   try {
-    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!Ctx) return;
-    audioCtx ??= new Ctx();
-    const ctx = audioCtx;
+    const ctx = audioContext();
+    if (!ctx) return;
     if (ctx.state === 'suspended') void ctx.resume();
     const [freq, dur, type]: [number, number, OscillatorType] =
       kind === 'move' ? [660, 0.04, 'square']

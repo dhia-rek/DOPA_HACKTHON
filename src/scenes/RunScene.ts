@@ -3,6 +3,7 @@ import { COLORS, Dir, DIR_VECTORS, GAME_HEIGHT, GAME_WIDTH, GRID_COLS, GRID_ROWS
 import { DEBUG, DEBUG_HELP, debugState } from '../core/debug';
 import { events } from '../core/events';
 import type { RunState } from '../core/run';
+import { music, type MusicKind } from '../core/music';
 import { settings } from '../core/settings';
 import { KARMA } from '../core/story';
 import { earnedWeaknesses } from '../core/profile';
@@ -148,6 +149,7 @@ export class RunScene extends Phaser.Scene {
     this.refreshDoors();
 
     events.emit('room_entered', { roomType: this.room.type, floor: this.run.floor });
+    this.playRoomMusic();
     events.emit('hud_update', {});
     events.on('quest_settled', this.onQuestSettled, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => events.off('quest_settled', this.onQuestSettled, this));
@@ -815,12 +817,24 @@ export class RunScene extends Phaser.Scene {
     this.toast(item.name, item.description);
   }
 
+  private playRoomMusic(): void {
+    const type = this.room.type;
+    const kind: MusicKind =
+      type === 'shrine' ? 'shrine'
+        : type === 'treasure' ? 'treasure'
+          : this.room.cleared ? 'explore'
+            : type === 'boss' ? 'boss'
+              : 'combat';
+    music.play(this.run.stage.id, kind);
+  }
+
   private clearRoom(): void {
     this.room.cleared = true;
     this.room.enemies = [];
     this.enemyShots.killAll();
     this.refreshDoors();
     events.emit('room_cleared', { roomType: this.room.type, floor: this.run.floor });
+    this.playRoomMusic();
     if (this.room.type === 'normal' && trials.wantsCoins) this.dropPickup(GAME_WIDTH / 2 + TILE, GAME_HEIGHT / 2, 'coin');
 
     if (this.room.type === 'boss') {
