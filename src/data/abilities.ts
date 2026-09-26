@@ -32,7 +32,7 @@ export interface AbilityDef {
 
 export const ABILITIES: AbilityDef[] = [
   { id: 'charge', name: 'Charge', cost: 1, tell: 'Stops and stamps for 0.6 s.', counter: 'Sidestep; boss staggers on the wall.', counters: 'cautious' },
-  { id: 'ground_slam', name: 'Ground Slam', cost: 1, tell: 'Raises arms.', counter: 'Keep distance; shockwave ring has gaps.', counters: 'melee-range play' },
+  { id: 'ground_slam', name: 'Ground Slam', cost: 1, tell: 'Raises arms for 0.7 s.', counter: 'Get three tiles away; the shockwave stops there.', counters: 'melee-range play' },
   { id: 'summon_minions', name: 'Summon', cost: 2, tell: 'Roars, minions rise from pits.', counter: 'Piercing / swarm builds clear them fast.', rewards: 'homing_swarm, piercing' },
   { id: 'orbit_shields', name: 'Orbiting Shields', cost: 2, tell: 'Shields visibly circle the boss.', counter: 'Shoot between shields or wait for the open phase.', counters: 'homing_swarm' },
   { id: 'poison_trail', name: 'Poison Trail', cost: 1, tell: 'Green trail behind the boss.', counter: 'Stay off the trail; kite in circles.', counters: 'kiter' },

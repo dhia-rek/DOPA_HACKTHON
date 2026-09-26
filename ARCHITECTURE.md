@@ -137,8 +137,12 @@ free of the Director's budget; the Director adds 1–3 extras keyed off the hero
 (`profile.character`, build, style) and `boss_directed` runs kit + extras.
 Behaviours declare body language with `enemy.pose('windup' | 'charge' |
 'stagger' | 'blink')`; `Enemy` eases the sprite (breathing, lean, stretch) and
-bosses accelerate/brake instead of snapping. Boss rooms use the `boss`
-templates (need a `B`).
+bosses accelerate/brake instead of snapping. At arm's reach every boss swipes
+(`systems/bossStrikes.ts`: wedge + `ctx.hurtPlayer`), `ground_slam` is a real
+shockwave, and a judged boss shows its verdict in the fight
+(`systems/bossJudgement.ts`: stance colour by alignment → aura, hp bar, banner
+with grudge, own kit and the extras taken against this hero). Boss rooms use
+the `boss` templates (need a `B`).
 
 ### Add a stage
 ```ts

@@ -45,6 +45,7 @@ Phase 3 (the LLM Director that reshapes each floor) is designed in `docs/DIRECTO
 - [x] Director: mutators `palette_shift`, `haunted`, `flooded`, `arena`; `enemyWeights` in spawning
 - [x] Director: shrine offerings → `story.favour(god)`; quest tracker (`systems/quests.ts`) + HUD line (orb pickups still open)
 - [x] Bosses bigger than the hero (radius 46–58 vs 20), fluid: eased acceleration, `Enemy.pose()` body language (breathe, lean, stretch, wobble, flicker)
+- [x] Boss judgement visible in the fight (`systems/bossJudgement.ts`: aura, hp bar, banner with grudge/kit/extras) + melee swipe and slam shockwave (`systems/bossStrikes.ts`)
 
 ### Stream C — Parthiv
 - [x] `server/`: HTTP service `POST DialogueRequest -> DialogueScript` (any stack; key stays server-side)

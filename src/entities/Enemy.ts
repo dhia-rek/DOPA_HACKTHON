@@ -37,6 +37,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private lastDelta = 16;
   /** "!" bubble shown above innocent NPCs when the player can talk to them. */
   private bubble: Phaser.GameObjects.Image | null = null;
+  /** Verdict glow behind a judged boss (colour = how it regards the hero). */
+  private aura: Phaser.GameObjects.Arc | null = null;
 
   /** `group` must be passed here: adding to an arcade group afterwards would reset body settings. */
   constructor(scene: Phaser.Scene, group: Phaser.Physics.Arcade.Group, x: number, y: number, def: EnemyDef, difficulty: number) {
@@ -61,6 +63,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       this.bubble = scene.add.image(x, y, 'bubble_talk').setDepth(15).setVisible(false);
       this.once(Phaser.GameObjects.Events.DESTROY, () => this.bubble?.destroy());
     }
+  }
+
+  setAura(color: number): void {
+    this.aura?.destroy();
+    this.aura = this.scene.add.circle(this.x, this.y, this.def.radius * 1.55, color, 0.22).setDepth(this.depth - 1).setBlendMode(Phaser.BlendModes.ADD);
+    this.once(Phaser.GameObjects.Events.DESTROY, () => this.aura?.destroy());
   }
 
   /** Toggle the talk bubble (innocents only); hidden automatically while panicking. */
@@ -117,6 +125,13 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.knock.scale(Math.pow(ENEMY.knockbackDamping, delta / 16));
     if (this.knock.lengthSq() < 4) this.knock.set(0, 0);
     if (this.def.isBoss) this.animate();
+    if (this.aura) {
+      const t = this.scene.time.now;
+      const enraged = this.hpRatio < 0.3;
+      this.aura.setPosition(this.x, this.y);
+      this.aura.setScale(this.baseScale * (1 + Math.sin(t / (enraged ? 120 : 300)) * 0.08));
+      this.aura.setAlpha(enraged ? 0.3 + Math.abs(Math.sin(t / 120)) * 0.15 : 0.22);
+    }
     if (this.bubble) {
       this.bubble.setPosition(this.x, this.y - this.def.radius - 22 + Math.sin(this.scene.time.now / 160) * 4);
       if (this.isPanicking) this.bubble.setVisible(false);
