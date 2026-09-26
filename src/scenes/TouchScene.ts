@@ -4,6 +4,8 @@ import { input, Stick } from '../core/input';
 
 const BASE_R = 58;
 const KNOB_R = 26;
+/** How far the knob centre may travel from the base: the knob disk always stays inside the ring. */
+const TRAVEL = BASE_R - KNOB_R;
 const DEAD_ZONE = 0.18;
 /** HUD bands the stick ring must not cover (hearts/stats on top, stage/quest/karma below). */
 const HUD_TOP = 64;
@@ -102,22 +104,22 @@ export class TouchScene extends Phaser.Scene {
     let dx = p.x - v.ox;
     let dy = p.y - v.oy;
     let dist = Math.hypot(dx, dy);
-    if (dist > BASE_R) {
+    if (dist > TRAVEL) {
       // Drag the base along so a thumb that wanders keeps full control, but never onto the HUD bands.
-      const over = dist - BASE_R;
+      const over = dist - TRAVEL;
       v.ox = Phaser.Math.Clamp(v.ox + (dx / dist) * over, BASE_R, GAME_WIDTH - BASE_R);
       v.oy = Phaser.Math.Clamp(v.oy + (dy / dist) * over, HUD_TOP + BASE_R, HUD_BOTTOM - BASE_R);
       v.base.setPosition(v.ox, v.oy);
       dx = p.x - v.ox;
       dy = p.y - v.oy;
       dist = Math.hypot(dx, dy);
-      if (dist > BASE_R) {
-        dx *= BASE_R / dist;
-        dy *= BASE_R / dist;
+      if (dist > TRAVEL) {
+        dx *= TRAVEL / dist;
+        dy *= TRAVEL / dist;
       }
     }
     v.knob.setPosition(v.ox + dx, v.oy + dy);
-    const mag = Math.min(1, Math.hypot(dx, dy) / BASE_R);
+    const mag = Math.min(1, Math.hypot(dx, dy) / TRAVEL);
     if (mag < DEAD_ZONE) {
       input.setStick(stick, 0, 0);
       return;
