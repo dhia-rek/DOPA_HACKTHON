@@ -26,6 +26,7 @@ export class HudScene extends Phaser.Scene {
   private stageText!: Phaser.GameObjects.Text;
   private questText!: Phaser.GameObjects.Text;
   private trialText!: Phaser.GameObjects.Text;
+  private omenBanner: Phaser.GameObjects.Text[] = [];
   private items!: Phaser.GameObjects.Container;
   private minimap!: Phaser.GameObjects.Graphics;
   private karmaLabel!: Phaser.GameObjects.Text;
@@ -65,6 +66,7 @@ export class HudScene extends Phaser.Scene {
     events.on('achievement_unlocked', this.onAchievement, this);
     events.on('trial_changed', this.refreshTrial, this);
     events.on('trial_resolved', this.onTrialResolved, this);
+    events.on('omen_revealed', this.onOmen, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       events.off('hud_update', this.refresh, this);
       events.off('room_entered', this.refresh, this);
@@ -72,6 +74,7 @@ export class HudScene extends Phaser.Scene {
       events.off('achievement_unlocked', this.onAchievement, this);
       events.off('trial_changed', this.refreshTrial, this);
       events.off('trial_resolved', this.onTrialResolved, this);
+      events.off('omen_revealed', this.onOmen, this);
     });
     this.refresh();
     this.updateKarma(false);
@@ -163,6 +166,20 @@ export class HudScene extends Phaser.Scene {
   private refreshTrial(): void {
     trials.tick();
     this.trialText.setText(trials.label ? `⚖ ${trials.label}` : '');
+  }
+
+  private onOmen(p: GameEvents['omen_revealed']): void {
+    this.omenBanner.forEach((t) => t.destroy());
+    const title = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 90, p.name.toUpperCase(), { fontFamily: 'serif', fontSize: '34px', color: '#f0e6c8', stroke: '#000', strokeThickness: 5 })
+      .setOrigin(0.5)
+      .setDepth(900);
+    const line = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 50, p.line, { fontFamily: 'monospace', fontSize: '15px', color: '#e8d9b0', align: 'center', stroke: '#000', strokeThickness: 4, wordWrap: { width: 720 } })
+      .setOrigin(0.5, 0)
+      .setDepth(900);
+    this.omenBanner = [title, line];
+    this.tweens.add({ targets: this.omenBanner, alpha: 0, delay: 3800, duration: 700, onComplete: () => [title, line].forEach((t) => t.destroy()) });
   }
 
   private onTrialResolved(p: GameEvents['trial_resolved']): void {

@@ -4,6 +4,8 @@ import { STAGES, StageDef } from '../data/stages';
 import type { RunSnapshot } from '../data/achievements';
 import { FloorMap, generateFloor, RoomNode } from '../gen/floorGen';
 import { chapterFor, loreFor, resolveFront, ResolvedFront, warSnapshot } from '../systems/chronicle';
+import { OmenDirector } from '../omens/provider';
+import type { FloorOmen, OmenRequest } from '../omens/types';
 import { pickItemFromPool } from '../systems/loot';
 import { debugState } from './debug';
 import { events } from './events';
@@ -52,6 +54,9 @@ export class RunState {
   itemsPickedThisRun = 0;
   damageTakenThisRun = 0;
   damageTakenThisFloor = 0;
+  /** The current floor's omen (theme, banner, generation knobs). */
+  omen: FloorOmen | null = null;
+  readonly omens = new OmenDirector();
   killsThisRun = 0;
 
   constructor(seed: string, characterId: string) {
@@ -182,12 +187,14 @@ export class RunState {
     if (this.floorMap) return this.floorMap;
     const picked: string[] = this.items.map((i) => i.id);
     const front = (this.front = resolveFront(this.stage, this.story));
+    this.omen = this.omens.get(this.omenRequest(this.floor));
     this.floorMap = generateFloor(this.floorRng.fork(`floor-${this.floor}`), {
       stage: this.stage,
       loop: this.loop,
       bossPool: front.bossPool,
       enemyPool: front.enemyPool,
       npcPool: front.npcPool,
+      omen: this.omen,
       avoidBossId: this.story.deeds.filter((d) => d.kind === 'boss_killed' && d.floor === this.floor - 1).pop()?.subject,
       pickItem: () => {
         const id = pickItemFromPool(this.itemRng, 'treasure', picked);
@@ -199,6 +206,11 @@ export class RunState {
     this.room = this.floorMap.start;
     events.emit('floor_started', { floor: this.floor, stageId: this.stage.id });
     return this.floorMap;
+  }
+
+  omenRequest(floor: number): OmenRequest {
+    const stage = STAGES[(floor - 1) % STAGES.length];
+    return { story: { ...this.storySnapshot(), floor, stageName: stage.name }, seed: `${this.seed}:${floor}:omen`, floor, stageName: stage.name, enemyPool: stage.enemyPool };
   }
 
   nextFloor(): void {

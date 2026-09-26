@@ -34,6 +34,8 @@ export interface GameEvents {
   quest_settled: { templateId: string; outcome: 'done' | 'failed'; reward: string };
   /** The active trial started, progressed or ended (HUD refresh). */
   trial_changed: Record<string, never>;
+  /** A new floor's omen is shown (HUD banner). */
+  omen_revealed: { name: string; line: string; theme: string };
   trial_resolved: { success: boolean; title: string; giverName: string; summary: string };
   hud_update: Record<string, never>;
 }

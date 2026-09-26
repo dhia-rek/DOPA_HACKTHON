@@ -19,6 +19,8 @@ Each floor opens with an AI-written **trial**: a god or shade picks a challenge 
 
 Dialogue is **voiced**. `src/voice` chooses a voice and a mood for each line from the speaker and your deeds: a boss sounds furious if you killed innocents, and an NPC sounds terrified of a cruel hero. With `VITE_DIALOGUE_API` set, lines are spoken by Gemini TTS via the server's `POST /voice`. Otherwise the browser's speech synthesis reads them. Press `M` in a dialogue to mute.
 
+Each floor gets an AI **omen** that reshapes it around your deeds. Cruel runs get *The Weeping Streets*: a blood tint, more pits and enemies, fewer innocents, and a skull-shaped room. Heroic runs get hallowed halls with more shrines and innocents to save. The omen comes from `src/omens`, and the server's `POST /omen` prefetches the next floor's omen while you finish the current one. A drawn room is used only if it passes the walkability check. Otherwise an offline seeded mock is used.
+
 Add `?debug=1` for dev shortcuts: `G` god mode, `X` kill the room, `B` warp to the boss
 room, `N` next floor, `T` random item, `H` heal, `[` / `]` karma −25 / +25.
 

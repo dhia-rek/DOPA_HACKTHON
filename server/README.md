@@ -11,6 +11,7 @@ POST /            body: DialogueRequest  ->  200 DialogueScript
                                              503 GEMINI_API_KEY not set
 POST /director    body: DirectorRequest  ->  200 FloorDirective (same error codes)
 POST /trial       body: TrialRequest     ->  200 TrialOffer (same error codes)
+POST /omen        body: OmenRequest      ->  200 FloorOmen (same error codes)
 POST /voice       body: VoiceRequest     ->  200 audio/wav (Gemini TTS, GEMINI_TTS_MODEL)
 GET  /health      { ok, llm, model, cached }
 ```

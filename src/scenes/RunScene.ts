@@ -21,6 +21,7 @@ import { trials } from '../systems/trials';
 import { trialProvider } from '../trials/provider';
 import { describeObjective, TrialOffer } from '../trials/types';
 import { voiceFor } from '../voice/types';
+import { OMEN_TINTS, tintWith } from '../omens/types';
 import { BEHAVIOURS, threaten } from '../systems/behaviours';
 import { weaknessDamageMul } from '../systems/bossAbilities';
 import { director } from '../systems/director';
@@ -169,8 +170,15 @@ export class RunScene extends Phaser.Scene {
 
     if (this.room === map.start && trials.offeredFloor !== this.run.floor) {
       trials.offeredFloor = this.run.floor;
-      this.time.delayedCall(450, () => void this.offerTrial());
+      const omen = this.run.omen;
+      if (omen) this.time.delayedCall(100, () => events.emit('omen_revealed', { name: omen.name, line: omen.line, theme: omen.theme }));
+      this.time.delayedCall(omen ? 1600 : 450, () => void this.offerTrial());
     }
+  }
+
+  /** Stage palette colour shaded by the floor omen's theme. */
+  private tint(color: number): number {
+    return tintWith(color, OMEN_TINTS[this.run.omen?.theme ?? 'none']);
   }
 
   /** At the start of each floor a god or shade offers one AI-written trial (src/trials). */
@@ -495,14 +503,14 @@ export class RunScene extends Phaser.Scene {
           if (doorDir === 'down') door.setAngle(180);
           this.doorSprites[doorDir] = door;
         } else {
-          (this.walls.create(x, y, 'wall') as Phaser.Physics.Arcade.Image).setTint(this.run.palette.wall);
+          (this.walls.create(x, y, 'wall') as Phaser.Physics.Arcade.Image).setTint(this.tint(this.run.palette.wall));
         }
       }
     }
   }
 
   private buildInterior(): void {
-    const tint = this.run.palette.floor;
+    const tint = this.tint(this.run.palette.floor);
     for (let r = 0; r < ROOM_ROWS; r++) {
       for (let c = 0; c < ROOM_COLS; c++) {
         const { x, y } = this.tileCenter(c + 1, r + 1);
@@ -790,9 +798,11 @@ export class RunScene extends Phaser.Scene {
     this.enemyShots.killAll();
     this.refreshDoors();
     events.emit('room_cleared', { roomType: this.room.type, floor: this.run.floor });
+    if (this.room.type === 'normal' && trials.wantsCoins) this.dropPickup(GAME_WIDTH / 2 + TILE, GAME_HEIGHT / 2, 'coin');
 
     if (this.room.type === 'boss') {
       events.emit('floor_cleared', { floor: this.run.floor });
+      this.run.omens.prefetch(this.run.omenRequest(this.run.floor + 1));
       if (this.run.isVictoryFloor && !this.run.won) {
         this.run.won = true;
         events.emit('run_won', { seed: this.run.seed, characterId: this.run.character.id, timeMs: this.run.elapsedMs });
