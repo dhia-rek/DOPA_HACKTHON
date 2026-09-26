@@ -122,7 +122,7 @@ export class MenuScene extends Phaser.Scene {
     events.emit('run_started', { seed: run.seed, characterId: c.id });
     this.input.keyboard!.removeAllListeners();
     this.cameras.main.fadeOut(250, 0, 0, 0);
-    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.scene.start('run', {}));
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.scene.start('floor_intro'));
   }
 
   private render(): void {

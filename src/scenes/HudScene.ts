@@ -3,6 +3,7 @@ import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import { events, GameEvents } from '../core/events';
 import type { RunState } from '../core/run';
 import type { RoomNode } from '../gen/floorGen';
+import { questTracker } from '../systems/quests';
 
 const CELL = 14;
 const GAP = 3;
@@ -22,6 +23,7 @@ export class HudScene extends Phaser.Scene {
   private hearts!: Phaser.GameObjects.Group;
   private info!: Phaser.GameObjects.Text;
   private stageText!: Phaser.GameObjects.Text;
+  private questText!: Phaser.GameObjects.Text;
   private items!: Phaser.GameObjects.Container;
   private minimap!: Phaser.GameObjects.Graphics;
   private karmaLabel!: Phaser.GameObjects.Text;
@@ -41,6 +43,7 @@ export class HudScene extends Phaser.Scene {
     this.hearts = this.add.group();
     this.info = this.add.text(12, 42, '', { fontFamily: 'monospace', fontSize: '16px', color: COLORS.text });
     this.stageText = this.add.text(12, GAME_HEIGHT - 28, '', { fontFamily: 'monospace', fontSize: '14px', color: COLORS.textDim });
+    this.questText = this.add.text(GAME_WIDTH - 12, GAME_HEIGHT - 50, '', { fontFamily: 'monospace', fontSize: '13px', color: '#8fd0ff', backgroundColor: '#0b0a0fbb', padding: { x: 6, y: 3 } }).setOrigin(1, 0);
     this.items = this.add.container(12, 68);
     this.minimap = this.add.graphics();
     const meter = this.add.graphics();
@@ -105,7 +108,9 @@ export class HudScene extends Phaser.Scene {
 
     this.info.setText(`◈ ${run.coins}   dmg ${run.stats.damage.toFixed(1)}  spd ${Math.round(run.stats.speed)}  rof ${run.stats.fireRate.toFixed(1)}`);
     const loopTag = run.loop > 0 ? `  ·  loop ${run.loop + 1}` : '';
-    this.stageText.setText(`Floor ${run.floor} — ${run.stage.name}${loopTag}   ·   seed ${run.seed}`);
+    const title = run.directive ? `  ·  ${run.directive.floorTitle}` : '';
+    this.stageText.setText(`Floor ${run.floor} — ${run.stage.name}${loopTag}${title}   ·   seed ${run.seed}`);
+    this.questText.setText(questTracker.label() ?? '');
 
     this.items.removeAll(true);
     run.items.forEach((item, i) => {

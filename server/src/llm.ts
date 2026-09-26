@@ -1,6 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
 import { SYSTEM_PROMPT } from '../../src/dialogue/prompt';
 import type { DialogueRequest } from '../../src/dialogue/types';
+import { DIRECTOR_SYSTEM_PROMPT } from '../../src/director/prompt';
+import type { DirectorRequest } from '../../src/director/types';
 import { CONFIG } from './config';
 
 const client = CONFIG.geminiApiKey
@@ -14,15 +16,23 @@ export const llmConfigured = client !== null;
 
 /** Ask Gemini for a script. Returns the parsed JSON (unvalidated) or throws. */
 export async function generateRaw(req: DialogueRequest): Promise<unknown> {
+  return generateJson(SYSTEM_PROMPT, req, req.language ?? 'en', 0.9);
+}
+
+/** Ask the Director for a floor directive. Returns the parsed JSON (unvalidated) or throws. */
+export async function directRaw(req: DirectorRequest): Promise<unknown> {
+  return generateJson(DIRECTOR_SYSTEM_PROMPT, req, req.language ?? 'en', 0.8);
+}
+
+async function generateJson(system: string, payload: unknown, language: string, temperature: number): Promise<unknown> {
   if (!client) throw new Error('GEMINI_API_KEY is not set');
-  const language = req.language ?? 'en';
   const result = await client.models.generateContent({
     model: CONFIG.model,
-    contents: JSON.stringify(req),
+    contents: JSON.stringify(payload),
     config: {
-      systemInstruction: `${SYSTEM_PROMPT}\nWrite all text in language "${language}".`,
+      systemInstruction: `${system}\nWrite all text in language "${language}".`,
       responseMimeType: 'application/json',
-      temperature: 0.9,
+      temperature,
     },
   });
   const text = result.text;

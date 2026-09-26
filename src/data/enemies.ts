@@ -2,7 +2,7 @@
  * Enemy behaviours are implemented in systems/behaviours.ts.
  * New behaviours = a new function there; new enemies = a new entry here.
  */
-export type BehaviourName = 'chaser' | 'wanderer' | 'flee' | 'shooter' | 'charger' | 'orbiter' | 'boss_minotaur' | 'boss_hydra';
+export type BehaviourName = 'chaser' | 'wanderer' | 'flee' | 'shooter' | 'charger' | 'orbiter' | 'boss_minotaur' | 'boss_hydra' | 'boss_directed';
 
 export type EnemyShape = 'circle' | 'square' | 'triangle' | 'diamond';
 
@@ -153,6 +153,18 @@ export const ENEMIES: EnemyDef[] = [
       'Ancient and many-voiced, each head finishing or contradicting the last in hissing riddles; still aches where Heracles burned her severed necks. ' +
       'Respects patience and cunning, despises fire and rash heroes: she flatters a cruel player as kin and mocks a heroic one as another Heracles doomed to fail.',
     reactsTo: ['blood_on_hands', 'defied_hydra', 'spared_many', 'knows_boss_weakness', 'bargained_with_hydra', 'slew_minotaur'],
+  },
+  {
+    id: 'shade',
+    name: 'Shade',
+    hp: 3,
+    speed: 140,
+    damage: 1,
+    behaviour: 'chaser',
+    shape: 'circle',
+    color: 0x5a4a7a,
+    radius: 14,
+    dropChance: 0,
   },
   {
     id: 'villager',
