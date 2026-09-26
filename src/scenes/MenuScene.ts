@@ -82,7 +82,9 @@ export class MenuScene extends Phaser.Scene {
     const cy = 205;
     add(this.add.text(cx - 200, cy, '◀', { fontFamily: mono, fontSize: '40px', color: COLORS.textDim }).setOrigin(0.5));
     add(this.add.text(cx + 200, cy, '▶', { fontFamily: mono, fontSize: '40px', color: COLORS.textDim }).setOrigin(0.5));
-    const portrait = this.add.image(cx, cy, `player_${c.id}`).setScale(2);
+    const portrait = this.textures.exists(`portrait_${c.id}`)
+      ? this.add.image(cx, cy, `portrait_${c.id}`)
+      : this.add.image(cx, cy, `player_${c.id}`).setScale(2);
     if (locked) portrait.setTint(0x333333);
     add(portrait);
     add(this.add.text(cx, cy + 70, locked ? '???' : c.name, { fontFamily: mono, fontSize: '30px', color: locked ? '#666' : '#fff' }).setOrigin(0.5));

@@ -26,8 +26,8 @@ export class HudScene extends Phaser.Scene {
 
   create(): void {
     this.hearts = this.add.group();
-    this.info = this.add.text(12, 42, '', { fontFamily: 'monospace', fontSize: '16px', color: COLORS.text });
-    this.stageText = this.add.text(12, GAME_HEIGHT - 28, '', { fontFamily: 'monospace', fontSize: '14px', color: COLORS.textDim });
+    this.info = this.add.text(12, 42, '', { fontFamily: 'monospace', fontSize: '16px', color: COLORS.text, stroke: '#0b0a0f', strokeThickness: 4 });
+    this.stageText = this.add.text(12, GAME_HEIGHT - 28, '', { fontFamily: 'monospace', fontSize: '14px', color: COLORS.textDim, stroke: '#0b0a0f', strokeThickness: 4 });
     this.items = this.add.container(12, 68);
     this.minimap = this.add.graphics();
 

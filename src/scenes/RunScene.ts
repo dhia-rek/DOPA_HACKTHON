@@ -238,7 +238,7 @@ export class RunScene extends Phaser.Scene {
           door.setData('dir', doorDir);
           if (doorDir === 'left') door.setAngle(-90);
           if (doorDir === 'right') door.setAngle(90);
-          if (doorDir === 'down') door.setAngle(180);
+          if (doorDir === 'down') door.setFlipY(true);
           this.doorSprites[doorDir] = door;
         } else {
           (this.walls.create(x, y, 'wall') as Phaser.Physics.Arcade.Image).setTint(this.run.stage.palette.wall);

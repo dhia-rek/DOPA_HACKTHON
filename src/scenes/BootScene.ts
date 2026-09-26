@@ -4,15 +4,24 @@ import { save } from '../core/save';
 import { CHARACTERS } from '../data/characters';
 import { ENEMIES, EnemyDef } from '../data/enemies';
 import { ITEMS } from '../data/items';
+import { artKeys, artUrl } from '../art/manifest';
 
 /**
- * Generates placeholder textures at runtime so the game needs no art assets.
- * Replace any of these with real sprites later (this.load.image / spritesheet)
- * — the rest of the code only refers to texture keys.
+ * Loads the real art from public/art/<key>.png (see ART.md) and generates a
+ * flat-shape placeholder for every texture key that has no file yet, so new
+ * content is playable before it is drawn. The rest of the code only refers to
+ * texture keys.
  */
 export class BootScene extends Phaser.Scene {
   constructor() {
     super('boot');
+  }
+
+  preload(): void {
+    for (const key of artKeys()) this.load.image(key, artUrl(key));
+    this.load.on(Phaser.Loader.Events.FILE_LOAD_ERROR, (file: Phaser.Loader.File) => {
+      if (import.meta.env.DEV) console.info(`[art] no ${file.key}.png, using placeholder`);
+    });
   }
 
   create(): void {
@@ -37,11 +46,17 @@ export class BootScene extends Phaser.Scene {
     this.scene.start('menu');
   }
 
+  /** True when no real art was loaded for this key and a placeholder is needed. */
+  private missing(key: string): boolean {
+    return !this.textures.exists(key);
+  }
+
   private gfx(): Phaser.GameObjects.Graphics {
     return this.make.graphics({ x: 0, y: 0 }, false);
   }
 
   private makeFloor(): void {
+    if (!this.missing('floor')) return;
     const g = this.gfx();
     g.fillStyle(COLORS.floor).fillRect(0, 0, TILE, TILE);
     g.fillStyle(COLORS.floorAlt);
@@ -52,6 +67,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   private makeWall(): void {
+    if (!this.missing('wall')) return;
     const g = this.gfx();
     g.fillStyle(COLORS.wallEdge).fillRect(0, 0, TILE, TILE);
     g.fillStyle(COLORS.wall).fillRect(4, 4, TILE - 8, TILE - 8);
@@ -63,25 +79,30 @@ export class BootScene extends Phaser.Scene {
   }
 
   private makeDoors(): void {
-    const open = this.gfx();
-    open.fillStyle(COLORS.wallEdge).fillRect(0, 0, TILE, TILE);
-    open.fillStyle(COLORS.doorFrame).fillRect(8, 4, TILE - 16, TILE - 8);
-    open.fillStyle(COLORS.door).fillRect(14, 10, TILE - 28, TILE - 20);
-    open.fillStyle(COLORS.floor).fillRect(20, 24, TILE - 40, TILE - 24);
-    open.generateTexture('door_open', TILE, TILE);
-    open.destroy();
+    if (this.missing('door_open')) {
+      const open = this.gfx();
+      open.fillStyle(COLORS.wallEdge).fillRect(0, 0, TILE, TILE);
+      open.fillStyle(COLORS.doorFrame).fillRect(8, 4, TILE - 16, TILE - 8);
+      open.fillStyle(COLORS.door).fillRect(14, 10, TILE - 28, TILE - 20);
+      open.fillStyle(COLORS.floor).fillRect(20, 24, TILE - 40, TILE - 24);
+      open.generateTexture('door_open', TILE, TILE);
+      open.destroy();
+    }
 
-    const closed = this.gfx();
-    closed.fillStyle(COLORS.wallEdge).fillRect(0, 0, TILE, TILE);
-    closed.fillStyle(COLORS.doorFrame).fillRect(8, 4, TILE - 16, TILE - 8);
-    closed.fillStyle(COLORS.doorClosed).fillRect(14, 10, TILE - 28, TILE - 20);
-    closed.lineStyle(3, COLORS.doorFrame);
-    closed.lineBetween(14, TILE / 2, TILE - 14, TILE / 2);
-    closed.generateTexture('door_closed', TILE, TILE);
-    closed.destroy();
+    if (this.missing('door_closed')) {
+      const closed = this.gfx();
+      closed.fillStyle(COLORS.wallEdge).fillRect(0, 0, TILE, TILE);
+      closed.fillStyle(COLORS.doorFrame).fillRect(8, 4, TILE - 16, TILE - 8);
+      closed.fillStyle(COLORS.doorClosed).fillRect(14, 10, TILE - 28, TILE - 20);
+      closed.lineStyle(3, COLORS.doorFrame);
+      closed.lineBetween(14, TILE / 2, TILE - 14, TILE / 2);
+      closed.generateTexture('door_closed', TILE, TILE);
+      closed.destroy();
+    }
   }
 
   private makeRock(): void {
+    if (!this.missing('rock')) return;
     const g = this.gfx();
     g.fillStyle(COLORS.rockShade).fillCircle(TILE / 2, TILE / 2 + 4, TILE / 2 - 8);
     g.fillStyle(COLORS.rock).fillCircle(TILE / 2 - 3, TILE / 2 - 2, TILE / 2 - 12);
@@ -90,6 +111,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   private makePit(): void {
+    if (!this.missing('pit')) return;
     const g = this.gfx();
     g.fillStyle(COLORS.floor).fillRect(0, 0, TILE, TILE);
     g.fillStyle(0x0b0a0f).fillRect(6, 6, TILE - 12, TILE - 12);
@@ -127,29 +149,35 @@ export class BootScene extends Phaser.Scene {
   }
 
   private makeHearts(): void {
-    const full = this.gfx();
-    this.heartShape(full, COLORS.heart);
-    full.generateTexture('heart_full', 26, 24);
-    full.destroy();
-
-    const empty = this.gfx();
-    this.heartShape(empty, COLORS.heartEmpty);
-    empty.generateTexture('heart_empty', 26, 24);
-    empty.destroy();
-
-    const half = this.gfx();
-    this.heartShape(half, COLORS.heartEmpty);
-    this.heartShape(half, COLORS.heart, true);
-    half.generateTexture('heart_half', 26, 24);
-    half.destroy();
-
-    const pickup = this.gfx();
-    this.heartShape(pickup, COLORS.heart);
-    pickup.generateTexture('pickup_heart', 26, 24);
-    pickup.destroy();
+    if (this.missing('heart_full')) {
+      const full = this.gfx();
+      this.heartShape(full, COLORS.heart);
+      full.generateTexture('heart_full', 26, 24);
+      full.destroy();
+    }
+    if (this.missing('heart_empty')) {
+      const empty = this.gfx();
+      this.heartShape(empty, COLORS.heartEmpty);
+      empty.generateTexture('heart_empty', 26, 24);
+      empty.destroy();
+    }
+    if (this.missing('heart_half')) {
+      const half = this.gfx();
+      this.heartShape(half, COLORS.heartEmpty);
+      this.heartShape(half, COLORS.heart, true);
+      half.generateTexture('heart_half', 26, 24);
+      half.destroy();
+    }
+    if (this.missing('pickup_heart')) {
+      const pickup = this.gfx();
+      this.heartShape(pickup, COLORS.heart);
+      pickup.generateTexture('pickup_heart', 26, 24);
+      pickup.destroy();
+    }
   }
 
   private makeCoin(): void {
+    if (!this.missing('pickup_coin')) return;
     const g = this.gfx();
     g.fillStyle(0xa08020).fillCircle(11, 12, 9);
     g.fillStyle(COLORS.coin).fillCircle(10, 10, 9);
@@ -159,6 +187,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   private makePedestal(): void {
+    if (!this.missing('pedestal')) return;
     const g = this.gfx();
     g.fillStyle(0x5a5060).fillRect(12, 40, TILE - 24, 18);
     g.fillStyle(COLORS.pedestal).fillRect(16, 34, TILE - 32, 12);
@@ -168,6 +197,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   private makeTrapdoor(): void {
+    if (!this.missing('trapdoor')) return;
     const g = this.gfx();
     g.fillStyle(0x5a5060).fillRect(6, 6, TILE - 12, TILE - 12);
     g.fillStyle(COLORS.trapdoor).fillRect(12, 12, TILE - 24, TILE - 24);
@@ -176,6 +206,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   private makePlayer(key: string, color: number, shade: number): void {
+    if (!this.missing(key)) return;
     const size = PLAYER.radius * 2 + 8;
     const cx = size / 2;
     const g = this.gfx();
@@ -189,6 +220,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   private makeEnemy(def: EnemyDef): void {
+    if (!this.missing(`enemy_${def.id}`)) return;
     const r = def.radius;
     const size = r * 2 + 8;
     const c = size / 2;
@@ -229,6 +261,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   private makeItemIcon(key: string, color: number): void {
+    if (!this.missing(key)) return;
     const g = this.gfx();
     g.fillStyle(0x1a1620).fillRoundedRect(0, 0, 28, 28, 6);
     g.fillStyle(color).fillRoundedRect(4, 4, 20, 20, 4);
