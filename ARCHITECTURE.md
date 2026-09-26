@@ -128,17 +128,23 @@ Then add `'cyclops'` to a stage's `enemyPool` in `data/stages.ts`.
 
 ### Add a boss
 Same as an enemy with `isBoss: true` and its own `boss_*` behaviour; add it to a
-stage's `bossPool`. Boss rooms use the `boss` templates (need a `B`).
+stage's `bossPool` **or** to a faction's `FRONTS[stage][faction].bossPool` in
+`data/war.ts` so it only appears when that faction holds the floor. Give it a
+`lore` id (`data/lore.ts`) so kills move the war tide and dialogue knows its
+kin. Boss rooms use the `boss` templates (need a `B`).
 
 ### Add a stage
 ```ts
 // src/data/stages.ts
-{ id: 'styx', name: 'Banks of the Styx',
+{ id: 'styx', name: 'Banks of the Styx', holder: 'olympian',
   enemyPool: ['skeleton', 'harpy'], bossPool: ['hydra'],
   roomCount: [10, 13], enemiesPerRoom: [3, 6],
   palette: { floor: 0x6f8f9f, wall: 0x4f6f7f, accent: 0x9fdfff } }
 ```
-Stages play in array order, then loop with higher difficulty.
+Stages play in array order, then loop with higher difficulty. `holder` is who
+owns the stage when the war is even; add a `FRONTS[id]` entry in `data/war.ts`
+to give the Titans / Giants their own version (bosses, extra enemies, palette,
+chapter card).
 
 ### Add a character
 Add an entry to `data/characters.ts` (`stats`, `startingItems`, optional
@@ -164,7 +170,18 @@ Keep door approaches (middle of each edge) walkable.
 ### Add an innocent NPC
 Add an `EnemyDef` with `innocent: true`, `damage: 0`, `behaviour: 'flee'` and a
 `persona`, then list its id in a stage's `npcPool`. Touching it starts an `npc`
-dialogue; shooting it records `npc_killed` (karma −15). Nothing else to wire.
+dialogue; shooting it records `npc_killed` (karma −15) and creates a named
+`Shade` (add an epitaph line for the new id in `EPITAPHS`, `data/war.ts`).
+Nothing else to wire.
+
+### The war (factions, fronts, shades, verdict)
+`StoryState.tide` is a score per faction. `record()` moves it from the deed
+kind and the subject's lore faction (`tideDeltaFor`); dialogue moves it with
+`effects.favor`. `systems/chronicle.ts` turns it into a `ResolvedFront` when a
+floor is generated: pools, palette, a `reason` sentence and a chapter card.
+`RunState.storySnapshot(speakerId)` adds `war`, `shades` and `lore` for the
+prompt. `judge()` (`data/war.ts`) picks the game-over verdict. All content is
+data: `LORE`, `FRONTS`, `EPITAPHS`, `SHADE_NAMES`, verdict texts.
 
 ### Make a boss react to the story
 Give the boss a `persona`. The boss intro dialogue receives the `StorySnapshot`

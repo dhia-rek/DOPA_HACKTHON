@@ -1,4 +1,6 @@
 import type { BossMods, StorySnapshot } from '../core/story';
+import { WAR_FACTIONS } from '../data/lore';
+import type { Tide } from '../data/war';
 
 /**
  * THE contract between the game and whatever writes dialogue (LLM service or
@@ -38,11 +40,15 @@ export interface DialogueEffects {
   flags?: string[];
   /** Multipliers applied to the upcoming boss (0.5..2). */
   boss?: Partial<BossMods>;
+  /** Push the war: per faction -20..20 (e.g. swearing to Cronus: {"titan": 10, "olympian": -5}). */
+  favor?: Partial<Tide>;
   /** Heal/hurt the player in half-hearts (-4..4). */
   hp?: number;
   coins?: number;
   /** Item id granted (must exist in data/items.ts). */
   itemId?: string;
+  /** NPC dialogues only: how the player treated the NPC. Omitted means spared. */
+  npcOutcome?: 'spared' | 'wronged';
 }
 
 export interface DialogueOption {
@@ -85,13 +91,21 @@ export function validateScript(raw: unknown, req: DialogueRequest): DialogueScri
       if (typeof opt.text !== 'string') continue;
       const fx = (typeof opt.effects === 'object' && opt.effects !== null ? opt.effects : {}) as Record<string, unknown>;
       const boss = (typeof fx.boss === 'object' && fx.boss !== null ? fx.boss : {}) as Record<string, unknown>;
+      const favorRaw = (typeof fx.favor === 'object' && fx.favor !== null ? fx.favor : {}) as Record<string, unknown>;
       const num = (v: unknown, lo: number, hi: number): number | undefined => (typeof v === 'number' && isFinite(v) ? clamp(v, lo, hi) : undefined);
+      const favor: Partial<Tide> = {};
+      for (const f of WAR_FACTIONS) {
+        const v = num(favorRaw[f], -20, 20);
+        if (v !== undefined) favor[f] = v;
+      }
       const effects: DialogueEffects = {
         karma: num(fx.karma, -30, 30),
         hp: num(fx.hp, -4, 4),
         coins: num(fx.coins, -20, 20),
         flags: Array.isArray(fx.flags) ? fx.flags.filter((f): f is string => typeof f === 'string').slice(0, 4) : undefined,
         itemId: typeof fx.itemId === 'string' ? fx.itemId : undefined,
+        favor: Object.keys(favor).length ? favor : undefined,
+        npcOutcome: fx.npcOutcome === 'spared' || fx.npcOutcome === 'wronged' ? fx.npcOutcome : undefined,
         boss: {
           hpMul: num(boss.hpMul, 0.5, 2),
           damageMul: num(boss.damageMul, 0.5, 2),

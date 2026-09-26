@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import type { Tide } from '../data/war';
 
 /**
  * Every gameplay event the game emits. Items, achievements, HUD and audio all
@@ -25,6 +26,10 @@ export interface GameEvents {
   /** The player picked an option in a dialogue. */
   dialogue_choice: { dialogueId: string; kind: string; optionId: string; karmaDelta: number };
   story_changed: { karma: number };
+  /** The war moved (data/war.ts). */
+  tide_changed: { tide: Tide };
+  /** An innocent's death was collected as a named shade. */
+  shade_collected: { shadeId: string; name: string; count: number };
   /** The floor quest ended (tracked by systems/quests.ts). */
   quest_settled: { templateId: string; outcome: 'done' | 'failed'; reward: string };
   hud_update: Record<string, never>;

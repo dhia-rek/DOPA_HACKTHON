@@ -1,3 +1,5 @@
+import type { WarFaction } from '../data/lore';
+import { factionOf, Shade, Tide, tideDeltaFor, zeroTide } from '../data/war';
 import type { GodId } from '../data/gods';
 import { GOD_IDS } from '../data/gods';
 import { events } from './events';
@@ -22,6 +24,8 @@ export interface Deed {
   kind: DeedKind;
   /** Free-form id: npc id, boss id, dialogue option id… */
   subject: string;
+  /** Lore id of the subject (see data/lore.ts) so the war knows whose side lost. */
+  lore?: string;
   floor: number;
   karmaDelta: number;
   /** Short human sentence for the LLM prompt, e.g. "Killed the shepherd Lykos on floor 2". */
@@ -33,6 +37,15 @@ export interface BossMods {
   hpMul: number;
   damageMul: number;
   speedMul: number;
+}
+
+/** The state of the Second Titanomachy as the LLM sees it. */
+export interface WarSnapshot {
+  tide: Tide;
+  /** Faction holding the current floor and why. */
+  front: WarFaction;
+  frontLabel: string;
+  frontReason: string;
 }
 
 /**
@@ -74,6 +87,11 @@ export interface StorySnapshot {
   bossesKilled: string[];
   items: string[];
   recentDeeds: string[];
+  war: WarSnapshot;
+  /** The innocents killed this run, by name: "Lykos the shepherd was counting the goats…" */
+  shades: string[];
+  /** Sourced myth about the speaker, the hero and the link between them. */
+  lore: string[];
 }
 
 /**
@@ -138,6 +156,10 @@ export class StoryState {
   private currentFloor = 1;
   /** Accumulated boss modifiers from dialogue outcomes; consumed per boss fight. */
   bossMods: BossMods = { hpMul: 1, damageMul: 1, speedMul: 1 };
+  /** The war: which side is winning, -100..100 each. Deeds push it (data/war.ts). */
+  readonly tide: Tide = zeroTide();
+  /** Death collectibles: every innocent killed, named. */
+  readonly shades: Shade[] = [];
   /** Orbs collected / offerings made per god. Read by the Director. */
   readonly divineAttention: Record<GodId, number> = Object.fromEntries(GOD_IDS.map((g) => [g, 0])) as Record<GodId, number>;
   /** Open promises the Director must honour; consumed by `takeProphecies()`. */
@@ -153,6 +175,23 @@ export class StoryState {
     this.deeds.push(deed);
     this.currentFloor = deed.floor;
     if (deed.karmaDelta) this.adjustKarma(deed.karmaDelta);
+    this.pushTide(tideDeltaFor(deed, factionOf(deed.lore)));
+  }
+
+  pushTide(delta: Partial<Tide>): void {
+    let changed = false;
+    for (const f of Object.keys(delta) as WarFaction[]) {
+      const d = delta[f] ?? 0;
+      if (!d) continue;
+      this.tide[f] = Math.max(-100, Math.min(100, this.tide[f] + d));
+      changed = true;
+    }
+    if (changed) events.emit('tide_changed', { tide: { ...this.tide } });
+  }
+
+  addShade(shade: Shade): void {
+    this.shades.push(shade);
+    events.emit('shade_collected', { shadeId: shade.id, name: shade.name, count: this.shades.length });
   }
 
   adjustKarma(delta: number): void {
@@ -185,15 +224,17 @@ export class StoryState {
   }
 
   /**
-   * Boss mods for the next boss: dialogue mods × karmaBossFactor(karma), each clamped to
+   * Boss mods for the next boss: dialogue mods × karmaBossFactor(karma) × the war (a boss
+   * whose side is winning is bolder: up to +20% damage at tide 100), each clamped to
    * [KARMA.bossMulMin, KARMA.bossMulMax]. Dialogue mods reset afterwards; karma persists.
    */
-  takeBossMods(): BossMods {
+  takeBossMods(bossFaction: WarFaction | null = null): BossMods {
     const k = karmaBossFactor(this.karma);
+    const tideFactor = bossFaction ? 1 + Math.max(0, this.tide[bossFaction]) / 500 : 1;
     const mul = (a: number, b = 1): number => clamp(a * b, KARMA.bossMulMin, KARMA.bossMulMax);
     const out: BossMods = {
       hpMul: mul(this.bossMods.hpMul, k.hpMul),
-      damageMul: mul(this.bossMods.damageMul, k.damageMul),
+      damageMul: mul(this.bossMods.damageMul, (k.damageMul ?? 1) * tideFactor),
       speedMul: mul(this.bossMods.speedMul, k.speedMul),
     };
     this.bossMods = { hpMul: 1, damageMul: 1, speedMul: 1 };
@@ -243,9 +284,10 @@ export class StoryState {
     return this.deeds.filter((d) => d.kind === kind).length;
   }
 
-  snapshot(base: Pick<StorySnapshot, 'characterId' | 'characterName' | 'floor' | 'stageName' | 'items'>): StorySnapshot {
+  snapshot(base: Pick<StorySnapshot, 'characterId' | 'characterName' | 'floor' | 'stageName' | 'items' | 'war' | 'lore'>): StorySnapshot {
     return {
       ...base,
+      shades: this.shades.map((s) => `${s.epitaph} (floor ${s.floor}, ${s.stageName})`),
       karma: this.karma,
       alignment: this.alignment,
       flags: [...this.flags],
