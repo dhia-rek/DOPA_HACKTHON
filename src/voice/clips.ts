@@ -6,6 +6,7 @@ const RECORDED = new Set([
   'minotaur', 'hydra',
   'villager', 'priestess', 'child', 'wounded_soldier',
   'altar',
+  'trial_hermes', 'trial_ares', 'trial_artemis', 'trial_athena', 'trial_charon', 'trial_nemesis',
 ]);
 
 let current: HTMLAudioElement | null = null;
