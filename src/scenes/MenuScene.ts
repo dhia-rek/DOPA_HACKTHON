@@ -9,6 +9,7 @@ import { settings } from '../core/settings';
 import { blip } from '../core/sfx';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { CHARACTERS, CharacterDef } from '../data/characters';
+import { playRecordedVoice } from '../voice/clips';
 import { getItem } from '../data/items';
 import { achievements } from '../systems/achievements';
 import { drawTitle, hintText, mono } from './ui';
@@ -121,6 +122,7 @@ export class MenuScene extends Phaser.Scene {
       return;
     }
     blip('confirm');
+    playRecordedVoice(c.id);
     const run = new RunState(this.seed, c.id);
     this.registry.set('run', run);
     if (import.meta.env.DEV) (window as unknown as { nekyia: unknown }).nekyia = { run, game: this.game };
