@@ -2,7 +2,9 @@ import Phaser from 'phaser';
 import { COLORS, Dir, DIR_VECTORS, GAME_HEIGHT, GAME_WIDTH, GRID_COLS, GRID_ROWS, OPPOSITE, ROOM_COLS, ROOM_ROWS, TILE } from '../config';
 import { DEBUG, DEBUG_HELP, debugState } from '../core/debug';
 import { events } from '../core/events';
+import { TOUCH } from '../core/input';
 import type { RunState } from '../core/run';
+import { music, type MusicKind } from '../core/music';
 import { settings } from '../core/settings';
 import { KARMA } from '../core/story';
 import { earnedWeaknesses } from '../core/profile';
@@ -148,6 +150,7 @@ export class RunScene extends Phaser.Scene {
     this.refreshDoors();
 
     events.emit('room_entered', { roomType: this.room.type, floor: this.run.floor });
+    this.playRoomMusic();
     events.emit('hud_update', {});
     events.on('quest_settled', this.onQuestSettled, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => events.off('quest_settled', this.onQuestSettled, this));
@@ -157,6 +160,10 @@ export class RunScene extends Phaser.Scene {
 
     if (!this.scene.isActive('hud')) this.scene.launch('hud');
     this.scene.bringToTop('hud');
+    if (TOUCH) {
+      if (!this.scene.isActive('touch')) this.scene.launch('touch');
+      this.scene.bringToTop('touch');
+    }
 
     const chapter = this.run.takeChapter();
     if (chapter) this.toast(chapter.title, chapter.body, 4200);
@@ -815,12 +822,24 @@ export class RunScene extends Phaser.Scene {
     this.toast(item.name, item.description);
   }
 
+  private playRoomMusic(): void {
+    const type = this.room.type;
+    const kind: MusicKind =
+      type === 'shrine' ? 'shrine'
+        : type === 'treasure' ? 'treasure'
+          : this.room.cleared ? 'explore'
+            : type === 'boss' ? 'boss'
+              : 'combat';
+    music.play(this.run.stage.id, kind);
+  }
+
   private clearRoom(): void {
     this.room.cleared = true;
     this.room.enemies = [];
     this.enemyShots.killAll();
     this.refreshDoors();
     events.emit('room_cleared', { roomType: this.room.type, floor: this.run.floor });
+    this.playRoomMusic();
     if (this.room.type === 'normal' && trials.wantsCoins) this.dropPickup(GAME_WIDTH / 2 + TILE, GAME_HEIGHT / 2, 'coin');
 
     if (this.room.type === 'boss') {
@@ -872,6 +891,7 @@ export class RunScene extends Phaser.Scene {
     this.cameras.main.fadeOut(300, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.scene.stop('hud');
+      this.scene.stop('touch');
       this.scene.start('floor_intro');
     });
   }
@@ -886,6 +906,7 @@ export class RunScene extends Phaser.Scene {
     this.tweens.add({ targets: this.player, angle: 90, alpha: 0.3, duration: 600 });
     this.time.delayedCall(900, () => {
       this.scene.stop('hud');
+      this.scene.stop('touch');
       this.scene.start('gameover');
     });
   }

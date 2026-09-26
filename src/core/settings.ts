@@ -9,6 +9,8 @@ export interface Settings {
   screenShake: boolean;
   /** Menu / dialogue blips. */
   sfx: boolean;
+  /** Procedural room music. */
+  music: boolean;
   /** Dialogue typewriter speed. */
   textSpeed: TextSpeed;
 }
@@ -17,7 +19,7 @@ export interface Settings {
 export const CHARS_PER_SEC: Record<TextSpeed, number> = { slow: 25, normal: 40, fast: 90 };
 
 function defaults(): Settings {
-  return { screenShake: true, sfx: true, textSpeed: 'normal' };
+  return { screenShake: true, sfx: true, music: true, textSpeed: 'normal' };
 }
 
 class SettingsStore {

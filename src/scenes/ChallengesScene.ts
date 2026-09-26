@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_WIDTH } from '../config';
+import { TOUCH } from '../core/input';
 import { save } from '../core/save';
 import { blip } from '../core/sfx';
 import { ACHIEVEMENTS, KRATOS_STEPS } from '../data/achievements';
@@ -57,7 +58,7 @@ export class ChallengesScene extends Phaser.Scene {
     };
     backButton(this, back);
     this.input.keyboard!.on('keydown-ENTER', back);
-    hintText(this, ['■ EARNED    □ LOCKED', 'ESC / ENTER  BACK']);
+    hintText(this, TOUCH ? ['■ EARNED    □ LOCKED'] : ['■ EARNED    □ LOCKED', 'ESC / ENTER  BACK']);
     this.cameras.main.fadeIn(200, 0, 0, 0);
   }
 }
