@@ -25,7 +25,7 @@ class AchievementSystem {
   private handle<K extends GameEventName>(name: K, payload: GameEvents[K]): void {
     this.bumpCounters(name, payload);
     if (!this.run) return;
-    const ctx = { save: save.data, run: this.run.snapshot() };
+    const ctx = { save: save.data, run: this.run.snapshot(), story: this.run.storySnapshot() };
 
     for (const a of ACHIEVEMENTS) {
       if (a.on !== name || save.hasAchievement(a.id)) continue;
@@ -46,6 +46,12 @@ class AchievementSystem {
         break;
       case 'item_picked':
         save.bump('items');
+        break;
+      case 'npc_killed':
+        save.bump('npc_kills');
+        break;
+      case 'npc_spared':
+        save.bump('npc_spares');
         break;
       case 'run_lost': {
         const p = payload as GameEvents['run_lost'];

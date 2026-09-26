@@ -92,7 +92,7 @@ export class MockDialogueProvider implements DialogueProvider {
                 id: 'honour',
                 text: rng.pick(['"Let us fight with honour, no tricks."', '"You were wronged. I fight you with respect."']),
                 reply: 'Honour… a word I had forgotten. Very well.',
-                effects: { karma: 10, boss: { speedMul: 0.85 } },
+                effects: { karma: 10, boss: { speedMul: 0.85 }, flags: ['swore_oath_to_' + req.speakerId] },
               },
               {
                 id: 'bargain',
