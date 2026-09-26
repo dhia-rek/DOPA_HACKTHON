@@ -10,6 +10,9 @@ POST /            body: DialogueRequest  ->  200 DialogueScript
                                              429 over RATE_LIMIT_PER_MIN LLM calls for this IP
                                              503 GEMINI_API_KEY not set
 POST /director    body: DirectorRequest  ->  200 FloorDirective (same error codes)
+POST /trial       body: TrialRequest     ->  200 TrialOffer (same error codes)
+POST /omen        body: OmenRequest      ->  200 FloorOmen (same error codes)
+POST /voice       body: VoiceRequest     ->  200 audio/wav (Gemini TTS, GEMINI_TTS_MODEL)
 GET  /health      { ok, llm, model, cached }
 ```
 
