@@ -10,6 +10,9 @@ POST /            body: DialogueRequest  ->  200 DialogueScript
                                              429 over RATE_LIMIT_PER_MIN LLM calls for this IP
                                              503 GEMINI_API_KEY not set
 POST /director    body: DirectorRequest  ->  200 FloorDirective (same error codes)
+POST /trial       body: TrialRequest     ->  200 TrialOffer (same error codes)
+POST /omen        body: OmenRequest      ->  200 FloorOmen (same error codes)
+POST /voice       body: VoiceRequest     ->  200 audio/wav (Gradium TTS if GRADIUM_API_KEY, else Gemini TTS)
 GET  /health      { ok, llm, model, cached }
 ```
 
@@ -35,6 +38,13 @@ npm install
 cp .env.example .env        # then paste your GEMINI_API_KEY (https://aistudio.google.com/apikey)
 npm run dev                 # http://localhost:8787
 ```
+
+Spoken dialogue (bosses, NPCs, shrines) goes through `POST /voice`. Put a
+`GRADIUM_API_KEY` (https://studio.gradium.ai) in `server/.env` to use Gradium
+TTS; otherwise Gemini TTS is used, and with neither the game falls back to the
+browser's speechSynthesis. `src/voice/types.ts` picks the voice + mood per
+speaker; `server/src/gradium.ts` maps each voice to a Gradium voice id
+(override with `GRADIUM_VOICES=Fenrir=<id>,...`); bosses use the team's custom voices by speaker id (`GRADIUM_SPEAKER_VOICES=minotaur=<id>,...`) and each mood to speed/temperature.
 
 Point the game at it (repo root):
 
