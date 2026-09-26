@@ -29,7 +29,7 @@ export class GameOverScene extends Phaser.Scene {
         243,
         [
           `${run.character.name} ${run.won ? 'survived' : 'fell'} on floor ${run.floor} · ${run.stage.name}`,
-          `${run.killsThisRun} kills  ·  ${run.items.length} items  ·  ${mins}m ${secs.toString().padStart(2, '0')}s`,
+          `${run.killsThisRun} ${run.killsThisRun === 1 ? 'kill' : 'kills'}  ·  ${run.items.length} ${run.items.length === 1 ? 'item' : 'items'}  ·  ${mins}m ${secs.toString().padStart(2, '0')}s`,
           `seed ${run.seed}`,
         ].join('\n'),
         { fontFamily: mono, fontSize: '17px', color: COLORS.uiIvory, align: 'center', lineSpacing: 12 },
