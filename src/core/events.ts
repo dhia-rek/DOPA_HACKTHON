@@ -30,6 +30,8 @@ export interface GameEvents {
   tide_changed: { tide: Tide };
   /** An innocent's death was collected as a named shade. */
   shade_collected: { shadeId: string; name: string; count: number };
+  /** The floor quest ended (tracked by systems/quests.ts). */
+  quest_settled: { templateId: string; outcome: 'done' | 'failed'; reward: string };
   hud_update: Record<string, never>;
 }
 

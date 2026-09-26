@@ -51,7 +51,7 @@ arrow came."* — and the run remembers:
 
 * the shade is listed in every `StorySnapshot` (`shades: string[]`), so boss
   intros can say the name;
-* a `shade` NPC may appear on later floors and speak as the last one killed;
+* a `restless_shade` NPC may appear on later floors and speak as the last one killed;
 * the game-over screen reads the epitaphs out under the verdict;
 * the mock provider and the `SYSTEM_PROMPT` are both told to name them and
   never invent other victims.

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { ENEMY, PROJECTILE } from '../config';
 import type { BossMods } from '../core/story';
 import type { EnemyDef } from '../data/enemies';
+import type { BossBlueprint } from '../director/types';
 
 export class Enemy extends Phaser.Physics.Arcade.Sprite {
   declare body: Phaser.Physics.Arcade.Body;
@@ -12,6 +13,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   contactDamage: number;
   /** Free-form memory for the behaviour function driving this enemy. */
   memory: Record<string, number> = {};
+  /** Director-composed boss: abilities, phases, weakness. Drives `boss_directed`. */
+  blueprint: BossBlueprint | null = null;
+  /** While in the future, shots are deflected (orbit_shields). */
+  shieldedUntil = 0;
+  /** Damage multiplier while staggered / exposed by an earned weakness. */
+  vulnerability = 1;
   private spawnedAt: number;
   private flashUntil = 0;
   private poisonUntil = 0;
@@ -87,7 +94,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       if (this.isPanicking) this.bubble.setVisible(false);
     }
 
-    if (this.scene.time.now < this.poisonUntil) {
+    if (this.isShielded) {
+      this.setTint(0x80c0ff);
+    } else if (this.scene.time.now < this.poisonUntil) {
       this.poisonTick += delta;
       if (this.poisonTick >= 500) {
         this.poisonTick = 0;
@@ -101,9 +110,17 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  get isShielded(): boolean {
+    return this.scene.time.now < this.shieldedUntil;
+  }
+
   takeHit(damage: number, fromX: number, fromY: number, knockback = 1, poison = false): void {
     if (this.isSpawning) return;
-    this.hp -= damage;
+    if (this.isShielded) {
+      this.flashUntil = this.scene.time.now + ENEMY.hitFlashMs;
+      return;
+    }
+    this.hp -= damage * this.vulnerability;
     if (this.def.innocent) this.memory.panicUntil = this.scene.time.now + 3000;
     this.flashUntil = this.scene.time.now + ENEMY.hitFlashMs;
     if (poison) this.poisonUntil = this.scene.time.now + PROJECTILE.poisonMs;

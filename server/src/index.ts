@@ -1,9 +1,11 @@
+import { createHash } from 'node:crypto';
 import cors from 'cors';
 import express from 'express';
 import { type DialogueRequest, validateScript } from '../../src/dialogue/types';
 import { cacheKey, ScriptCache } from './cache';
 import { CONFIG } from './config';
-import { generateRaw, llmConfigured } from './llm';
+import { directRaw, generateRaw, llmConfigured } from './llm';
+import { type DirectorRequest, type FloorDirective, validateDirective } from '../../src/director/types';
 
 const KINDS = new Set(['boss_intro', 'boss_outro', 'npc', 'shrine']);
 
@@ -22,6 +24,18 @@ function parseRequest(body: unknown): DialogueRequest | null {
 }
 
 const cache = new ScriptCache(CONFIG.cacheSize);
+const directorCache = new ScriptCache<FloorDirective>(CONFIG.cacheSize);
+
+/** Shape check on a DirectorRequest body; `validateDirective` does the real work on the model output. */
+function parseDirectorRequest(body: unknown): DirectorRequest | null {
+  if (typeof body !== 'object' || body === null) return null;
+  const b = body as Record<string, unknown>;
+  if (typeof b.seed !== 'string' || !b.seed || typeof b.stageId !== 'string' || typeof b.floor !== 'number') return null;
+  if (typeof b.profile !== 'object' || b.profile === null || Array.isArray(b.profile)) return null;
+  if (JSON.stringify(b.profile).length > 24000) return null;
+  if (b.language !== undefined && typeof b.language !== 'string') return null;
+  return b as unknown as DirectorRequest;
+}
 
 /** Fixed one-minute window per IP; only LLM calls count, cache hits are free. */
 const llmCalls = new Map<string, { windowStart: number; count: number }>();
@@ -84,6 +98,45 @@ app.post('/', async (req, res) => {
   }
 });
 
+/** The Director: PlayerProfile -> FloorDirective. Same key, cache and rate limit as dialogue. */
+app.post('/director', async (req, res) => {
+  const request = parseDirectorRequest(req.body);
+  if (!request) {
+    res.status(400).json({ error: 'body must be a DirectorRequest' });
+    return;
+  }
+  if (!llmConfigured) {
+    res.status(503).json({ error: 'LLM not configured (GEMINI_API_KEY missing)' });
+    return;
+  }
+  const key = `director:${request.seed}:${request.language ?? 'en'}:${createHash('sha1').update(JSON.stringify(request.profile)).digest('hex')}`;
+  const cached = directorCache.get(key);
+  if (cached) {
+    res.setHeader('x-cache', 'hit');
+    res.json(cached);
+    return;
+  }
+  if (!allowLlmCall(req.ip ?? 'unknown')) {
+    res.status(429).json({ error: 'too many director requests, slow down' });
+    return;
+  }
+  try {
+    const raw = await directRaw(request);
+    const directive = validateDirective(raw, request);
+    if (!directive) {
+      console.error('[director] invalid directive from model:', JSON.stringify(raw).slice(0, 400));
+      res.status(502).json({ error: 'LLM returned an invalid directive' });
+      return;
+    }
+    directorCache.set(key, directive);
+    res.setHeader('x-cache', 'miss');
+    res.json(directive);
+  } catch (err) {
+    console.error('[director] floor', request.floor, err instanceof Error ? err.message : err);
+    res.status(502).json({ error: 'LLM request failed' });
+  }
+});
+
 app.listen(CONFIG.port, () => {
-  console.log(`nekyia dialogue server on http://localhost:${CONFIG.port} (model ${CONFIG.model}, llm ${llmConfigured ? 'ready' : 'NOT configured'})`);
+  console.log(`nekyia dialogue+director server on http://localhost:${CONFIG.port} (model ${CONFIG.model}, llm ${llmConfigured ? 'ready' : 'NOT configured'})`);
 });

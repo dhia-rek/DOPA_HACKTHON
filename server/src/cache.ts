@@ -6,12 +6,12 @@ export const cacheKey = (req: DialogueRequest): string =>
   `${req.seed}:${req.kind}:${req.speakerId}:${req.language ?? 'en'}:${createHash('sha1').update(JSON.stringify(req.story)).digest('hex')}`;
 
 /** Tiny LRU: Map keeps insertion order, so the first key is the oldest. */
-export class ScriptCache {
-  private readonly map = new Map<string, DialogueScript>();
+export class ScriptCache<T = DialogueScript> {
+  private readonly map = new Map<string, T>();
 
   constructor(private readonly max: number) {}
 
-  get(key: string): DialogueScript | undefined {
+  get(key: string): T | undefined {
     const hit = this.map.get(key);
     if (hit) {
       this.map.delete(key);
@@ -20,7 +20,7 @@ export class ScriptCache {
     return hit;
   }
 
-  set(key: string, script: DialogueScript): void {
+  set(key: string, script: T): void {
     this.map.delete(key);
     this.map.set(key, script);
     if (this.map.size > this.max) {

@@ -51,7 +51,7 @@ bosses say, how hard they hit, and how the story ends.
   Dialogue can push the tide with `effects.favor` (−20…20 per faction).
 * **Shades** — killing an innocent creates a *named* shade (`Shade` in
   `data/war.ts`, e.g. "Timon the villager…"). Shades are listed in the
-  snapshot, haunt boss intros, can spawn as a talkable `shade` NPC, and are
+  snapshot, haunt boss intros, can spawn as a talkable `restless_shade` NPC, and are
   read out with the verdict on the game-over screen.
 * **Lore links** — `data/lore.ts` is a small genealogy of real myth
   (parents / `undoneBy`). The snapshot's `lore` lines tell the LLM who the
@@ -67,6 +67,19 @@ bosses say, how hard they hit, and how the story ends.
 6. **Karma in the HUD** — small laurel/blood icon; toast on alignment change.
 7. **LLM room generator** — reuse the 13×7 grid contract in `roomGen.ts` (already planned in ARCHITECTURE.md).
 8. **Kratos hook** — Kratos starts at karma −40 and gods refuse his shrine offerings.
+
+---
+
+## 1b. Phase 3: the Director (designed, contract on `main`)
+
+Once per floor an LLM reads a `PlayerProfile` (deeds, dialogue voice, build,
+skill/style telemetry, orbs = divine attention, shrine prophecies, quests) and
+returns a validated `FloorDirective`: stage mutators, enemy weights, a quest,
+NPC casting and a composed boss (archetype + ability modules + grudge +
+weakness the player earned), all within a difficulty budget. The LLM only
+picks catalog ids and writes text. Design, wiring plan and per-stream tasks:
+**[docs/DIRECTOR.md](docs/DIRECTOR.md)**. Code: `src/director/*`,
+`src/core/profile.ts`, `src/data/{gods,mutators,abilities,quests}.ts`.
 
 ---
 

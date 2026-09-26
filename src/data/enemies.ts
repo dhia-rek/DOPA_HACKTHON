@@ -12,7 +12,8 @@ export type BehaviourName =
   | 'boss_minotaur'
   | 'boss_hydra'
   | 'boss_giant'
-  | 'boss_titan';
+  | 'boss_titan'
+  | 'boss_directed';
 
 export type EnemyShape = 'circle' | 'square' | 'triangle' | 'diamond';
 
@@ -274,6 +275,18 @@ export const ENEMIES: EnemyDef[] = [
     lore: 'cronus',
   },
   {
+    id: 'shade',
+    name: 'Shade',
+    hp: 3,
+    speed: 140,
+    damage: 1,
+    behaviour: 'chaser',
+    shape: 'circle',
+    color: 0x5a4a7a,
+    radius: 14,
+    dropChance: 0,
+  },
+  {
     id: 'villager',
     name: 'Shepherd',
     hp: 4,
@@ -288,7 +301,7 @@ export const ENEMIES: EnemyDef[] = [
     lore: 'polis',
   },
   {
-    id: 'shade',
+    id: 'restless_shade',
     name: 'Restless Shade',
     hp: 3,
     speed: 90,

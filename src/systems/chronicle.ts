@@ -27,7 +27,7 @@ export function resolveFront(stage: StageDef, story: StoryState): ResolvedFront 
   const def = frontDef(stage.id, faction);
   const enemyPool = def.enemies ? [...stage.enemyPool, ...def.enemies, ...def.enemies] : stage.enemyPool;
   const npcPool = [...(stage.npcPool ?? [])];
-  if (story.shades.length) npcPool.push('shade', 'shade');
+  if (story.shades.length) npcPool.push('restless_shade', 'restless_shade');
   return {
     def,
     stageName: def.label ? `${stage.name}, ${def.label}` : stage.name,

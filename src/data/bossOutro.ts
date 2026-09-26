@@ -4,7 +4,7 @@ import type { DialogueRequest } from '../dialogue/types';
 
 /**
  * Dying words for bosses (`kind: 'boss_outro'`). Pure flavour, no options.
- * Templates may use `{you}` (character name), `{name}` (boss name) and `{n}` (innocents killed).
+ * Templates may use `{you}` (character name), `{name}` (boss name) and `{innocents}` ("1 innocent" / "3 innocents").
  *
  * A script is 1–3 lines: a death line, a reaction to how the fight was set up
  * (`BossOutroMood`, resolved in priority order below), and an omen of what
@@ -46,7 +46,7 @@ export const GENERIC_BOSS_OUTRO: BossOutroVoice = {
     weakness: ['Someone whispered my weakness to you. There was no glory in this.', 'You knew where to strike. A thief\'s victory, not a hero\'s.'],
     defied: ['You spoke boldly, and your hands kept the promise. Good.', 'Big words… and a bigger blow. I would have said the same.'],
     honoured: ['You fought as you said you would. I go without hatred.', 'No tricks, as promised. Go on, {you}. You have earned the road.'],
-    butcher: ['{n} innocents… and now me. The Furies will not need to search for you.', 'The shades of the {n} you slaughtered are already waiting for you below.'],
+    butcher: ['{innocents}… and now me. The Furies will not need to search for you.', 'The shades of the {innocents} you slaughtered are already waiting for you below.'],
     cruel: ['Cruel thing. What waits below is crueller still, and it knows your name.', 'You are no hero. You are the next monster of this place.'],
     heroic: ['A hero after all. The old songs are not all lies.', 'Go, {you}. Perhaps you will be the one to end this.'],
     merciful: ['You showed mercy to the weak and none to me. The gods keep strange ledgers.', 'You spared them. Remember that when the dark asks you why.'],
@@ -69,7 +69,7 @@ export const BOSS_OUTRO: Record<string, BossOutroVoice> = {
       weakness: ['Someone told you where to strike. The shepherds always did talk too much.', 'You knew of the old wound. A whispered secret felled what a thousand spears could not.'],
       defied: ['You promised me a fight and you kept your word. There is honour even in a taunt.', 'You said you would wear my horns. Wear them well… they are heavy.'],
       honoured: ['Honour… you gave it back to me at the end. The bull thanks you.', 'A clean death, as you promised. I had forgotten they existed.'],
-      butcher: ['{n} innocents dead by your hand… and you called ME the beast.', 'The shepherds you butchered will greet you below, {you}. They are less forgiving than I.'],
+      butcher: ['{innocents} dead by your hand… and you called ME the beast.', 'The shepherds you butchered will greet you below, {you}. They are less forgiving than I.'],
       cruel: ['I was made a monster. You chose to become one.', 'You strike like something that hates the living. The dark below will recognise you.'],
       heroic: ['A true hero. Theseus was never so kind.', 'Go with my blessing, {you}. Few have earned it.'],
       merciful: ['You spared the weak. Mercy… I never knew it. Perhaps you will teach it to the dark.', 'You let the shepherds live. Somewhere, a bull-headed boy would have wept at that.'],
@@ -90,7 +90,7 @@ export const BOSS_OUTRO: Record<string, BossOutroVoice> = {
       weakness: ['Someone spoke of fire and pride. The shepherds… always the shepherds.', 'You knew the riddle\'s answer before we asked it. That is not cleverness; it is theft.'],
       defied: ['You promised a fight and every head felt it. We do not regret you.', 'Bold words, bold hands. One head, at least, admires you.'],
       honoured: ['No tricks, as sworn. Rare. The heads argue, but all agree: you were fair.', 'An honourable ending. We had forgotten the taste.'],
-      butcher: ['{n} innocents… we count them in every mouth. You will hear them in the dark.', 'Blood on your hands, blood in our jaws. We are more alike than you wish, {you}.'],
+      butcher: ['{innocents}… we count them in every mouth. You will hear them in the dark.', 'Blood on your hands, blood in our jaws. We are more alike than you wish, {you}.'],
       cruel: ['Cruelty grows heads too, mortal. Cut one and two more come.', 'Every head we lost was a warning. Every innocent you killed was a promise.'],
       heroic: ['Heracles had your eyes. He also had our hatred. You have only our respect.', 'A hero of the old kind. The heads fall silent for you, {you}.'],
       merciful: ['You spared the small ones. The heads argue whether that was wisdom or weakness.', 'Mercy for the weak, death for us. The gods will riddle over that one.'],
@@ -137,11 +137,12 @@ export function bossOutroLines(req: Pick<DialogueRequest, 'speakerId' | 'speaker
   const voice = BOSS_OUTRO[req.speakerId] ?? GENERIC_BOSS_OUTRO;
   const mood = bossOutroMood(req.speakerId, s);
   const moodLines = voice.moods[mood] ?? GENERIC_BOSS_OUTRO.moods[mood] ?? GENERIC_BOSS_OUTRO.moods.neutral!;
+  const n = Math.max(1, s.npcsKilled);
   const fill = (t: string): string =>
     t
       .replace(/\{you\}/g, s.characterName)
       .replace(/\{name\}/g, req.speakerName)
-      .replace(/\{n\}/g, String(Math.max(1, s.npcsKilled)));
+      .replace(/\{innocents\}/g, `${n} innocent${n === 1 ? '' : 's'}`);
 
   const lines = [rng.pick(voice.dying)];
   if (mood !== 'neutral' || rng.chance(0.6)) lines.push(rng.pick(moodLines));

@@ -173,7 +173,7 @@ const SHADE_NAMES = ['Lykos', 'Phaidra', 'Nikias', 'Melitta', 'Dorieus', 'Chloe'
 
 const EPITAPHS: Record<string, string[]> = {
   villager: ['was counting the goats when the arrow came.', 'had a child waiting at home.', 'never learned why.'],
-  shade: ['died a second time, and did not deserve the first.'],
+  restless_shade: ['died a second time, and did not deserve the first.'],
   default: ['was no one\u2019s enemy.', 'asked for nothing.', 'died looking at you.'],
 };
 

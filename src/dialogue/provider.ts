@@ -195,7 +195,7 @@ export class MockDialogueProvider implements DialogueProvider {
           }
         : req.kind === 'boss_outro'
           ? { lines: bossOutroLines(req, rng), options: [] }
-          : req.kind === 'npc' && req.speakerId === 'shade'
+          : req.kind === 'npc' && req.speakerId === 'restless_shade'
           ? {
               lines: [
                 shadeName

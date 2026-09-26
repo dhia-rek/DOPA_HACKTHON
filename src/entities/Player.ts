@@ -12,7 +12,7 @@ import type { Projectile, ProjectilePool } from './Projectile';
  */
 export class Player extends Phaser.Physics.Arcade.Sprite {
   declare body: Phaser.Physics.Arcade.Body;
-  private run: RunState;
+  readonly run: RunState;
   private shots: ProjectilePool;
   private nextShotAt = 0;
   private invulnerableUntil = 0;

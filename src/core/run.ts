@@ -9,6 +9,8 @@ import { events } from './events';
 import { Rng } from './rng';
 import { computeStats, mergeFlags, ShotFlags, Stats } from './stats';
 import { StoryState, StorySnapshot } from './story';
+import type { FloorDirective } from '../director/types';
+import { applyDirective } from '../director/apply';
 
 /**
  * All mutable state of a single run. Scenes read from it; systems mutate it
@@ -43,6 +45,8 @@ export class RunState {
   front: ResolvedFront | null = null;
   /** Set once the floor's chapter card has been shown. */
   chapterShown = false;
+  /** The Director's verdict for the current floor; set by FloorIntroScene before `ensureFloor()`. */
+  directive: FloorDirective | null = null;
 
   itemsPickedThisRun = 0;
   damageTakenThisRun = 0;
@@ -185,6 +189,7 @@ export class RunState {
         return id;
       },
     });
+    if (this.directive) applyDirective(this.floorMap, this.directive, this.stage, this.floorRng.fork(`director-${this.floor}`));
     this.room = this.floorMap.start;
     events.emit('floor_started', { floor: this.floor, stageId: this.stage.id });
     return this.floorMap;
@@ -197,6 +202,7 @@ export class RunState {
     this.room = null;
     this.front = null;
     this.chapterShown = false;
+    this.directive = null;
   }
 
   snapshot(): RunSnapshot {
