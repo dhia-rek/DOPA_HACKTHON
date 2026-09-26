@@ -3,6 +3,7 @@ import { ART_SCALE } from '../art/manifest';
 import { ENEMY, PROJECTILE } from '../config';
 import type { BossMods } from '../core/story';
 import type { EnemyDef } from '../data/enemies';
+import type { BossBlueprint } from '../director/types';
 
 export type EnemyPose = 'idle' | 'attack' | 'hurt' | 'dead';
 
@@ -21,6 +22,12 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   faceX = 0;
   /** True once killed: the death pose plays out, behaviours and collisions stop, then the sprite destroys itself. */
   dying = false;
+  /** Director-composed boss: abilities, phases, weakness. Drives `boss_directed`. */
+  blueprint: BossBlueprint | null = null;
+  /** While in the future, shots are deflected (orbit_shields). */
+  shieldedUntil = 0;
+  /** Damage multiplier while staggered / exposed by an earned weakness. */
+  vulnerability = 1;
   private spawnedAt: number;
   private flashUntil = 0;
   private hurtUntil = 0;
@@ -36,6 +43,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private readonly baseKey: string;
   /** Pose textures that exist for this enemy (enemy_<id>_attack / _hurt / _dead); missing ones fall back to the base. */
   private readonly poses: Partial<Record<EnemyPose, string>> = {};
+  /** "!" bubble shown above innocent NPCs when the player can talk to them. */
+  private bubble: Phaser.GameObjects.Image | null = null;
 
   /** `group` must be passed here: adding to an arcade group afterwards would reset body settings. */
   constructor(scene: Phaser.Scene, group: Phaser.Physics.Arcade.Group, x: number, y: number, def: EnemyDef, difficulty: number) {
@@ -64,6 +73,22 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.setScale(0.3 / ART_SCALE);
     scene.tweens.add({ targets: this, alpha: 1, scale: 1 / ART_SCALE, duration: ENEMY.spawnDelayMs, ease: 'Back.Out' });
     scene.tweens.add({ targets: this.shadow, alpha: 0.6, duration: ENEMY.spawnDelayMs });
+
+    if (def.innocent) {
+      this.bubble = scene.add.image(x, y, 'bubble_talk').setDepth(15).setVisible(false);
+      this.once(Phaser.GameObjects.Events.DESTROY, () => this.bubble?.destroy());
+    }
+  }
+
+  /** Toggle the talk bubble (innocents only); hidden automatically while panicking. */
+  showBubble(visible: boolean): void {
+    if (!this.bubble) return;
+    this.bubble.setVisible(visible && !this.isPanicking && this.active);
+  }
+
+  /** Set by behaviours/scene when the NPC is threatened; `flee` sprints and wobbles while this is in the future. */
+  get isPanicking(): boolean {
+    return this.scene.time.now < (this.memory.panicUntil ?? 0);
   }
 
   /** Story-driven tuning (dialogue outcomes, karma). Safe to call while at full hp. */
@@ -105,6 +130,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.dying) return;
     this.knock.scale(Math.pow(ENEMY.knockbackDamping, delta / 16));
     if (this.knock.lengthSq() < 4) this.knock.set(0, 0);
+    if (this.bubble) {
+      this.bubble.setPosition(this.x, this.y - this.def.radius - 22 + Math.sin(this.scene.time.now / 160) * 4);
+      if (this.isPanicking) this.bubble.setVisible(false);
+    }
 
     if (!this.isSpawning) {
       const speed = this.body.velocity.length();
@@ -120,7 +149,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
     this.shadow.setPosition(this.x, this.y + this.def.radius + 2);
 
-    if (this.scene.time.now < this.poisonUntil) {
+    if (this.isShielded) {
+      this.setTint(0x80c0ff);
+    } else if (this.scene.time.now < this.poisonUntil) {
       this.poisonTick += delta;
       if (this.poisonTick >= 500) {
         this.poisonTick = 0;
@@ -134,9 +165,18 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  get isShielded(): boolean {
+    return this.scene.time.now < this.shieldedUntil;
+  }
+
   takeHit(damage: number, fromX: number, fromY: number, knockback = 1, poison = false): void {
     if (this.isSpawning || this.dying) return;
-    this.hp -= damage;
+    if (this.isShielded) {
+      this.flashUntil = this.scene.time.now + ENEMY.hitFlashMs;
+      return;
+    }
+    this.hp -= damage * this.vulnerability;
+    if (this.def.innocent) this.memory.panicUntil = this.scene.time.now + 3000;
     this.flashUntil = this.scene.time.now + ENEMY.hitFlashMs;
     this.hurtUntil = this.scene.time.now + HURT_POSE_MS;
     if (poison) this.poisonUntil = this.scene.time.now + PROJECTILE.poisonMs;

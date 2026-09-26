@@ -5,47 +5,78 @@ import { events } from '../core/events';
 import { Rng } from '../core/rng';
 import { RunState } from '../core/run';
 import { save } from '../core/save';
+import { settings } from '../core/settings';
+import { blip } from '../core/sfx';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { CHARACTERS, CharacterDef } from '../data/characters';
 import { getItem } from '../data/items';
 import { achievements } from '../systems/achievements';
+import { drawTitle, hintText, mono } from './ui';
+
+type View = 'main' | 'select';
+
+interface MenuEntry {
+  label: () => string;
+  run: () => void;
+}
 
 /**
- * Title + character select + challenge list. Locked characters show their
- * unlock hint; the seed can be re-rolled with R so runs are shareable.
+ * Title screen: Descend / Challenges / Options. Descend opens the character
+ * select (locked characters show their unlock hint; R re-rolls the seed so
+ * runs are shareable).
  */
 export class MenuScene extends Phaser.Scene {
-  private index = 0;
+  private view: View = 'main';
+  private menuIndex = 0;
+  private charIndex = 0;
   private seed = new URLSearchParams(location.search).get('seed') ?? Rng.randomSeed();
   private root!: Phaser.GameObjects.Container;
+
+  private readonly entries: MenuEntry[] = [
+    { label: () => 'DESCEND', run: () => this.setView('select') },
+    { label: () => `CHALLENGES  ${ACHIEVEMENTS.filter((a) => save.hasAchievement(a.id)).length} / ${ACHIEVEMENTS.length}`, run: () => this.go('challenges') },
+    { label: () => 'OPTIONS', run: () => this.go('options') },
+  ];
 
   constructor() {
     super('menu');
   }
 
-  create(): void {
+  create(data?: { view?: View }): void {
     achievements.start();
-    this.index = Math.max(0, CHARACTERS.findIndex((c) => !this.locked(c)));
+    this.view = data?.view ?? 'main';
+    this.menuIndex = 0;
+    this.charIndex = Math.max(0, CHARACTERS.findIndex((c) => !this.locked(c)));
     if (this.textures.exists('menu_bg')) {
       this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'menu_bg').setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
-      // Darken so the text reads; heaviest at the bottom where the lists are.
-      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x0b0a0f, 0.45);
-      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - 90, GAME_WIDTH, 180, 0x0b0a0f, 0.5);
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x0b0a0f, 0.55);
     }
+    drawTitle(this);
     this.root = this.add.container(0, 0);
     this.render();
 
     const kb = this.input.keyboard!;
-    kb.on('keydown-LEFT', () => this.move(-1));
-    kb.on('keydown-RIGHT', () => this.move(1));
-    kb.on('keydown-A', () => this.move(-1));
-    kb.on('keydown-D', () => this.move(1));
+    const horizontal = (dir: number) => (this.view === 'select' ? this.moveChar(dir) : undefined);
+    const vertical = (dir: number) => (this.view === 'main' ? this.moveMenu(dir) : undefined);
+    kb.on('keydown-LEFT', () => horizontal(-1));
+    kb.on('keydown-RIGHT', () => horizontal(1));
+    kb.on('keydown-A', () => horizontal(-1));
+    kb.on('keydown-D', () => horizontal(1));
+    kb.on('keydown-UP', () => vertical(-1));
+    kb.on('keydown-DOWN', () => vertical(1));
+    kb.on('keydown-W', () => vertical(-1));
+    kb.on('keydown-S', () => vertical(1));
     kb.on('keydown-R', () => {
+      if (this.view !== 'select') return;
       this.seed = Rng.randomSeed();
+      blip('move');
       this.render();
     });
-    kb.on('keydown-ENTER', () => this.start());
-    kb.on('keydown-SPACE', () => this.start());
+    kb.on('keydown-ESC', () => {
+      if (this.view === 'select') this.setView('main');
+    });
+    kb.on('keydown-ENTER', () => this.confirm());
+    kb.on('keydown-SPACE', () => this.confirm());
     this.cameras.main.fadeIn(300, 0, 0, 0);
   }
 
@@ -53,17 +84,43 @@ export class MenuScene extends Phaser.Scene {
     return !!c.unlock && !save.isUnlocked(c.unlock);
   }
 
-  private move(dir: number): void {
-    this.index = (this.index + dir + CHARACTERS.length) % CHARACTERS.length;
+  private setView(view: View): void {
+    this.view = view;
+    blip(view === 'main' ? 'advance' : 'confirm');
     this.render();
   }
 
+  private go(scene: 'challenges' | 'options'): void {
+    blip('confirm');
+    this.input.keyboard!.removeAllListeners();
+    this.scene.start(scene);
+  }
+
+  private moveMenu(dir: number): void {
+    this.menuIndex = (this.menuIndex + dir + this.entries.length) % this.entries.length;
+    blip('move');
+    this.render();
+  }
+
+  private moveChar(dir: number): void {
+    this.charIndex = (this.charIndex + dir + CHARACTERS.length) % CHARACTERS.length;
+    blip('move');
+    this.render();
+  }
+
+  private confirm(): void {
+    if (this.view === 'main') this.entries[this.menuIndex].run();
+    else this.start();
+  }
+
   private start(): void {
-    const c = CHARACTERS[this.index];
+    const c = CHARACTERS[this.charIndex];
     if (this.locked(c)) {
-      this.cameras.main.shake(120, 0.004);
+      settings.shake(this.cameras.main, 120, 0.004);
+      blip('deny');
       return;
     }
+    blip('confirm');
     const run = new RunState(this.seed, c.id);
     this.registry.set('run', run);
     if (import.meta.env.DEV) (window as unknown as { nekyia: unknown }).nekyia = { run, game: this.game };
@@ -71,35 +128,78 @@ export class MenuScene extends Phaser.Scene {
     events.emit('run_started', { seed: run.seed, characterId: c.id });
     this.input.keyboard!.removeAllListeners();
     this.cameras.main.fadeOut(250, 0, 0, 0);
-    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.scene.start('run', {}));
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.scene.start('floor_intro'));
   }
 
   private render(): void {
     this.root.removeAll(true);
-    const mono = 'monospace';
+    if (this.view === 'main') this.renderMain();
+    else this.renderSelect();
+  }
+
+  private renderMain(): void {
+    const add = (o: Phaser.GameObjects.GameObject) => this.root.add(o);
+    const cx = GAME_WIDTH / 2;
+
+    this.entries.forEach((entry, i) => {
+      const y = 215 + i * 58;
+      const selected = i === this.menuIndex;
+      const label = selected ? `▶   ${entry.label()}   ◀` : entry.label();
+      const text = this.add.text(cx, y, label, {
+        fontFamily: mono, fontSize: selected ? '26px' : '22px', color: selected ? COLORS.uiIvory : COLORS.textDim,
+      }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      if (selected) text.setShadow(0, 2, '#000000', 6);
+      text.on('pointerover', () => {
+        if (this.menuIndex !== i) {
+          this.menuIndex = i;
+          blip('move');
+          this.render();
+        }
+      });
+      text.on('pointerdown', () => entry.run());
+      add(text);
+    });
+
+    const divider = this.add.graphics();
+    divider.lineStyle(1, COLORS.uiBorder, 0.7).lineBetween(40, 450, GAME_WIDTH - 40, 450);
+    add(divider);
+    const stats = `RUNS ${save.data.runs}   WINS ${save.data.wins}   BEST FLOOR ${save.data.bestFloor}   KILLS ${save.counter('kills')}`;
+    add(this.add.text(cx, 470, stats, { fontFamily: mono, fontSize: '13px', color: COLORS.textDim }).setOrigin(0.5, 0));
+    const unlocked = CHARACTERS.filter((c) => !this.locked(c)).length;
+    add(this.add.text(cx, 492, `HEROES ${unlocked} / ${CHARACTERS.length}`, { fontFamily: mono, fontSize: '13px', color: COLORS.textDim }).setOrigin(0.5, 0));
+    add(hintText(this, ['↑ ↓  CHOOSE', 'ENTER  SELECT']));
+  }
+
+  private renderSelect(): void {
     const add = (o: Phaser.GameObjects.GameObject) => this.root.add(o);
 
-    add(this.add.text(GAME_WIDTH / 2, 48, 'N E K Y I A', { fontFamily: mono, fontSize: '52px', color: '#e8dcc0', stroke: '#1a1410', strokeThickness: 8 }).setOrigin(0.5));
-    add(this.add.text(GAME_WIDTH / 2, 100, 'a descent through the Greek underworld', { fontFamily: mono, fontSize: '16px', color: COLORS.text, stroke: '#1a1410', strokeThickness: 4 }).setOrigin(0.5));
-
-    // Character carousel.
-    const c = CHARACTERS[this.index];
+    const c = CHARACTERS[this.charIndex];
     const locked = this.locked(c);
     const cx = GAME_WIDTH / 2;
     const cy = 205;
-    add(this.add.text(cx - 200, cy, '◀', { fontFamily: mono, fontSize: '40px', color: COLORS.textDim }).setOrigin(0.5));
-    add(this.add.text(cx + 200, cy, '▶', { fontFamily: mono, fontSize: '40px', color: COLORS.textDim }).setOrigin(0.5));
-    add(this.add.rectangle(cx, cy + 68, 600, 262, 0x0b0a0f, 0.55).setStrokeStyle(2, 0xc9a45c, 0.35));
-    add(this.add.image(cx, cy + 44, 'shadow').setScale(1.6, 1.1).setAlpha(0.8));
-    const portrait = this.textures.exists(`portrait_${c.id}`)
-      ? this.add.image(cx, cy, `portrait_${c.id}`).setScale(1 / ART_SCALE)
-      : this.add.image(cx, cy, `player_${c.id}`).setScale(2);
+    const card = this.add.graphics();
+    card.fillStyle(COLORS.uiPanel, 0.85).fillRoundedRect(cx - 248, 134, 496, 310, 8);
+    card.lineStyle(1, COLORS.uiBorder, 0.8).strokeRoundedRect(cx - 248, 134, 496, 310, 8);
+    card.lineStyle(2, c.color, locked ? 0.2 : 0.55).strokeCircle(cx, cy, 55);
+    add(card);
+    for (const [dir, x, symbol] of [[-1, cx - 290, '◀'], [1, cx + 290, '▶']] as const) {
+      const arrow = this.add.text(x, cy, symbol, { fontFamily: mono, fontSize: '36px', color: COLORS.textDim })
+        .setOrigin(0.5).setInteractive({ useHandCursor: true });
+      arrow.on('pointerover', () => arrow.setColor(COLORS.uiIvory).setScale(1.15));
+      arrow.on('pointerout', () => arrow.setColor(COLORS.textDim).setScale(1));
+      arrow.on('pointerdown', () => this.moveChar(dir));
+      add(arrow);
+    }
+    const hires = this.textures.exists(`portrait_${c.id}`);
+    const portraitScale = hires ? 1 / ART_SCALE : 2;
+    const portrait = this.add.image(cx, cy, hires ? `portrait_${c.id}` : `player_${c.id}`).setScale(portraitScale);
     if (locked) portrait.setTint(0x333333);
     add(portrait);
-    add(this.add.text(cx, cy + 70, locked ? '???' : c.name, { fontFamily: mono, fontSize: '30px', color: locked ? '#666' : '#fff', stroke: '#1a1410', strokeThickness: 6 }).setOrigin(0.5));
-    add(this.add.text(cx, cy + 100, locked ? `Locked — ${c.unlockHint ?? ''}` : c.title, { fontFamily: mono, fontSize: '15px', color: COLORS.textDim }).setOrigin(0.5));
+    this.tweens.add({ targets: portrait, scale: { from: portraitScale * 1.09, to: portraitScale }, duration: 260, ease: 'Sine.Out' });
+    add(this.add.text(cx, cy + 70, locked ? '???' : c.name.toUpperCase(), { fontFamily: mono, fontSize: '28px', color: locked ? COLORS.textDim : COLORS.uiIvory }).setOrigin(0.5));
+    add(this.add.text(cx, cy + 100, locked ? `Locked — ${c.unlockHint ?? ''}` : c.title, { fontFamily: mono, fontSize: '15px', color: COLORS.textDim, wordWrap: { width: 450 }, align: 'center' }).setOrigin(0.5));
     if (!locked) {
-      add(this.add.text(cx, cy + 128, c.description, { fontFamily: mono, fontSize: '14px', color: '#bbb', wordWrap: { width: 520 }, align: 'center' }).setOrigin(0.5, 0));
+      add(this.add.text(cx, cy + 128, c.description, { fontFamily: mono, fontSize: '14px', color: COLORS.uiIvory, wordWrap: { width: 450 }, align: 'center' }).setOrigin(0.5, 0));
       const s = c.stats;
       const line = `♥ ${s.maxHp / 2}   dmg ${s.damage}   spd ${s.speed}   rof ${s.fireRate}   range ${s.range}`;
       add(this.add.text(cx, cy + 172, line, { fontFamily: mono, fontSize: '14px', color: COLORS.text }).setOrigin(0.5, 0));
@@ -108,36 +208,19 @@ export class MenuScene extends Phaser.Scene {
         add(this.add.text(cx, cy + 194, `starts with: ${names}`, { fontFamily: mono, fontSize: '13px', color: COLORS.textDim }).setOrigin(0.5, 0));
       }
     }
-    add(this.add.text(cx, cy + 226, `${this.index + 1} / ${CHARACTERS.length}`, { fontFamily: mono, fontSize: '12px', color: '#555' }).setOrigin(0.5, 0));
+    add(this.add.text(cx, cy + 220, `${this.charIndex + 1} / ${CHARACTERS.length}`, { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(0.5, 0));
 
-    // Challenges panel.
-    const px = 40;
-    let py = GAME_HEIGHT - 160;
-    add(this.add.text(px, py, 'CHALLENGES', { fontFamily: mono, fontSize: '14px', color: COLORS.text }));
-    py += 22;
-    for (const a of ACHIEVEMENTS) {
-      const done = save.hasAchievement(a.id);
-      if (a.secret && !done) continue;
-      const mark = done ? '■' : '□';
-      const reward = a.rewardLabel ? `  → ${a.rewardLabel}` : '';
-      add(this.add.text(px, py, `${mark} ${a.title}: ${a.description}${reward}`, { fontFamily: mono, fontSize: '12px', color: done ? '#ffe08a' : '#777' }));
-      py += 16;
-    }
+    const divider = this.add.graphics();
+    divider.lineStyle(1, COLORS.uiBorder, 0.7).lineBetween(40, 450, GAME_WIDTH - 40, 450);
+    add(divider);
+    const descend = this.add.text(cx, 478, locked ? 'LOCKED' : 'ENTER  ·  DESCEND', { fontFamily: mono, fontSize: '18px', color: locked ? COLORS.textDim : COLORS.text })
+      .setOrigin(0.5).setInteractive({ useHandCursor: !locked });
+    descend.on('pointerover', () => !locked && descend.setColor(COLORS.uiIvory));
+    descend.on('pointerout', () => !locked && descend.setColor(COLORS.text));
+    descend.on('pointerdown', () => this.start());
+    add(descend);
+    add(this.add.text(cx, 504, `SEED ${this.seed}`, { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(0.5));
 
-    const stats = `runs ${save.data.runs}   wins ${save.data.wins}   best floor ${save.data.bestFloor}   kills ${save.counter('kills')}`;
-    add(this.add.text(GAME_WIDTH - 40, GAME_HEIGHT - 160, stats, { fontFamily: mono, fontSize: '12px', color: '#777' }).setOrigin(1, 0));
-    add(this.add.text(GAME_WIDTH - 40, GAME_HEIGHT - 138, `seed ${this.seed}   (R to re-roll)`, { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(1, 0));
-
-    add(
-      this.add
-        .text(GAME_WIDTH - 40, GAME_HEIGHT - 100, ['← →  choose', 'ENTER  start', 'WASD  move', 'ARROWS  shoot'], {
-          fontFamily: mono,
-          fontSize: '13px',
-          color: COLORS.textDim,
-          align: 'right',
-          lineSpacing: 4,
-        })
-        .setOrigin(1, 0),
-    );
+    add(hintText(this, ['← →  CHOOSE     R  RE-ROLL SEED', 'ESC  BACK', 'WASD  MOVE     ARROWS  SHOOT']));
   }
 }

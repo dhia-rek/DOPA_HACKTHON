@@ -1,129 +1,157 @@
 import Phaser from 'phaser';
-import { GAME_HEIGHT, GAME_WIDTH } from '../config';
+import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
+import { settings } from '../core/settings';
+import { blip } from '../core/sfx';
+import type { CharacterDef } from '../data/characters';
+import type { EnemyDef } from '../data/enemies';
 
-export interface BossIntroSceneData {
-  heroKey: string;
-  heroName: string;
-  heroTitle: string;
-  bossKey: string;
-  bossName: string;
-  bossTitle: string;
-  bossColor: number;
+export interface BossIntroData {
+  hero: CharacterDef;
+  boss: EnemyDef;
+  /** Director's title for this boss (falls back to `boss.name`). */
+  title?: string;
+  grudge?: string;
+  floor: number;
   onDone: () => void;
 }
 
 const mono = 'monospace';
 const W = GAME_WIDTH;
 const H = GAME_HEIGHT;
-const SKEW = 70;
-const HOLD_MS = 2600;
+const GAP = 22;
+const BAND = (H - GAP) / 2;
+const STREAKS = 'vs_streaks';
+const SLIDE_MS = 420;
+const HOLD_MS = 1500;
 
 /**
- * VS splash before a boss fight: a marble band with the hero slams in from the
- * left, a dark band with the boss from the right, "VS" punches in between.
- * The launching scene pauses itself and resumes in onDone (ENTER skips).
+ * "VS" splash shown when the player steps into a boss room: two coloured
+ * bands slide in from opposite sides (boss on top, hero below), clash in
+ * the middle, hold, then hand over to the boss_intro dialogue.
  */
 export class BossIntroScene extends Phaser.Scene {
-  private data_!: BossIntroSceneData;
+  private top!: Phaser.GameObjects.Container;
+  private bottom!: Phaser.GameObjects.Container;
+  private streaks: Phaser.GameObjects.TileSprite[] = [];
   private done = false;
 
   constructor() {
-    super('bossintro');
+    super('boss_vs');
   }
 
-  create(data: BossIntroSceneData): void {
-    this.data_ = data;
+  create(data: BossIntroData): void {
     this.done = false;
-    const edge = Phaser.Display.Color.IntegerToColor(data.bossColor).lighten(20).color;
-    const bossHex = `#${data.bossColor.toString(16).padStart(6, '0')}`;
+    this.streaks = [];
+    this.makeStreaks();
+    this.cameras.main.setBackgroundColor('#07060a');
 
-    this.add.rectangle(W / 2, H / 2, W, H, 0x07050a, 0.94);
-
-    const hero = this.add.container(-W, 0);
-    const boss = this.add.container(W, 0);
-
-    hero.add(this.band(0xe8dcc2, 0xc9a45c, true));
-    boss.add(this.band(0x22101c, edge, false));
-
-    const heroImg = this.add.image(W * 0.27, H / 2 - 16, data.heroKey);
-    heroImg.setScale(230 / Math.max(heroImg.width, heroImg.height));
-    const bossImg = this.add.image(W * 0.73, H / 2 - 16, data.bossKey).setFlipX(true);
-    bossImg.setScale(260 / Math.max(bossImg.width, bossImg.height));
-    hero.add(heroImg);
-    boss.add(bossImg);
-    for (const img of [heroImg, bossImg]) {
-      const sy = img.scaleY;
-      this.tweens.add({ targets: img, scaleY: sy * 1.04, y: img.y - 5, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
-    }
-
-    hero.add(this.label(W * 0.27, H / 2 + 128, data.heroName.toUpperCase(), 30, '#2a1a10', '#f7efe0'));
-    hero.add(this.label(W * 0.27, H / 2 + 162, data.heroTitle, 15, '#6b4d2a', '#f7efe0'));
-    boss.add(this.label(W * 0.73, H / 2 + 128, data.bossName.toUpperCase(), 30, '#f3e6c8', '#000000'));
-    boss.add(this.label(W * 0.73, H / 2 + 162, data.bossTitle, 15, bossHex, '#000000'));
-
-    this.tweens.add({ targets: hero, x: 0, duration: 420, ease: 'Cubic.Out' });
-    this.tweens.add({
-      targets: boss,
-      x: 0,
-      duration: 420,
-      delay: 140,
-      ease: 'Cubic.Out',
-      onComplete: () => this.cameras.main.shake(140, 0.01),
-    });
+    const title = (data.title ?? data.boss.name).toUpperCase();
+    this.top = this.band(0, data.boss.color, 'right', [
+      this.sprite(`enemy_${data.boss.id}`, W - 190, BAND / 2 + 10, 150),
+      this.label(40, BAND / 2 - 36, title, 30, COLORS.uiIvory, 0),
+      this.label(40, BAND / 2 + 10, `BOSS  ·  FLOOR ${data.floor}`, 14, COLORS.textDim, 0),
+      this.label(40, BAND / 2 + 40, data.grudge ? `“${data.grudge}”` : '', 13, '#e08080', 0, W - 400),
+    ]);
+    this.bottom = this.band(BAND + GAP, data.hero.color, 'left', [
+      this.sprite(this.textures.exists(`portrait_${data.hero.id}`) ? `portrait_${data.hero.id}` : `player_${data.hero.id}`, 190, BAND / 2 - 10, 150),
+      this.label(W - 40, BAND / 2 - 36, data.hero.name.toUpperCase(), 30, COLORS.uiIvory, 1),
+      this.label(W - 40, BAND / 2 + 10, data.hero.title.toUpperCase(), 14, COLORS.textDim, 1),
+    ]);
+    this.top.x = W;
+    this.bottom.x = -W;
 
     const vs = this.add
-      .text(W / 2, H / 2 - 10, 'VS', { fontFamily: mono, fontSize: '104px', fontStyle: 'bold', color: '#ffe066', stroke: '#3a1414', strokeThickness: 12 })
+      .text(W / 2, H / 2, 'VS', { fontFamily: mono, fontSize: '64px', color: '#ffe08a', fontStyle: 'bold' })
       .setOrigin(0.5)
-      .setScale(4)
-      .setAlpha(0)
-      .setAngle(-8);
+      .setShadow(0, 4, '#000000', 10)
+      .setDepth(10)
+      .setScale(0)
+      .setAlpha(0);
+
+    this.tweens.add({ targets: this.top, x: 0, duration: SLIDE_MS, ease: 'Cubic.Out' });
     this.tweens.add({
-      targets: vs,
-      scale: 1,
-      alpha: 1,
-      delay: 560,
-      duration: 260,
-      ease: 'Back.Out',
+      targets: this.bottom,
+      x: 0,
+      duration: SLIDE_MS,
+      ease: 'Cubic.Out',
       onComplete: () => {
-        this.cameras.main.flash(180, 255, 240, 200);
-        this.tweens.add({ targets: vs, scale: 1.08, duration: 380, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+        blip('confirm');
+        settings.shake(this.cameras.main, 160, 0.01);
+        this.cameras.main.flash(120, 255, 255, 255);
+        this.tweens.add({ targets: vs, scale: { from: 3, to: 1 }, alpha: 1, duration: 220, ease: 'Back.Out' });
       },
     });
 
-    for (const y of [10, H - 10]) this.add.rectangle(W / 2, y, W, 4, 0xc9a45c).setAlpha(0.8);
-    this.add.text(W - 24, H - 30, 'ENTER ▸', { fontFamily: mono, fontSize: '12px', color: '#a89a80' }).setOrigin(1, 0.5);
+    const skip = this.add
+      .text(W / 2, H - 14, 'ENTER  ·  SKIP', { fontFamily: mono, fontSize: '12px', color: COLORS.textDim })
+      .setOrigin(0.5, 1)
+      .setDepth(10)
+      .setAlpha(0);
+    this.tweens.add({ targets: skip, alpha: 0.8, delay: SLIDE_MS + 300, duration: 300 });
 
-    const kb = this.input.keyboard!;
-    kb.on('keydown-ENTER', this.finish, this);
-    kb.on('keydown-SPACE', this.finish, this);
-    this.time.delayedCall(HOLD_MS, this.finish, [], this);
+    const finish = (): void => this.finish(data.onDone);
+    this.input.keyboard!.once('keydown-ENTER', finish);
+    this.input.keyboard!.once('keydown-SPACE', finish);
+    this.input.once('pointerdown', finish);
+    this.time.delayedCall(SLIDE_MS + HOLD_MS, finish);
   }
 
-  private band(fill: number, edge: number, left: boolean): Phaser.GameObjects.Graphics {
-    const g = this.add.graphics();
-    const pts = left
-      ? [{ x: 0, y: 0 }, { x: W / 2 + SKEW, y: 0 }, { x: W / 2 - SKEW, y: H }, { x: 0, y: H }]
-      : [{ x: W / 2 + SKEW + 8, y: 0 }, { x: W, y: 0 }, { x: W, y: H }, { x: W / 2 - SKEW + 8, y: H }];
-    g.fillStyle(fill, 1).fillPoints(pts, true);
-    g.lineStyle(6, edge, 1);
-    if (left) g.lineBetween(W / 2 + SKEW, 0, W / 2 - SKEW, H);
-    else g.lineBetween(W / 2 + SKEW + 8, 0, W / 2 - SKEW + 8, H);
-    return g;
+  update(_time: number, delta: number): void {
+    const dx = delta * 0.18;
+    for (const [i, s] of this.streaks.entries()) s.tilePositionX += i === 0 ? -dx : dx;
   }
 
-  private label(x: number, y: number, text: string, size: number, color: string, stroke: string): Phaser.GameObjects.Text {
-    return this.add
-      .text(x, y, text, { fontFamily: mono, fontSize: `${size}px`, fontStyle: size > 20 ? 'bold' : 'normal', color, stroke, strokeThickness: size > 20 ? 6 : 3 })
-      .setOrigin(0.5);
-  }
-
-  private finish(): void {
+  private finish(onDone: () => void): void {
     if (this.done) return;
     this.done = true;
-    this.cameras.main.fadeOut(220, 0, 0, 0);
+    this.input.keyboard!.removeAllListeners();
+    this.tweens.add({ targets: this.top, x: -W, duration: 260, ease: 'Cubic.In' });
+    this.tweens.add({ targets: this.bottom, x: W, duration: 260, ease: 'Cubic.In' });
+    this.cameras.main.fadeOut(260, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.scene.stop();
-      this.data_.onDone();
+      onDone();
     });
+  }
+
+  /** One coloured half-screen band with drifting streaks and its content. */
+  private band(y: number, color: number, drift: 'left' | 'right', content: Phaser.GameObjects.GameObject[]): Phaser.GameObjects.Container {
+    const c = Phaser.Display.Color.IntegerToColor(color);
+    const dark = Phaser.Display.Color.GetColor(c.red * 0.45, c.green * 0.45, c.blue * 0.45);
+    const bg = this.add.rectangle(0, 0, W, BAND, dark).setOrigin(0);
+    const streaks = this.add.tileSprite(0, 0, W, BAND, STREAKS).setOrigin(0).setTint(color).setAlpha(0.45);
+    streaks.tilePositionX = drift === 'left' ? 0 : 128;
+    this.streaks.push(streaks);
+    const edge = this.add.rectangle(0, drift === 'right' ? BAND - 3 : 0, W, 3, 0xffffff, 0.35).setOrigin(0);
+    return this.add.container(0, y, [bg, streaks, edge, ...content]);
+  }
+
+  private sprite(key: string, x: number, y: number, size: number): Phaser.GameObjects.Image {
+    const img = this.add.image(x, y, key);
+    img.setScale(size / Math.max(img.width, img.height));
+    this.tweens.add({ targets: img, y: y - 6, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    return img;
+  }
+
+  private label(x: number, y: number, text: string, size: number, color: string, originX: number, wrap?: number): Phaser.GameObjects.Text {
+    return this.add
+      .text(x, y, text, { fontFamily: mono, fontSize: `${size}px`, color, fontStyle: size >= 30 ? 'bold' : 'normal', wordWrap: wrap ? { width: wrap } : undefined })
+      .setOrigin(originX, 0.5)
+      .setShadow(0, 2, '#000000', 6);
+  }
+
+  /** Horizontal speed-line texture, tiled and tinted per band. */
+  private makeStreaks(): void {
+    if (this.textures.exists(STREAKS)) return;
+    const g = this.make.graphics({ x: 0, y: 0 }, false);
+    g.fillStyle(0xffffff, 1);
+    let seed = 7;
+    const rnd = (): number => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+    for (let i = 0; i < 26; i++) {
+      const len = 24 + Math.floor(rnd() * 70);
+      g.fillRect(Math.floor(rnd() * 256), 6 + Math.floor(rnd() * 116), len, 3);
+    }
+    g.generateTexture(STREAKS, 256, 128);
+    g.destroy();
   }
 }
