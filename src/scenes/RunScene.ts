@@ -1,14 +1,19 @@
 import Phaser from 'phaser';
 import { COLORS, Dir, DIR_VECTORS, GAME_HEIGHT, GAME_WIDTH, GRID_COLS, GRID_ROWS, OPPOSITE, ROOM_COLS, ROOM_ROWS, TILE } from '../config';
+import { DEBUG, DEBUG_HELP, debugState } from '../core/debug';
 import { events } from '../core/events';
+import { TOUCH } from '../core/input';
 import type { RunState } from '../core/run';
+import { music, type MusicKind } from '../core/music';
+import { settings } from '../core/settings';
 import { KARMA } from '../core/story';
 import { earnedWeaknesses } from '../core/profile';
 import { EnemyDef, getEnemy } from '../data/enemies';
-import { getItem } from '../data/items';
+import { getItem, ITEMS } from '../data/items';
 import { factionOf, makeShade } from '../data/war';
 import { dialogueProvider } from '../dialogue/provider';
 import type { DialogueKind, DialogueOption, DialogueScript } from '../dialogue/types';
+import type { BossIntroData } from './BossIntroScene';
 import type { DialogueSceneData } from './DialogueScene';
 import { doorsOf, neighbour, RoomNode } from '../gen/floorGen';
 import { Enemy } from '../entities/Enemy';
@@ -16,6 +21,11 @@ import { Pickup, PickupKind } from '../entities/Pickup';
 import { Player } from '../entities/Player';
 import { Projectile, ProjectilePool } from '../entities/Projectile';
 import { achievements } from '../systems/achievements';
+import { trials } from '../systems/trials';
+import { trialProvider } from '../trials/provider';
+import { describeObjective, TrialOffer } from '../trials/types';
+import { voiceFor } from '../voice/types';
+import { OMEN_TINTS, tintWith } from '../omens/types';
 import { BEHAVIOURS, threaten } from '../systems/behaviours';
 import { weaknessDamageMul } from '../systems/bossAbilities';
 import { judgementLines, verdictOf } from '../systems/bossJudgement';
@@ -116,6 +126,7 @@ export class RunScene extends Phaser.Scene {
 
     this.run = this.registry.get('run') as RunState;
     achievements.attachRun(this.run);
+    trials.attachRun(this.run);
     const map = this.run.ensureFloor();
     this.room = this.run.room ?? map.start;
     this.room.visited = true;
@@ -142,13 +153,20 @@ export class RunScene extends Phaser.Scene {
     this.refreshDoors();
 
     events.emit('room_entered', { roomType: this.room.type, floor: this.run.floor });
+    this.playRoomMusic();
     events.emit('hud_update', {});
     events.on('quest_settled', this.onQuestSettled, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => events.off('quest_settled', this.onQuestSettled, this));
     this.cameras.main.fadeIn(180, 0, 0, 0);
 
+    if (DEBUG) this.bindDebugKeys();
+
     if (!this.scene.isActive('hud')) this.scene.launch('hud');
     this.scene.bringToTop('hud');
+    if (TOUCH) {
+      if (!this.scene.isActive('touch')) this.scene.launch('touch');
+      this.scene.bringToTop('touch');
+    }
 
     const chapter = this.run.takeChapter();
     if (chapter) this.toast(chapter.title, chapter.body, 4200);
@@ -159,11 +177,94 @@ export class RunScene extends Phaser.Scene {
       const boss = this.hostiles().find((e) => e.def.isBoss);
       if (boss && !this.room.dialogueDone) {
         this.room.dialogueDone = true;
-        this.time.delayedCall(250, () => this.startDialogue('boss_intro', this.bossSpeaker(boss)));
+        this.time.delayedCall(250, () => this.bossSplash(boss));
       } else if (boss) {
         this.showJudgement(boss);
       }
     }
+
+    if (this.room === map.start && trials.offeredFloor !== this.run.floor) {
+      trials.offeredFloor = this.run.floor;
+      const omen = this.run.omen;
+      if (omen) this.time.delayedCall(100, () => events.emit('omen_revealed', { name: omen.name, line: omen.line, theme: omen.theme }));
+      this.time.delayedCall(omen ? 1600 : 450, () => void this.offerTrial());
+    }
+  }
+
+  /** Stage palette colour shaded by the floor omen's theme. */
+  private tint(color: number): number {
+    return tintWith(color, OMEN_TINTS[this.run.omen?.theme ?? 'none']);
+  }
+
+  /** At the start of each floor a god or shade offers one AI-written trial (src/trials). */
+  private async offerTrial(): Promise<void> {
+    if (this.dead || this.transitioning || this.dialogueOpen) return;
+    this.dialogueOpen = true;
+    const room = this.room;
+    this.scene.pause();
+    let offer: TrialOffer;
+    try {
+      offer = await trialProvider.offer({
+        story: this.run.storySnapshot(),
+        seed: `${this.run.seed}:${this.run.floor}:trial`,
+        enemyPool: this.run.stage.enemyPool,
+        normalRooms: [...this.run.floorMap!.rooms.values()].filter((r) => r.type === 'normal').length,
+      });
+    } catch (err) {
+      console.warn('[trial] skipped:', err);
+      this.dialogueOpen = false;
+      this.scene.resume();
+      return;
+    }
+    if (this.room !== room || this.dead) return;
+    const script: DialogueScript = {
+      id: offer.id,
+      kind: 'shrine',
+      speakerId: `trial_${offer.giverName.toLowerCase().replace(/[^a-z]+/g, '_')}`,
+      speakerName: offer.giverName,
+      lines: [...offer.lines, `Trial: ${describeObjective(offer.objective)}.`],
+      options: [
+        { id: 'accept', text: offer.acceptText, reply: 'Then it is sworn.', effects: {} },
+        { id: 'refuse', text: offer.refuseText, reply: 'As you wish. The gods will remember.', effects: {} },
+      ],
+    };
+    const data: DialogueSceneData = {
+      script,
+      voice: voiceFor(script.speakerId, 'trial', this.run.storySnapshot()),
+      onDone: (option) => {
+        this.dialogueOpen = false;
+        this.scene.resume();
+        if (option?.id === 'accept') {
+          trials.accept(offer);
+        } else {
+          this.run.story.record({ kind: 'custom', subject: 'trial_refused', floor: this.run.floor, karmaDelta: 0, summary: `Refused ${offer.giverName}'s trial on floor ${this.run.floor}` });
+          this.run.story.addFlag('refused_trial');
+        }
+      },
+    };
+    this.scene.launch('dialogue', data);
+    this.scene.bringToTop('dialogue');
+  }
+
+  /** Pokémon-style VS splash over the paused room, then the boss_intro dialogue. */
+  private bossSplash(boss: Enemy): void {
+    if (this.dead || this.transitioning || this.dialogueOpen) return;
+    const room = this.room;
+    this.scene.pause();
+    const data: BossIntroData = {
+      hero: this.run.character,
+      boss: boss.def,
+      title: boss.blueprint?.title,
+      grudge: boss.blueprint?.grudge,
+      floor: this.run.floor,
+      onDone: () => {
+        if (this.room !== room || this.dead) return;
+        this.scene.resume();
+        if (boss.active) void this.startDialogue('boss_intro', this.bossSpeaker(boss));
+      },
+    };
+    this.scene.launch('boss_vs', data);
+    this.scene.bringToTop('boss_vs');
   }
 
   /**
@@ -357,6 +458,7 @@ export class RunScene extends Phaser.Scene {
     if (this.room !== room || this.dead) return;
     const data: DialogueSceneData = {
       script,
+      voice: voiceFor(speaker.id, kind, this.run.storySnapshot()),
       onDone: (option) => {
         this.dialogueOpen = false;
         this.holdClear = false;
@@ -490,14 +592,14 @@ export class RunScene extends Phaser.Scene {
           if (doorDir === 'down') door.setAngle(180);
           this.doorSprites[doorDir] = door;
         } else {
-          (this.walls.create(x, y, 'wall') as Phaser.Physics.Arcade.Image).setTint(this.run.palette.wall);
+          (this.walls.create(x, y, 'wall') as Phaser.Physics.Arcade.Image).setTint(this.tint(this.run.palette.wall));
         }
       }
     }
   }
 
   private buildInterior(): void {
-    const tint = this.run.palette.floor;
+    const tint = this.tint(this.run.palette.floor);
     for (let r = 0; r < ROOM_ROWS; r++) {
       for (let c = 0; c < ROOM_COLS; c++) {
         const { x, y } = this.tileCenter(c + 1, r + 1);
@@ -647,7 +749,7 @@ export class RunScene extends Phaser.Scene {
       const trampling = enemy.def.isBoss && enemy.memory.state === 2;
       this.hurtPlayer(enemy.contactDamage, enemy.def.id, enemy.x, enemy.y);
       if (this.run.hp < before && trampling) {
-        this.cameras.main.shake(220, 0.016);
+        settings.shake(this.cameras.main, 220, 0.016);
         this.burst(this.player.x, this.player.y, 0xfff0d0, 14);
       }
       if (this.run.hp < before && enemy.blueprint?.abilities.includes('steal_hearts')) {
@@ -707,7 +809,7 @@ export class RunScene extends Phaser.Scene {
   }
 
   private hurtPlayer(amount: number, source: string, fromX: number, fromY: number): void {
-    if (this.dead || this.player.isInvulnerable) return;
+    if (this.dead || this.player.isInvulnerable || debugState.god) return;
     if (this.run.character.passive === 'glass') amount = Math.max(amount, 2);
     const died = this.player.hurt(amount, source, fromX, fromY);
     if (died) this.die();
@@ -726,7 +828,7 @@ export class RunScene extends Phaser.Scene {
       }
     }
     if (isBoss) {
-      this.cameras.main.shake(300, 0.012);
+      settings.shake(this.cameras.main, 300, 0.012);
       this.run.story.record({ kind: 'boss_killed', subject: enemy.def.id, lore: enemy.def.lore, floor: this.run.floor, karmaDelta: 0, summary: `Slew ${enemy.def.name} on floor ${this.run.floor}` });
       this.run.story.addFlag(`slew_${enemy.def.id}`);
       events.emit('boss_killed', { enemyId: enemy.def.id, floor: this.run.floor });
@@ -796,15 +898,29 @@ export class RunScene extends Phaser.Scene {
     this.toast(item.name, item.description);
   }
 
+  private playRoomMusic(): void {
+    const type = this.room.type;
+    const kind: MusicKind =
+      type === 'shrine' ? 'shrine'
+        : type === 'treasure' ? 'treasure'
+          : this.room.cleared ? 'explore'
+            : type === 'boss' ? 'boss'
+              : 'combat';
+    music.play(this.run.stage.id, kind);
+  }
+
   private clearRoom(): void {
     this.room.cleared = true;
     this.room.enemies = [];
     this.enemyShots.killAll();
     this.refreshDoors();
     events.emit('room_cleared', { roomType: this.room.type, floor: this.run.floor });
+    this.playRoomMusic();
+    if (this.room.type === 'normal' && trials.wantsCoins) this.dropPickup(GAME_WIDTH / 2 + TILE, GAME_HEIGHT / 2, 'coin');
 
     if (this.room.type === 'boss') {
       events.emit('floor_cleared', { floor: this.run.floor });
+      this.run.omens.prefetch(this.run.omenRequest(this.run.floor + 1));
       if (this.run.isVictoryFloor && !this.run.won) {
         this.run.won = true;
         events.emit('run_won', { seed: this.run.seed, characterId: this.run.character.id, timeMs: this.run.elapsedMs });
@@ -851,6 +967,7 @@ export class RunScene extends Phaser.Scene {
     this.cameras.main.fadeOut(300, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.scene.stop('hud');
+      this.scene.stop('touch');
       this.scene.start('floor_intro');
     });
   }
@@ -865,8 +982,49 @@ export class RunScene extends Phaser.Scene {
     this.tweens.add({ targets: this.player, angle: 90, alpha: 0.3, duration: 600 });
     this.time.delayedCall(900, () => {
       this.scene.stop('hud');
+      this.scene.stop('touch');
       this.scene.start('gameover');
     });
+  }
+
+  // ------------------------------------------------------------------- debug
+
+  private bindDebugKeys(): void {
+    this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT - 10, DEBUG_HELP, { fontFamily: 'monospace', fontSize: '11px', color: '#f88', backgroundColor: '#000a' })
+      .setOrigin(0.5, 1)
+      .setDepth(500);
+    const kb = this.input.keyboard!;
+    const on = (key: string, fn: () => void): void => {
+      kb.on(`keydown-${key}`, () => {
+        if (!this.dialogueOpen && !this.transitioning && !this.dead) fn();
+      });
+    };
+    on('G', () => {
+      debugState.god = !debugState.god;
+      this.toast('God mode', debugState.god ? 'ON' : 'OFF');
+    });
+    on('X', () => this.hostiles().forEach((e) => (e.hp = 0)));
+    on('B', () => this.warpTo(this.run.floorMap!.boss));
+    on('N', () => this.descend());
+    on('T', () => {
+      const owned = new Set(this.run.items.map((i) => i.id));
+      const pool = ITEMS.filter((i) => !owned.has(i.id));
+      if (!pool.length) return;
+      const item = this.run.rng.pick(pool);
+      this.run.addItem(item.id);
+      this.toast(item.name, item.description);
+    });
+    on('H', () => this.run.heal(this.run.stats.maxHp));
+    on('OPEN_BRACKET', () => this.run.story.adjustKarma(-25));
+    on('CLOSED_BRACKET', () => this.run.story.adjustKarma(25));
+  }
+
+  private warpTo(room: RoomNode): void {
+    if (room === this.room) return;
+    this.transitioning = true;
+    this.run.room = room;
+    this.scene.restart({});
   }
 
   // ----------------------------------------------------------------- helpers

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH, TILE } from '../config';
+import { settings } from '../core/settings';
 import type { ShotFlags } from '../core/stats';
 import type { AbilityId, WeaknessId } from '../data/abilities';
 import type { Enemy } from '../entities/Enemy';
@@ -155,7 +156,7 @@ export const bossDirected: Behaviour = (ctx) => {
     if (!enemy.body.blocked.none || now >= m.until) {
       m.state = State.Stagger;
       m.until = now + (bp.weakness === 'stagger_after_charge' ? 1500 : 700);
-      ctx.player.scene.cameras.main.shake(120, 0.008);
+      settings.shake(ctx.player.scene.cameras.main, 120, 0.008);
       if (!enemy.body.blocked.none) impact(ctx, enemy.x + m.cx * enemy.def.radius, enemy.y + m.cy * enemy.def.radius, 0xc0b090, 10);
     }
     return;

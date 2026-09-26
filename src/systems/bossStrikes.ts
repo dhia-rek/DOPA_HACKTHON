@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { BehaviourContext } from './behaviours';
+import { settings } from '../core/settings';
 
 /**
  * Boss melee and impact effects, shared by `boss_directed` and the authored
@@ -44,7 +45,7 @@ export function swipe(ctx: BehaviourContext, dir: Phaser.Math.Vector2): void {
   if (to.length() <= reach + 20 && off <= half + 0.15) {
     ctx.hurtPlayer?.(enemy.contactDamage, enemy.def.id, enemy.x, enemy.y);
     impact(ctx, player.x, player.y, 0xffe0c0, 10);
-    scene.cameras.main.shake(140, 0.01);
+    settings.shake(scene.cameras.main, 140, 0.01);
   }
 }
 
@@ -55,7 +56,7 @@ export function shockwave(ctx: BehaviourContext, radius = 190): void {
   const ring = scene.add.circle(enemy.x, enemy.y, enemy.def.radius * 0.6).setStrokeStyle(10, 0xf0d8a0, 0.95).setDepth(19);
   scene.tweens.add({ targets: ring, radius, alpha: 0, duration: 400, ease: 'Cubic.Out', onComplete: () => ring.destroy() });
   impact(ctx, enemy.x, enemy.y, 0xc0b090, 12);
-  scene.cameras.main.shake(200, 0.014);
+  settings.shake(scene.cameras.main, 200, 0.014);
 
   const dist = Phaser.Math.Distance.Between(enemy.x, enemy.y, player.x, player.y);
   if (dist <= radius) {
