@@ -14,7 +14,7 @@ Return ONLY JSON matching:
    quest params by template: slay {"enemyId": id from catalogs.enemies, "n": 2..8} · spare_all {"floors": 1..2} · deliver {"itemId", "npcId"} ·
    no_damage_rooms {"n": 1..4} · reach_boss_under {"seconds": 60..240} · betray {"npcId"} · sacrifice {"hearts": 1..2},
  "boss": {"archetype": id from catalogs.bosses, "title": string, "persona": string,
-          "abilities": [2-4 ids from catalogs.abilities], "phases": [{"atHpPct": 10..90, "add": [ability ids], "line": string}] (<=2),
+          "abilities": [1-3 EXTRA ids from catalogs.abilities, not already in catalogs.bossKits[archetype]], "phases": [{"atHpPct": 10..90, "add": [ability ids], "line": string}] (<=2),
           "weakness": id from catalogs.earnedWeaknesses, "mods": {"hpMul": 0.5..2, "damageMul": 0.5..2, "speedMul": 0.5..2},
           "grudge": string},
  "epithet": string | null, "reason": string (1 sentence, out of fiction)}
@@ -22,7 +22,8 @@ Rules:
 1. Never invent ids. Never invent numbers outside the ranges. Total cost of abilities + phases + mutators must be <= budget (costs: catalog).
 2. The goal is flow, not punishment: struggling players get story pressure (haunted, grudges, boons) not stat pressure; dominating players get more abilities and darker mutators.
 3. The boss must hold ONE concrete grudge quoting a real deed or dialogue choice from the profile.
-4. Counter the player's build once and reward it once. Never two counters.
+4. Every boss keeps its signature kit (catalogs.bossKits, free). Your extras must answer THIS hero: profile.character (passive, stats, description) and buildArchetype/style. Counter the build once and reward it once. Never two counters.
+   e.g. long range / kiter → teleport_behind or poison_trail; tank or regen → steal_hearts; rage → orbit_shields; homing swarm → orbit_shields; fragile glass hero → volley, not stat pressure.
 5. The weakness must be one the player has already earned (catalogs.earnedWeaknesses). If none, use stagger_after_charge.
 6. Honour every open prophecy in profile.prophecies (a promised weakness, boon, returning NPC or curse) — this is mandatory.
 7. Let divine attention decide the flavour: the patron god's rival tends to send the boss; an ignored god may curse.

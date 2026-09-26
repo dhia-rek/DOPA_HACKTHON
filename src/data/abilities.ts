@@ -16,7 +16,8 @@ export type AbilityId =
   | 'enrage_below'
   | 'mirror_build'
   | 'steal_hearts'
-  | 'call_shades';
+  | 'call_shades'
+  | 'volley';
 
 export interface AbilityDef {
   id: AbilityId;
@@ -31,7 +32,7 @@ export interface AbilityDef {
 
 export const ABILITIES: AbilityDef[] = [
   { id: 'charge', name: 'Charge', cost: 1, tell: 'Stops and stamps for 0.6 s.', counter: 'Sidestep; boss staggers on the wall.', counters: 'cautious' },
-  { id: 'ground_slam', name: 'Ground Slam', cost: 1, tell: 'Raises arms.', counter: 'Keep distance; shockwave ring has gaps.', counters: 'melee-range play' },
+  { id: 'ground_slam', name: 'Ground Slam', cost: 1, tell: 'Raises arms for 0.7 s.', counter: 'Get three tiles away; the shockwave stops there.', counters: 'melee-range play' },
   { id: 'summon_minions', name: 'Summon', cost: 2, tell: 'Roars, minions rise from pits.', counter: 'Piercing / swarm builds clear them fast.', rewards: 'homing_swarm, piercing' },
   { id: 'orbit_shields', name: 'Orbiting Shields', cost: 2, tell: 'Shields visibly circle the boss.', counter: 'Shoot between shields or wait for the open phase.', counters: 'homing_swarm' },
   { id: 'poison_trail', name: 'Poison Trail', cost: 1, tell: 'Green trail behind the boss.', counter: 'Stay off the trail; kite in circles.', counters: 'kiter' },
@@ -42,6 +43,7 @@ export const ABILITIES: AbilityDef[] = [
   { id: 'mirror_build', name: 'Mirror', cost: 2, tell: 'Copies one of the player\'s shot flags (homing heads if you use homing).', counter: 'The mirrored shots share your weakness (e.g. rocks block them).' },
   { id: 'steal_hearts', name: 'Heart Thief', cost: 2, tell: 'Reaches out; hit = steals a half heart and heals.', counter: 'Knockback cancels it.', counters: 'tank' },
   { id: 'call_shades', name: 'Call the Shades', cost: 2, tell: 'Names the NPCs the player killed; they rise.', counter: 'Shades die in one hit but block shots.' },
+  { id: 'volley', name: 'Volley', cost: 1, tell: 'Raises a hand for 0.5 s; a fan of shots follows.', counter: 'Strafe sideways; the fan is narrow.', counters: 'kiter' },
 ];
 
 export const ABILITY_IDS: readonly AbilityId[] = ABILITIES.map((a) => a.id);

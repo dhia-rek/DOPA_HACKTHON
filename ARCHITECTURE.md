@@ -127,11 +127,22 @@ Then add `'cyclops'` to a stage's `enemyPool` in `data/stages.ts`.
    `enemyShots.shoot()` to fire.
 
 ### Add a boss
-Same as an enemy with `isBoss: true` and its own `boss_*` behaviour; add it to a
-stage's `bossPool` **or** to a faction's `FRONTS[stage][faction].bossPool` in
+Same as an enemy with `isBoss: true`, a `radius` well above the hero's 20 px
+(bosses are 46–58) and its own `boss_*` behaviour; add it to a stage's
+`bossPool` **or** to a faction's `FRONTS[stage][faction].bossPool` in
 `data/war.ts` so it only appears when that faction holds the floor. Give it a
 `lore` id (`data/lore.ts`) so kills move the war tide and dialogue knows its
-kin. Boss rooms use the `boss` templates (need a `B`).
+kin, and an `abilities` kit (`data/abilities.ts` ids) — its signature moves,
+free of the Director's budget; the Director adds 1–3 extras keyed off the hero
+(`profile.character`, build, style) and `boss_directed` runs kit + extras.
+Behaviours declare body language with `enemy.pose('windup' | 'charge' |
+'stagger' | 'blink')`; `Enemy` eases the sprite (breathing, lean, stretch) and
+bosses accelerate/brake instead of snapping. At arm's reach every boss swipes
+(`systems/bossStrikes.ts`: wedge + `ctx.hurtPlayer`), `ground_slam` is a real
+shockwave, and a judged boss shows its verdict in the fight
+(`systems/bossJudgement.ts`: stance colour by alignment → aura, hp bar, banner
+with grudge, own kit and the extras taken against this hero). Boss rooms use
+the `boss` templates (need a `B`).
 
 ### Add a stage
 ```ts
