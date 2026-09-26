@@ -4,6 +4,7 @@ import type { BehaviourName } from '../data/enemies';
 import type { Enemy } from '../entities/Enemy';
 import type { Player } from '../entities/Player';
 import type { ProjectilePool } from '../entities/Projectile';
+import { bossDirected } from './bossAbilities';
 
 export interface BehaviourContext {
   enemy: Enemy;
@@ -14,18 +15,24 @@ export interface BehaviourContext {
   delta: number;
   /** Multiplier from the run's difficulty (endless loops). */
   difficulty: number;
+  /** Spawn another enemy into the room (summons). Optional: behaviours must cope without it. */
+  spawn?: (id: string, x: number, y: number) => Enemy;
+  /** Enemy ids the room may summon from (the stage's pool). */
+  summonPool?: string[];
+  /** Announce a boss line (phase change, ability call-out). */
+  announce?: (title: string, text: string) => void;
 }
 
 export type Behaviour = (ctx: BehaviourContext) => void;
 
-const toPlayer = (e: Enemy, p: Player): Phaser.Math.Vector2 => new Phaser.Math.Vector2(p.x - e.x, p.y - e.y);
+export const toPlayer = (e: Enemy, p: Player): Phaser.Math.Vector2 => new Phaser.Math.Vector2(p.x - e.x, p.y - e.y);
 
 /**
  * Move toward a target, sliding sideways for a moment when a rock/pit blocks
  * the way. Cheap obstacle avoidance; swap for A* over the room grid later if
  * rooms get maze-like.
  */
-function seek(enemy: Enemy, toTarget: Phaser.Math.Vector2, speed: number, now: number): void {
+export function seek(enemy: Enemy, toTarget: Phaser.Math.Vector2, speed: number, now: number): void {
   const m = enemy.memory;
   const dir = toTarget.clone().normalize();
   const b = enemy.body.blocked;
@@ -51,7 +58,7 @@ function seek(enemy: Enemy, toTarget: Phaser.Math.Vector2, speed: number, now: n
   else enemy.moveTowards(dir.x * speed, dir.y * speed);
 }
 
-function shootAt(ctx: BehaviourContext, dx: number, dy: number, speed?: number): void {
+export function shootAt(ctx: BehaviourContext, dx: number, dy: number, speed?: number): void {
   const { enemy } = ctx;
   ctx.enemyShots.shoot({
     x: enemy.x,
@@ -65,7 +72,7 @@ function shootAt(ctx: BehaviourContext, dx: number, dy: number, speed?: number):
   });
 }
 
-function ring(ctx: BehaviourContext, count: number, offset = 0, speed?: number): void {
+export function ring(ctx: BehaviourContext, count: number, offset = 0, speed?: number): void {
   for (let i = 0; i < count; i++) {
     const a = offset + (Math.PI * 2 * i) / count;
     shootAt(ctx, Math.cos(a), Math.sin(a), speed);
@@ -292,4 +299,5 @@ export const BEHAVIOURS: Record<BehaviourName, Behaviour> = {
   orbiter,
   boss_minotaur: bossMinotaur,
   boss_hydra: bossHydra,
+  boss_directed: bossDirected,
 };

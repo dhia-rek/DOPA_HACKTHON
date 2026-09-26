@@ -19,7 +19,7 @@ export class GameOverScene extends Phaser.Scene {
     frame.lineStyle(2, COLORS.uiBorder).strokeRoundedRect(185, 120, 590, 350, 8);
     frame.lineStyle(1, COLORS.uiBorder, 0.7).lineBetween(260, 217, 700, 217);
     this.add.text(cx, 91, '✦  CHRONICLE OF THE DESCENT  ✦', { fontFamily: mono, fontSize: '15px', color: COLORS.textDim }).setOrigin(0.5);
-    const heading = this.add.text(cx, 174, run.won ? 'THE DESCENT ENDS' : 'YOU DIED', {
+    const heading = this.add.text(cx, 174, 'YOU DIED', {
       fontFamily: mono, fontSize: '44px', color: `#${(run.won ? COLORS.karmaBlessed : COLORS.karmaCursed).toString(16).padStart(6, '0')}`,
     }).setOrigin(0.5).setShadow(0, 3, '#000000', 8);
     this.tweens.add({ targets: heading, alpha: { from: 0.8, to: 1 }, duration: 1700, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
@@ -28,7 +28,7 @@ export class GameOverScene extends Phaser.Scene {
         cx,
         243,
         [
-          `${run.character.name} ${run.won ? 'survived' : 'fell'} on floor ${run.floor} · ${run.stage.name}`,
+          `${run.character.name} fell on floor ${run.floor} · ${run.stage.name}${run.won ? ' · Nostos achieved' : ''}`,
           `${run.killsThisRun} ${run.killsThisRun === 1 ? 'kill' : 'kills'}  ·  ${run.items.length} ${run.items.length === 1 ? 'item' : 'items'}  ·  ${mins}m ${secs.toString().padStart(2, '0')}s`,
           `seed ${run.seed}`,
         ].join('\n'),

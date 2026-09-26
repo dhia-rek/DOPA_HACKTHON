@@ -25,6 +25,8 @@ export interface GameEvents {
   /** The player picked an option in a dialogue. */
   dialogue_choice: { dialogueId: string; kind: string; optionId: string; karmaDelta: number };
   story_changed: { karma: number };
+  /** The floor quest ended (tracked by systems/quests.ts). */
+  quest_settled: { templateId: string; outcome: 'done' | 'failed'; reward: string };
   hud_update: Record<string, never>;
 }
 

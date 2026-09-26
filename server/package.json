@@ -2,7 +2,7 @@
   "name": "nekyia-dialogue-server",
   "private": true,
   "version": "0.0.1",
-  "description": "Gemini dialogue service for Nekyia: POST DialogueRequest -> DialogueScript",
+  "description": "Gemini dialogue + Director service for Nekyia: POST DialogueRequest -> DialogueScript, POST /director DirectorRequest -> FloorDirective",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
