@@ -2,6 +2,7 @@ import { ABILITY_IDS, WEAKNESS_IDS, WeaknessId } from '../data/abilities';
 import { ENEMIES } from '../data/enemies';
 import { MUTATOR_IDS } from '../data/mutators';
 import { QUEST_TEMPLATE_IDS } from '../data/quests';
+import { STAGES, StageDef } from '../data/stages';
 import type { DirectorRequest, PlayerProfile, Skill, Style, Traits, Voice } from '../director/types';
 import { events } from './events';
 import type { RunState } from './run';
@@ -124,25 +125,42 @@ function traitsOf(run: RunState, skill: Skill): Traits {
   };
 }
 
-/** Difficulty points for this floor: grows with depth, shrinks when the player struggles. */
-export function budgetFor(run: RunState, skill: Skill): number {
-  const base = 4 + run.floor + run.loop * 2;
+/** Stage the given floor belongs to (mirrors RunState.stage / loop, which only know the current floor). */
+export function stageForFloor(floor: number): StageDef {
+  return STAGES[(floor - 1) % STAGES.length];
+}
+const loopForFloor = (floor: number): number => Math.floor((floor - 1) / STAGES.length);
+
+/** Difficulty points for `floor`: grows with depth, shrinks when the player struggles. Never below the cheapest ability pair. */
+export function budgetFor(run: RunState, skill: Skill, floor = run.floor): number {
+  const base = 4 + floor + loopForFloor(floor) * 2;
   const factor = skill === 'struggling' ? 0.6 : skill === 'dominating' ? 1.4 : 1;
-  return Math.round(base * factor);
+  return Math.max(2, Math.round(base * factor));
 }
 
-export function legendOf(run: RunState): string {
+export function legendOf(run: RunState, stage: StageDef = run.stage): string {
   const s = run.story;
   const deeds = s.deeds.slice(-6).map((d) => d.summary);
-  return deeds.length ? deeds.join(' ') : `${run.character.name} descends into the ${run.stage.name}.`;
+  return deeds.length ? deeds.join(' ') : `${run.character.name} descends into the ${stage.name}.`;
 }
 
+/**
+ * Profile for the floor the Director is judging. `floor` may be `run.floor + 1`
+ * (prefetch at boss-room entry): stage catalogs, stageName and budget follow
+ * the target floor; deeds, build and performance are the live run.
+ */
 export function buildProfile(run: RunState, floor = run.floor): PlayerProfile {
   const hpPct = run.hp / run.stats.maxHp;
   const skill = skillOf(run, hpPct);
-  const stage = run.stage;
+  const stage = stageForFloor(floor);
   return {
-    story: run.storySnapshot(),
+    story: run.story.snapshot({
+      characterId: run.character.id,
+      characterName: run.character.name,
+      floor,
+      stageName: stage.name,
+      items: run.items.map((i) => i.name),
+    }),
     traits: traitsOf(run, skill),
     voice: voiceOf(run),
     buildArchetype: buildArchetype(run),
@@ -152,14 +170,14 @@ export function buildProfile(run: RunState, floor = run.floor): PlayerProfile {
     patron: run.story.patron,
     quests: run.story.quests.map((q) => ({ templateId: q.templateId, outcome: q.outcome })),
     prophecies: run.story.dueProphecies(floor),
-    legend: legendOf(run),
+    legend: legendOf(run, stage),
     performance: {
       hpPct,
       dmgTakenLastFloor: run.damageTakenThisFloor,
       deathsThisSession: telemetry.deathsThisSession,
       runsPlayed: save.data.runs,
     },
-    budget: budgetFor(run, skill),
+    budget: budgetFor(run, skill, floor),
     catalogs: {
       mutators: [...MUTATOR_IDS],
       abilities: [...ABILITY_IDS],
@@ -178,7 +196,7 @@ export function directorRequest(run: RunState, floor = run.floor): DirectorReque
   return {
     profile: buildProfile(run, floor),
     floor,
-    stageId: run.stage.id,
+    stageId: stageForFloor(floor).id,
     seed: `${run.seed}:${floor}`,
   };
 }

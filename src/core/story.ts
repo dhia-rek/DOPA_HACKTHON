@@ -1,6 +1,7 @@
 import type { GodId } from '../data/gods';
 import { GOD_IDS } from '../data/gods';
 import { events } from './events';
+import { type FloorDirective, honours } from '../director/types';
 
 /**
  * The run's moral/narrative memory. Everything the player does that the story
@@ -146,8 +147,16 @@ export class StoryState {
     return this.prophecies.filter((p) => p.madeOnFloor < floor);
   }
 
-  settleProphecies(floor: number): void {
-    for (const p of this.dueProphecies(floor)) this.prophecies.splice(this.prophecies.indexOf(p), 1);
+  /**
+   * Remove due prophecies once a floor directive has been applied. Pass the
+   * directive to keep unfulfilled truthful promises pending for a later floor
+   * (e.g. an `npc_returns` whose NPC is not in this stage's pool).
+   */
+  settleProphecies(floor: number, directive?: FloorDirective): void {
+    for (const p of this.dueProphecies(floor)) {
+      if (directive && !honours(p, directive)) continue;
+      this.prophecies.splice(this.prophecies.indexOf(p), 1);
+    }
   }
 
   get alignment(): StorySnapshot['alignment'] {

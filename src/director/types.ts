@@ -134,8 +134,10 @@ const ids = <T extends string>(v: unknown, allowed: readonly T[], max: number): 
 
 /**
  * Sanitise a directive that came from an LLM. Unknown ids are dropped, numbers
- * clamped, the budget enforced (abilities and mutators are trimmed from the
- * end until the cost fits). Returns null only if no usable boss remains.
+ * clamped, the budget enforced (phases, mutators, then abilities are trimmed
+ * from the end; if two abilities still do not fit, the cheapest pair is used).
+ * Truthful due prophecies are forced in (boss weakness, returning NPC, promised
+ * boon/curse modifier). Returns null only if no usable boss remains.
  */
 export function validateDirective(raw: unknown, req: DirectorRequest): FloorDirective | null {
   if (typeof raw !== 'object' || raw === null) return null;
@@ -160,11 +162,12 @@ export function validateDirective(raw: unknown, req: DirectorRequest): FloorDire
       phases.push({ atHpPct: num(ph.atHpPct, 10, 90, 50), add, line: str(ph.line, 160) });
     }
   }
+  const due = req.profile.prophecies.filter((p) => p.truthful);
   const earned = cat.earnedWeaknesses.filter((w): w is WeaknessId => (WEAKNESS_IDS as readonly string[]).includes(w));
+  const promisedWeakness = due.find((p) => p.kind === 'boss_weakness' && (WEAKNESS_IDS as readonly string[]).includes(p.payload))?.payload as WeaknessId | undefined;
   const wantedWeakness = str(bossRaw.weakness, 40);
-  const weakness: WeaknessId = earned.includes(wantedWeakness as WeaknessId)
-    ? (wantedWeakness as WeaknessId)
-    : earned[0] ?? 'stagger_after_charge';
+  const weakness: WeaknessId =
+    promisedWeakness ?? (earned.includes(wantedWeakness as WeaknessId) ? (wantedWeakness as WeaknessId) : earned[0] ?? 'stagger_after_charge');
   const modsRaw = (typeof bossRaw.mods === 'object' && bossRaw.mods !== null ? bossRaw.mods : {}) as Record<string, unknown>;
 
   let mutators = ids(r.mutators, MUTATOR_IDS, 2);
@@ -178,6 +181,7 @@ export function validateDirective(raw: unknown, req: DirectorRequest): FloorDire
     mutators = mutators.filter((_, i) => i !== last);
   }
   while (cost() > budget && abilities.length > 2) abilities = abilities.slice(0, -1);
+  if (cost() > budget) abilities = cheapestPair(abilities);
 
   const enemyWeights: Record<string, number> = {};
   if (typeof r.enemyWeights === 'object' && r.enemyWeights !== null) {
@@ -194,6 +198,9 @@ export function validateDirective(raw: unknown, req: DirectorRequest): FloorDire
       const role = o.role === 'quest_giver' || o.role === 'victim' || o.role === 'witness' ? o.role : 'witness';
       npcs.push({ id, name: str(o.name, 24) || undefined, role });
     }
+  }
+  for (const p of due) {
+    if (p.kind === 'npc_returns' && cat.npcs.includes(p.payload) && !npcs.some((n) => n.id === p.payload)) npcs.push({ id: p.payload, role: 'witness' });
   }
 
   let quest: QuestOffer | undefined;
@@ -214,7 +221,13 @@ export function validateDirective(raw: unknown, req: DirectorRequest): FloorDire
   }
 
   const modifierRaw = typeof r.modifier === 'object' && r.modifier !== null ? (r.modifier as Record<string, unknown>) : null;
-  const modifier = modifierRaw && str(modifierRaw.id, 40) ? { id: str(modifierRaw.id, 40), label: str(modifierRaw.label, 60) } : undefined;
+  const promisedMod = due.find((p) => p.kind === 'boon_next_floor' || p.kind === 'curse');
+  const modifier =
+    modifierRaw && str(modifierRaw.id, 40)
+      ? { id: str(modifierRaw.id, 40), label: str(modifierRaw.label, 60) }
+      : promisedMod
+        ? { id: promisedMod.payload.slice(0, 40), label: promisedMod.kind === 'curse' ? 'A curse sworn at the shrine' : 'A boon sworn at the shrine' }
+        : undefined;
 
   return {
     id: str(r.id, 80) || `director_${req.stageId}_${req.seed}`,
@@ -246,3 +259,27 @@ export function validateDirective(raw: unknown, req: DirectorRequest): FloorDire
 }
 
 const abilityCost = (id: AbilityId): number => getAbility(id).cost;
+
+/** Two cheapest abilities; ties go to the ones the Director asked for. */
+function cheapestPair(wanted: AbilityId[]): AbilityId[] {
+  const rank = (a: AbilityId): number => abilityCost(a) * 2 + (wanted.includes(a) ? 0 : 1);
+  return [...ABILITY_IDS].sort((a, b) => rank(a) - rank(b)).slice(0, 2);
+}
+
+/**
+ * True if the directive delivers the promise. Lies (`truthful: false`, Hermes)
+ * are never "honoured" but still settle. Used to decide which prophecies to
+ * remove from StoryState once the floor is applied.
+ */
+export function honours(p: Prophecy, d: FloorDirective): boolean {
+  if (!p.truthful) return true;
+  switch (p.kind) {
+    case 'boss_weakness':
+      return d.boss.weakness === p.payload;
+    case 'npc_returns':
+      return d.npcs.some((n) => n.id === p.payload);
+    case 'boon_next_floor':
+    case 'curse':
+      return d.modifier?.id === p.payload;
+  }
+}

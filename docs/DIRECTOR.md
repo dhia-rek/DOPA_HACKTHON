@@ -82,7 +82,7 @@ computed in TS so the prompt carries conclusions, not raw logs:
 * **Orbs** are god-coloured pickups → `story.favour(god)`. Ignored god for 2 floors → curse; patron's rival → boss.
 * **Shrines** make **prophecies** (`story.promise({...})`): `boss_weakness`, `boon_next_floor`, `npc_returns`, `curse`.
   Only Hermes may set `truthful: false`, once per run. `dueProphecies(floor)` goes into the profile;
-  `settleProphecies(floor)` after the directive is applied.
+  `settleProphecies(floor, directive)` after the directive is applied — only promises the directive `honours()` are removed (validator forces truthful ones in when the stage catalog allows; lies from Hermes always settle).
 * **Quests** are templates (`slay`, `spare_all`, `deliver`, `no_damage_rooms`, `reach_boss_under`, `betray`, `sacrifice`)
   with param specs; outcomes land in `story.quests` and feed the next judgement.
 

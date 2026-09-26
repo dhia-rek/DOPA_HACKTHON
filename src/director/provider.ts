@@ -22,16 +22,15 @@ export class HttpDirectorProvider implements DirectorProvider {
   ) {}
 
   async direct(req: DirectorRequest): Promise<FloorDirective> {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), this.timeoutMs);
     try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), this.timeoutMs);
       const res = await fetch(this.url, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(req),
         signal: ctrl.signal,
       });
-      clearTimeout(timer);
       if (!res.ok) throw new Error(`director service ${res.status}`);
       const directive = validateDirective(await res.json(), req);
       if (!directive) throw new Error('director service returned an invalid directive');
@@ -39,6 +38,8 @@ export class HttpDirectorProvider implements DirectorProvider {
     } catch (err) {
       console.warn('[director] falling back to mock:', err);
       return this.fallback.direct(req);
+    } finally {
+      clearTimeout(timer);
     }
   }
 }
@@ -68,7 +69,9 @@ export class MockDirectorProvider implements DirectorProvider {
     else if (!struggling) abilities.push(rng.pick<AbilityId>(['projectile_ring', 'poison_trail', 'teleport_behind']));
 
     const grudgeDeed = s.recentDeeds[s.recentDeeds.length - 1];
-    const promised = p.prophecies.find((x) => x.kind === 'boss_weakness');
+    const promised = p.prophecies.find((x) => x.kind === 'boss_weakness' && x.truthful);
+    const returning = p.prophecies.filter((x) => x.kind === 'npc_returns' && x.truthful && cat.npcs.includes(x.payload)).map((x) => ({ id: x.payload, role: 'witness' }));
+    const promisedMod = p.prophecies.find((x) => (x.kind === 'boon_next_floor' || x.kind === 'curse') && x.truthful);
     const archetype = rng.pick(cat.bosses);
 
     const raw = {
@@ -78,8 +81,12 @@ export class MockDirectorProvider implements DirectorProvider {
         : `You walk with ${s.npcsSpared > 0 ? 'mercy' : 'steel'} in your hands.\nThe gods take note, ${s.characterName}.`,
       mutators,
       enemyWeights: p.style === 'kiter' ? { centaur_archer: 1.5 } : {},
-      modifier: struggling ? { id: 'boon_heart', label: 'A god pities you: +1 heart' } : null,
-      npcs: cat.npcs.length ? [{ id: cat.npcs[0], role: 'witness' }] : [],
+      modifier: promisedMod
+        ? { id: promisedMod.payload, label: promisedMod.kind === 'curse' ? 'The shrine\'s curse follows you' : 'The shrine keeps its word' }
+        : struggling
+          ? { id: 'boon_heart', label: 'A god pities you: +1 heart' }
+          : null,
+      npcs: returning.length ? returning : cat.npcs.length ? [{ id: cat.npcs[0], role: 'witness' }] : [],
       quest: cat.npcs.length && !cruel ? { templateId: 'spare_all', params: { floors: 1 }, giverNpcId: cat.npcs[0], hook: 'Spare the innocent of this floor and the gods will remember.', reward: 'coins:10' } : null,
       boss: {
         archetype,
