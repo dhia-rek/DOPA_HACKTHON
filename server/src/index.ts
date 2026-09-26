@@ -4,6 +4,7 @@ import express from 'express';
 import { type DialogueRequest, validateScript } from '../../src/dialogue/types';
 import { cacheKey, ScriptCache } from './cache';
 import { CONFIG } from './config';
+import { gradiumConfigured, synthesizeGradium } from './gradium';
 import { directRaw, generateJson, generateRaw, llmConfigured, synthesizeSpeech } from './llm';
 import { type DirectorRequest, type FloorDirective, validateDirective } from '../../src/director/types';
 import { TRIAL_SYSTEM_PROMPT } from '../../src/trials/prompt';
@@ -24,7 +25,7 @@ function parseRequest(body: unknown): DialogueRequest | null {
   }
   if (typeof b.story !== 'object' || b.story === null || Array.isArray(b.story)) return null;
   if (JSON.stringify(b.story).length > 8000) return null;
-  if (b.language !== undefined && typeof b.language !== 'string') return null;
+  if (b.language !== undefined && (typeof b.language !== 'string' || b.language.length > 16)) return null;
   return b as unknown as DialogueRequest;
 }
 
@@ -38,7 +39,7 @@ function parseDirectorRequest(body: unknown): DirectorRequest | null {
   if (typeof b.seed !== 'string' || !b.seed || typeof b.stageId !== 'string' || typeof b.floor !== 'number') return null;
   if (typeof b.profile !== 'object' || b.profile === null || Array.isArray(b.profile)) return null;
   if (JSON.stringify(b.profile).length > 24000) return null;
-  if (b.language !== undefined && typeof b.language !== 'string') return null;
+  if (b.language !== undefined && (typeof b.language !== 'string' || b.language.length > 16)) return null;
   return b as unknown as DirectorRequest;
 }
 
@@ -61,7 +62,7 @@ app.use(cors({ origin: CONFIG.corsOrigin === '*' ? true : CONFIG.corsOrigin.spli
 app.use(express.json({ limit: '64kb' }));
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, llm: llmConfigured, model: CONFIG.model, cached: cache.size });
+  res.json({ ok: true, llm: llmConfigured, tts: gradiumConfigured ? 'gradium' : llmConfigured ? 'gemini' : null, model: CONFIG.model, cached: cache.size });
 });
 
 app.post('/', async (req, res) => {
@@ -145,12 +146,12 @@ app.post('/director', async (req, res) => {
 function parseTrialRequest(body: unknown): TrialRequest | null {
   if (typeof body !== 'object' || body === null) return null;
   const b = body as Record<string, unknown>;
-  if (typeof b.seed !== 'string' || !b.seed) return null;
+  if (typeof b.seed !== 'string' || !b.seed || b.seed.length > 200) return null;
   if (typeof b.story !== 'object' || b.story === null || Array.isArray(b.story)) return null;
   if (JSON.stringify(b.story).length > 8000) return null;
-  if (!Array.isArray(b.enemyPool) || !b.enemyPool.every((e) => typeof e === 'string') || b.enemyPool.length > 20) return null;
-  if (typeof b.normalRooms !== 'number') return null;
-  if (b.language !== undefined && typeof b.language !== 'string') return null;
+  if (!Array.isArray(b.enemyPool) || !b.enemyPool.every((e) => typeof e === 'string' && e.length <= 40) || b.enemyPool.length > 20) return null;
+  if (typeof b.normalRooms !== 'number' || !Number.isInteger(b.normalRooms) || b.normalRooms < 0 || b.normalRooms > 50) return null;
+  if (b.language !== undefined && (typeof b.language !== 'string' || b.language.length > 16)) return null;
   return b as unknown as TrialRequest;
 }
 
@@ -196,11 +197,13 @@ app.post('/trial', async (req, res) => {
 function parseOmenRequest(body: unknown): OmenRequest | null {
   if (typeof body !== 'object' || body === null) return null;
   const b = body as Record<string, unknown>;
-  if (typeof b.seed !== 'string' || !b.seed || typeof b.floor !== 'number' || typeof b.stageName !== 'string') return null;
+  if (typeof b.seed !== 'string' || !b.seed || b.seed.length > 200) return null;
+  if (typeof b.floor !== 'number' || !Number.isInteger(b.floor) || b.floor < 1 || b.floor > 999) return null;
+  if (typeof b.stageName !== 'string' || b.stageName.length > 80) return null;
   if (typeof b.story !== 'object' || b.story === null || Array.isArray(b.story)) return null;
   if (JSON.stringify(b.story).length > 8000) return null;
-  if (!Array.isArray(b.enemyPool) || !b.enemyPool.every((e) => typeof e === 'string') || b.enemyPool.length > 20) return null;
-  if (b.language !== undefined && typeof b.language !== 'string') return null;
+  if (!Array.isArray(b.enemyPool) || !b.enemyPool.every((e) => typeof e === 'string' && e.length <= 40) || b.enemyPool.length > 20) return null;
+  if (b.language !== undefined && (typeof b.language !== 'string' || b.language.length > 16)) return null;
   return b as unknown as OmenRequest;
 }
 
@@ -253,11 +256,11 @@ app.post('/voice', async (req, res) => {
     res.status(400).json({ error: 'body must be a VoiceRequest' });
     return;
   }
-  if (!llmConfigured) {
-    res.status(503).json({ error: 'LLM not configured (GEMINI_API_KEY missing)' });
+  if (!gradiumConfigured && !llmConfigured) {
+    res.status(503).json({ error: 'TTS not configured (GRADIUM_API_KEY and GEMINI_API_KEY missing)' });
     return;
   }
-  const key = `${request.voice}:${request.mood}:${request.text}`;
+  const key = `${request.speakerId ?? ''}:${request.voice}:${request.mood}:${request.text}`;
   const cached = voiceCache.get(key);
   if (cached) {
     res.setHeader('x-cache', 'hit');
@@ -269,7 +272,7 @@ app.post('/voice', async (req, res) => {
     return;
   }
   try {
-    const wav = await synthesizeSpeech(request);
+    const wav = gradiumConfigured ? await synthesizeGradium(request) : await synthesizeSpeech(request);
     if (voiceCache.size >= VOICE_CACHE_MAX) voiceCache.delete(voiceCache.keys().next().value!);
     voiceCache.set(key, wav);
     res.setHeader('x-cache', 'miss');
@@ -281,5 +284,5 @@ app.post('/voice', async (req, res) => {
 });
 
 app.listen(CONFIG.port, () => {
-  console.log(`nekyia dialogue+director+trial+voice server on http://localhost:${CONFIG.port} (model ${CONFIG.model}, llm ${llmConfigured ? 'ready' : 'NOT configured'})`);
+  console.log(`nekyia dialogue+director+trial+voice server on http://localhost:${CONFIG.port} (model ${CONFIG.model}, llm ${llmConfigured ? 'ready' : 'NOT configured'}, tts ${gradiumConfigured ? 'gradium' : llmConfigured ? 'gemini' : 'NOT configured'})`);
 });

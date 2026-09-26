@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
+import { OK_KEY } from '../core/input';
 import { settings } from '../core/settings';
 import { blip } from '../core/sfx';
 import type { CharacterDef } from '../data/characters';
@@ -83,7 +84,7 @@ export class BossIntroScene extends Phaser.Scene {
     });
 
     const skip = this.add
-      .text(W / 2, H - 14, 'ENTER  ·  SKIP', { fontFamily: mono, fontSize: '12px', color: COLORS.textDim })
+      .text(W / 2, H - 14, `${OK_KEY}  ·  SKIP`, { fontFamily: mono, fontSize: '12px', color: COLORS.textDim })
       .setOrigin(0.5, 1)
       .setDepth(10)
       .setAlpha(0);

@@ -63,16 +63,25 @@ export class MockDirectorProvider implements DirectorProvider {
     else if (p.style === 'aggressive') mutators.push('arena');
     else if (p.patron === 'poseidon' || p.divineAttention.poseidon === 0) mutators.push('flooded');
 
-    const abilities: AbilityId[] = ['charge'];
-    abilities.push(p.buildArchetype.startsWith('homing') ? 'orbit_shields' : 'summon_minions');
-    if (s.npcsKilled >= 2) abilities.push('call_shades');
-    else if (!struggling) abilities.push(rng.pick<AbilityId>(['projectile_ring', 'poison_trail', 'teleport_behind']));
+    const archetype = rng.pick(cat.bosses);
+    const kit = cat.bossKits?.[archetype] ?? [];
+    const hero = p.character;
+    // Extras answer the hero: the kit is the boss's own, these are the Director's reading of the player.
+    const wanted: AbilityId[] = [];
+    if (p.buildArchetype.startsWith('homing') || hero.passive === 'rage') wanted.push('orbit_shields');
+    else if (p.style === 'kiter' || hero.stats.range >= 300) wanted.push('teleport_behind');
+    else wanted.push('summon_minions');
+    if (hero.passive === 'regen' || p.buildArchetype === 'tank') wanted.push('steal_hearts');
+    else if (s.npcsKilled >= 2) wanted.push('call_shades');
+    else if (hero.passive === 'glass') wanted.push('volley');
+    else if (!struggling) wanted.push(rng.pick<AbilityId>(['projectile_ring', 'poison_trail', 'ground_slam']));
+    const abilities = [...new Set(wanted.filter((a) => !kit.includes(a)))];
+    if (!abilities.length) abilities.push(kit.includes('ground_slam') ? 'projectile_ring' : 'ground_slam');
 
     const grudgeDeed = s.recentDeeds[s.recentDeeds.length - 1];
     const promised = p.prophecies.find((x) => x.kind === 'boss_weakness' && x.truthful);
     const returning = p.prophecies.filter((x) => x.kind === 'npc_returns' && x.truthful && cat.npcs.includes(x.payload)).map((x) => ({ id: x.payload, role: 'witness' }));
     const promisedMod = p.prophecies.find((x) => (x.kind === 'boon_next_floor' || x.kind === 'curse') && x.truthful);
-    const archetype = rng.pick(cat.bosses);
 
     const raw = {
       floorTitle: cruel ? rng.pick(['The Polis Remembers', 'Blood Debt']) : struggling ? 'A Kinder Road' : rng.pick(['Under Watching Eyes', 'The Descent Continues']),
@@ -99,7 +108,7 @@ export class MockDirectorProvider implements DirectorProvider {
         grudge: grudgeDeed ?? 'Another hero, another corpse for the labyrinth.',
       },
       epithet: s.npcsKilled >= 2 ? 'the Butcher' : s.npcsSpared >= 2 ? 'the Merciful' : null,
-      reason: `mock: alignment=${s.alignment}, skill=${p.skill}, style=${p.style}, build=${p.buildArchetype}, patron=${p.patron ?? 'none'}, budget=${p.budget}`,
+      reason: `mock: alignment=${s.alignment}, skill=${p.skill}, style=${p.style}, build=${p.buildArchetype}, hero=${hero.id}/${hero.passive ?? 'none'}, kit=${kit.join('+') || 'none'}, patron=${p.patron ?? 'none'}, budget=${p.budget}`,
     };
 
     const directive = validateDirective(raw, req);

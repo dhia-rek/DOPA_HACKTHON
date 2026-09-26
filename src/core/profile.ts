@@ -1,6 +1,8 @@
 import { ABILITY_IDS, WEAKNESS_IDS, WeaknessId } from '../data/abilities';
 import { ITEMS } from '../data/items';
-import { ENEMIES } from '../data/enemies';
+import { ENEMIES, getEnemy } from '../data/enemies';
+import { WarFaction } from '../data/lore';
+import { factionOf, Tide, tideDeltaFor } from '../data/war';
 import { MUTATOR_IDS } from '../data/mutators';
 import { QUEST_TEMPLATE_IDS } from '../data/quests';
 import { STAGES, StageDef } from '../data/stages';
@@ -148,14 +150,18 @@ export function legendOf(run: RunState, stage: StageDef = run.stage): string {
 
 /**
  * Profile for the floor the Director is judging. `floor` may be `run.floor + 1`
- * (prefetch at boss-room entry): stage catalogs, stageName and budget follow
- * the target floor; deeds, build and performance are the live run.
+ * (prefetched once the boss intro choice is made): front catalogs, stageName
+ * and budget follow the target floor; deeds, build and performance are the
+ * live run. The boss the player is fighting (or just slew) is never offered
+ * again, mirroring `generateFloor`'s `avoidBossId`.
  */
 export function buildProfile(run: RunState, floor = run.floor): PlayerProfile {
   const hpPct = run.hp / run.stats.maxHp;
   const skill = skillOf(run, hpPct);
   const stage = stageForFloor(floor);
-  const front = floor === run.floor ? run.currentFront : resolveFront(stage, run.story);
+  const avoidBoss = floor > run.floor ? run.floorMap?.boss.bossId : run.story.deeds.filter((d) => d.kind === 'boss_killed' && d.floor === floor - 1).pop()?.subject;
+  const front = floor === run.floor ? run.currentFront : resolveFront(stage, run.story, predictedTide(run, avoidBoss));
+  const bosses = front.bossPool.filter((id) => id !== avoidBoss);
   return {
     story: run.story.snapshot({
       characterId: run.character.id,
@@ -166,6 +172,20 @@ export function buildProfile(run: RunState, floor = run.floor): PlayerProfile {
       war: warSnapshot(front, run.story),
       lore: loreFor(undefined, run.character.lore, front),
     }),
+    character: {
+      id: run.character.id,
+      name: run.character.name,
+      title: run.character.title,
+      description: run.character.description,
+      passive: run.character.passive ?? null,
+      stats: {
+        maxHp: run.character.stats.maxHp,
+        speed: run.character.stats.speed,
+        damage: run.character.stats.damage,
+        fireRate: run.character.stats.fireRate,
+        range: run.character.stats.range,
+      },
+    },
     traits: traitsOf(run, skill),
     voice: voiceOf(run),
     buildArchetype: buildArchetype(run),
@@ -188,16 +208,29 @@ export function buildProfile(run: RunState, floor = run.floor): PlayerProfile {
       abilities: [...ABILITY_IDS],
       weaknesses: [...WEAKNESS_IDS],
       quests: [...QUEST_TEMPLATE_IDS],
-      enemies: [...stage.enemyPool],
-      bosses: [...stage.bossPool],
-      npcs: [...(stage.npcPool ?? [])].filter((id) => ENEMIES.some((e) => e.id === id && e.innocent)),
+      enemies: [...new Set(front.enemyPool)],
+      bosses: bosses.length ? bosses : [...front.bossPool],
+      bossKits: Object.fromEntries((bosses.length ? bosses : front.bossPool).map((id) => [id, [...(getEnemy(id).abilities ?? [])]])),
+      npcs: [...new Set(front.npcPool)].filter((id) => ENEMIES.some((e) => e.id === id && e.innocent)),
       items: ITEMS.map((i) => i.id),
       earnedWeaknesses: earnedWeaknesses(run),
     },
   };
 }
 
-/** Request for the floor the player is about to enter (call at boss-room entry to prefetch floor+1). */
+/**
+ * The war tide once the player has slain the boss they are fighting: the only
+ * way to reach the next floor, and the swing that decides who holds it.
+ */
+function predictedTide(run: RunState, currentBossId: string | undefined): Tide {
+  const tide = { ...run.story.tide };
+  const lore = currentBossId ? getEnemy(currentBossId).lore : undefined;
+  const delta = tideDeltaFor({ kind: 'boss_killed', subject: currentBossId ?? '', lore, floor: run.floor, karmaDelta: 0, summary: '' }, factionOf(lore));
+  for (const f of Object.keys(delta) as WarFaction[]) tide[f] = Math.max(-100, Math.min(100, tide[f] + (delta[f] ?? 0)));
+  return tide;
+}
+
+/** Request for the floor the player is about to enter (call after the boss intro choice to prefetch floor+1). */
 export function directorRequest(run: RunState, floor = run.floor): DirectorRequest {
   return {
     profile: buildProfile(run, floor),

@@ -6,6 +6,7 @@ import type { Enemy } from '../entities/Enemy';
 import type { Player } from '../entities/Player';
 import type { ProjectilePool } from '../entities/Projectile';
 import { bossDirected } from './bossAbilities';
+import { inReach, shockwave, swipe } from './bossStrikes';
 
 export interface BehaviourContext {
   enemy: Enemy;
@@ -22,6 +23,8 @@ export interface BehaviourContext {
   summonPool?: string[];
   /** Announce a boss line (phase change, ability call-out). */
   announce?: (title: string, text: string) => void;
+  /** Melee/shockwave damage to the hero; the scene keeps i-frames and passives. */
+  hurtPlayer?: (amount: number, source: string, fromX: number, fromY: number) => void;
 }
 
 export type Behaviour = (ctx: BehaviourContext) => void;
@@ -244,7 +247,14 @@ const bossMinotaur: Behaviour = (ctx) => {
 
   if (state === 0) {
     seek(enemy, d, enemy.speed * (enraged ? 1.4 : 1), now);
-    if (now >= (m.cooldownUntil ?? 0)) {
+    if (now >= (m.meleeUntil ?? 0) && inReach(ctx, d)) {
+      const dir = d.clone().normalize();
+      m.cx = dir.x;
+      m.cy = dir.y;
+      m.meleeUntil = now + (enraged ? 1100 : 1600);
+      m.state = 4;
+      m.until = now + 320;
+    } else if (now >= (m.cooldownUntil ?? 0)) {
       m.state = 1;
       m.until = now + (enraged ? 300 : 500);
       enemy.chargeFx('windup');
@@ -252,10 +262,19 @@ const bossMinotaur: Behaviour = (ctx) => {
       m.cx = dir.x;
       m.cy = dir.y;
     }
+  } else if (state === 4) {
+    enemy.moveTowards(0, 0);
+    enemy.bossPose('windup');
+    enemy.setTint(0xffc0a0);
+    if (now >= m.until) {
+      swipe(ctx, new Phaser.Math.Vector2(m.cx, m.cy));
+      m.state = 0;
+    }
   } else if (state === 1) {
     // Wind-up: crouch, raise the axe, face the target.
     enemy.moveTowards(0, 0);
-    enemy.stretch.set(0.88, 1.12);
+    enemy.bossPose('windup');
+    enemy.setTint(0xff8060);
     enemy.attack(120);
     enemy.faceX = m.cx;
     if (now >= m.until) {
@@ -265,7 +284,7 @@ const bossMinotaur: Behaviour = (ctx) => {
   } else if (state === 2) {
     const s = (enemy.def.chargeSpeed ?? 500) * (enraged ? 1.25 : 1);
     enemy.moveTowards(m.cx * s, m.cy * s);
-    enemy.stretch.set(1.12, 0.92);
+    enemy.bossPose('charge');
     enemy.attack(120);
     enemy.chargeFx('charge');
     if (!enemy.body.blocked.none || now >= m.until) {
@@ -279,7 +298,7 @@ const bossMinotaur: Behaviour = (ctx) => {
   } else {
     // Recovery: slumped, then springs back to idle.
     enemy.moveTowards(0, 0);
-    enemy.stretch.lerp(new Phaser.Math.Vector2(1, 1), 0.15);
+    enemy.bossPose('stagger');
     if (now >= m.until) {
       m.state = 0;
       enemy.stretch.set(1, 1);
@@ -320,7 +339,7 @@ const bossHydra: Behaviour = (ctx) => {
  * with lost health) and charges through the dust. Alcyoneus, Porphyrion, Talos.
  */
 const bossGiant: Behaviour = (ctx) => {
-  const { enemy, player, now, rng } = ctx;
+  const { enemy, player, now } = ctx;
   const m = enemy.memory;
   const d = toPlayer(enemy, player);
   const state = m.state ?? 0;
@@ -335,11 +354,11 @@ const bossGiant: Behaviour = (ctx) => {
     }
   } else if (state === 1) {
     enemy.moveTowards(0, 0);
+    enemy.bossPose('windup');
     enemy.setTint(0xc0a080);
     if (now >= m.until) {
       enemy.clearTint();
-      settings.shake(player.scene.cameras.main, 200, 0.012);
-      ring(ctx, wounded ? 12 : 8, rng.float(0, Math.PI), 200);
+      shockwave(ctx, wounded ? 210 : 180);
       const dir = d.clone().normalize();
       m.cx = dir.x;
       m.cy = dir.y;
@@ -349,6 +368,7 @@ const bossGiant: Behaviour = (ctx) => {
   } else if (state === 2) {
     const s = (enemy.def.chargeSpeed ?? 450) * (wounded ? 1.2 : 1);
     enemy.moveTowards(m.cx * s, m.cy * s);
+    enemy.bossPose('charge');
     enemy.attack(120);
     enemy.chargeFx('charge');
     if (!enemy.body.blocked.none || now >= m.until) {

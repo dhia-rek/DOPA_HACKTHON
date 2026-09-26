@@ -31,7 +31,7 @@ Code on `main` today (contract first, no gameplay wired yet):
 ```
  events bus ─▶ telemetry + StoryState ─▶ buildProfile(run) ─▶ PlayerProfile
                                                                   │
-                          directorProvider.direct(request)  ◀─────┘   (prefetch at boss-room entry)
+                          directorProvider.direct(request)  ◀─────┘   (prefetched after the boss intro choice)
                                                                   │
                                               FloorDirective (validated, budgeted)
                                                                   │
@@ -66,7 +66,7 @@ computed in TS so the prompt carries conclusions, not raw logs:
 * `modifier` boon/curse (free id until `src/data/boons.ts` exists).
 * `npcs` with role `quest_giver | victim | witness`, optional name (recurring NPCs).
 * `quest` = template id + params + giver + hook + reward (tracking is TS over the event bus).
-* `boss` = **`BossBlueprint`**: archetype from the stage pool, 2–4 ability modules, ≤2 phases,
+* `boss` = **`BossBlueprint`**: archetype from the war front's pool, its signature kit (`EnemyDef.abilities`, free) + 1–3 extra ability modules answering `profile.character`, ≤2 phases,
   a weakness the player *earned*, clamped `BossMods`, a `grudge` quoting a real deed.
 * `epithet` (HUD: "Achilles the Butcher"), `reason` (debug overlay only), `spent`.
 
@@ -74,7 +74,7 @@ computed in TS so the prompt carries conclusions, not raw logs:
 1. One concrete grudge.
 2. Counter the build once, reward it once (`AbilityDef.counters / rewards`).
 3. Weakness ∈ `catalogs.earnedWeaknesses`, else `stagger_after_charge`.
-4. Cost ≤ budget. Struggling → 2 abilities, no phase, boon.
+4. Cost ≤ budget. Struggling → kit + 1 extra, no phase, boon.
 5. The boss intro dialogue still applies `BossMods`; humbling it may remove an ability, defying may add one.
 
 ## 4. Orbs, shrines, quests
@@ -98,7 +98,7 @@ same `validateDirective()` and returns 502 on failure → client falls back to t
 ```
 MenuScene ──► FloorIntroScene ──► RunScene (rooms…) ──► boss room ──► trapdoor ──► FloorIntroScene ──► …
                  │                    │                     │
-                 │                    │                     └─ director.prefetch(run, floor+1)   (systems/director.ts)
+                 │                    │                     └─ boss intro choice → director.prefetch(run, floor+1)   (systems/director.ts)
                  │                    └─ run.ensureFloor() → generateFloor() → applyDirective()  (director/apply.ts)
                  └─ await director.forFloor(run, floor) → run.directive; settleProphecies; questTracker.offer
 ```
@@ -106,7 +106,7 @@ MenuScene ──► FloorIntroScene ──► RunScene (rooms…) ──► boss
 * **FloorIntroScene** shows `floorTitle`, `verdict`, epithet, omens (mutators + god), modifier, quest hook and the boss title/grudge. `?director=1` prints `reason`, abilities, weakness, spent.
 * **director/apply.ts** (pure): boss archetype, `enemyWeights` re-roll, `arena`/`pilgrim_road` enemy counts, `haunted` shades, NPC casting into empty rooms.
 * **RunScene**: `palette_shift` (walls tinted by patron god), `flooded` (0.85 speed + tint), `darkness` (mask around the player), `plague` (poison burst on kills); boss intro speaker uses the blueprint title/persona/grudge; earned weakness multiplies matching shots ×1.6 (`stagger_after_charge` doubles damage during the longer stagger); `steal_hearts` heals the boss on contact; shrine offerings call `story.favour(god)` and make a prophecy (boss weakness or boon; Hermes may lie once).
-* **systems/bossAbilities.ts**: `boss_directed` behaviour composes `BossBlueprint.abilities` + phases in round-robin (charge, ground_slam, projectile_ring, summon_minions, teleport_behind, call_shades, mirror_build) with passives (orbit_shields, poison_trail, enrage_below, split_on_hp).
+* **systems/bossAbilities.ts**: `boss_directed` behaviour composes the archetype's kit (`EnemyDef.abilities`) + `BossBlueprint.abilities` + phases in round-robin (charge, ground_slam, projectile_ring, volley, summon_minions, teleport_behind, call_shades, mirror_build) with passives (orbit_shields, poison_trail, enrage_below, split_on_hp). Poses go through `Enemy.pose()`; `Enemy.animate()` eases scale/lean/alpha so bosses breathe, lean and stretch instead of snapping.
 * **systems/quests.ts**: tracks `slay`, `spare_all`, `no_damage_rooms`, `reach_boss_under`, `betray`, `sacrifice`, `deliver` over the event bus; rewards `heart` / `coins:N` / item; result recorded as a deed the next Director call sees.
 * **server/**: `POST /director` (Gemini, `DIRECTOR_SYSTEM_PROMPT`, `validateDirective`, cache by seed+profile hash). Client: `VITE_DIRECTOR_API`; without it (or on any failure) the seeded `MockDirectorProvider` runs, so every run still differs offline.
 

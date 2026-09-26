@@ -22,6 +22,15 @@ The game works offline without an API key. AI features fall back to a built-in m
 - **Menus:** `↑ / ↓` to move, `Enter` / `Space` to select, `Esc` to go back
 - **Hero select:** `← / →` to pick a hero, `R` for a new seed
 
+### On a phone
+
+Touch is detected automatically. Hold the phone **sideways**; in portrait a "turn your phone" overlay is shown.
+
+- **Move:** left thumb stick (bottom-left)
+- **Shoot:** right thumb stick (bottom-right), fires in the stick's direction
+- **Menus / dialogue / options:** tap an entry, an answer or a value; tap `BACK` to go back
+- **Fullscreen:** entered on the first tap in the menu (where the browser allows it)
+
 ## What to know
 
 - **Choices matter.** You can spare, rob or kill innocent villagers. This changes your **karma**, and bosses remember it.
