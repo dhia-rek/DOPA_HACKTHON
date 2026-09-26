@@ -9,6 +9,7 @@ import { EnemyDef, getEnemy } from '../data/enemies';
 import { getItem } from '../data/items';
 import { dialogueProvider } from '../dialogue/provider';
 import type { DialogueKind, DialogueOption, DialogueScript } from '../dialogue/types';
+import type { BossIntroData } from './BossIntroScene';
 import type { DialogueSceneData } from './DialogueScene';
 import { doorsOf, neighbour, RoomNode } from '../gen/floorGen';
 import { Enemy } from '../entities/Enemy';
@@ -152,9 +153,30 @@ export class RunScene extends Phaser.Scene {
       const boss = this.hostiles().find((e) => e.def.isBoss);
       if (boss) {
         this.room.dialogueDone = true;
-        this.time.delayedCall(250, () => this.startDialogue('boss_intro', this.bossSpeaker(boss)));
+        this.time.delayedCall(250, () => this.bossSplash(boss));
       }
     }
+  }
+
+  /** Pokémon-style VS splash over the paused room, then the boss_intro dialogue. */
+  private bossSplash(boss: Enemy): void {
+    if (this.dead || this.transitioning || this.dialogueOpen) return;
+    const room = this.room;
+    this.scene.pause();
+    const data: BossIntroData = {
+      hero: this.run.character,
+      boss: boss.def,
+      title: boss.blueprint?.title,
+      grudge: boss.blueprint?.grudge,
+      floor: this.run.floor,
+      onDone: () => {
+        if (this.room !== room || this.dead) return;
+        this.scene.resume();
+        if (boss.active) void this.startDialogue('boss_intro', this.bossSpeaker(boss));
+      },
+    };
+    this.scene.launch('boss_vs', data);
+    this.scene.bringToTop('boss_vs');
   }
 
   /** Boss dialogue speaker: the Director's title, persona and grudge on top of the authored persona. */
