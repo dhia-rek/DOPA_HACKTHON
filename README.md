@@ -37,6 +37,23 @@ room, `N` next floor, `T` random item, `H` heal, `[` / `]` karma −25 / +25.
 
 Bindings live in `src/core/input.ts`.
 
+### Mobile / touch
+
+The game detects touch devices (`TOUCH` in `src/core/input.ts`) and switches to phone controls; nothing to configure.
+
+| Action        | Touch                                                                 |
+| ------------- | --------------------------------------------------------------------- |
+| Move          | Left thumb stick (bottom-left; drag anywhere in the lower-left band)  |
+| Shoot         | Right thumb stick (bottom-right); the hero fires in the stick's direction |
+| Menus         | Tap an entry to select it, tap `BACK` to go back                       |
+| Dialogue      | Tap to advance a line, tap an answer to choose it                      |
+| Options       | Tap a value to change it                                               |
+| Fullscreen    | Entered automatically on the first tap in the menu (where the browser allows it) |
+
+Hold the phone **sideways**: the room is 5:3, so in portrait a "turn your phone" overlay is shown until you rotate. The sticks (`src/scenes/TouchScene.ts`) stay inside the play band and away from the HUD, and the hints throughout the game reword themselves for touch (`TAP` instead of `ENTER`). Mouse + two thumbs work at the same time (`activePointers: 3`).
+
+To publish on itch.io (or any static host): `npm run build`, zip the **contents** of `dist/` (so `index.html` is at the zip root), upload it as an HTML project and tick "This file will be played in the browser"; enable fullscreen and set the viewport to 1280×768 or larger. Without `VITE_DIALOGUE_API`/`VITE_DIRECTOR_API` at build time the game runs on the offline seeded mocks, which is fine for a static upload.
+
 ## Scripts
 
 | Command             | What it does                            |
