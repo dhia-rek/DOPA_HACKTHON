@@ -1,13 +1,20 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from './config';
 import { TOUCH } from './core/input';
+import { telemetry } from './core/profile';
 import { BootScene } from './scenes/BootScene';
+import { BossIntroScene } from './scenes/BossIntroScene';
+import { ChallengesScene } from './scenes/ChallengesScene';
 import { DialogueScene } from './scenes/DialogueScene';
+import { FloorIntroScene } from './scenes/FloorIntroScene';
 import { GameOverScene } from './scenes/GameOverScene';
 import { HudScene } from './scenes/HudScene';
 import { MenuScene } from './scenes/MenuScene';
+import { OptionsScene } from './scenes/OptionsScene';
 import { RunScene } from './scenes/RunScene';
 import { TouchScene } from './scenes/TouchScene';
+
+telemetry.listen();
 
 new Phaser.Game({
   type: Phaser.AUTO,
@@ -28,7 +35,7 @@ new Phaser.Game({
     default: 'arcade',
     arcade: { debug: false },
   },
-  scene: [BootScene, MenuScene, RunScene, HudScene, TouchScene, DialogueScene, GameOverScene],
+  scene: [BootScene, MenuScene, ChallengesScene, OptionsScene, FloorIntroScene, RunScene, HudScene, TouchScene, DialogueScene, BossIntroScene, GameOverScene],
 });
 
 if (TOUCH) {

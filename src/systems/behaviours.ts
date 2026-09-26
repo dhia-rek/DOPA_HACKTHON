@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
 import type { Rng } from '../core/rng';
+import { settings } from '../core/settings';
 import type { BehaviourName } from '../data/enemies';
 import type { Enemy } from '../entities/Enemy';
 import type { Player } from '../entities/Player';
 import type { ProjectilePool } from '../entities/Projectile';
+import { bossDirected } from './bossAbilities';
 
 export interface BehaviourContext {
   enemy: Enemy;
@@ -14,18 +16,24 @@ export interface BehaviourContext {
   delta: number;
   /** Multiplier from the run's difficulty (endless loops). */
   difficulty: number;
+  /** Spawn another enemy into the room (summons). Optional: behaviours must cope without it. */
+  spawn?: (id: string, x: number, y: number) => Enemy;
+  /** Enemy ids the room may summon from (the stage's pool). */
+  summonPool?: string[];
+  /** Announce a boss line (phase change, ability call-out). */
+  announce?: (title: string, text: string) => void;
 }
 
 export type Behaviour = (ctx: BehaviourContext) => void;
 
-const toPlayer = (e: Enemy, p: Player): Phaser.Math.Vector2 => new Phaser.Math.Vector2(p.x - e.x, p.y - e.y);
+export const toPlayer = (e: Enemy, p: Player): Phaser.Math.Vector2 => new Phaser.Math.Vector2(p.x - e.x, p.y - e.y);
 
 /**
  * Move toward a target, sliding sideways for a moment when a rock/pit blocks
  * the way. Cheap obstacle avoidance; swap for A* over the room grid later if
  * rooms get maze-like.
  */
-function seek(enemy: Enemy, toTarget: Phaser.Math.Vector2, speed: number, now: number): void {
+export function seek(enemy: Enemy, toTarget: Phaser.Math.Vector2, speed: number, now: number): void {
   const m = enemy.memory;
   const dir = toTarget.clone().normalize();
   const b = enemy.body.blocked;
@@ -51,7 +59,7 @@ function seek(enemy: Enemy, toTarget: Phaser.Math.Vector2, speed: number, now: n
   else enemy.moveTowards(dir.x * speed, dir.y * speed);
 }
 
-function shootAt(ctx: BehaviourContext, dx: number, dy: number, speed?: number): void {
+export function shootAt(ctx: BehaviourContext, dx: number, dy: number, speed?: number): void {
   const { enemy } = ctx;
   ctx.enemyShots.shoot({
     x: enemy.x,
@@ -65,7 +73,7 @@ function shootAt(ctx: BehaviourContext, dx: number, dy: number, speed?: number):
   });
 }
 
-function ring(ctx: BehaviourContext, count: number, offset = 0, speed?: number): void {
+export function ring(ctx: BehaviourContext, count: number, offset = 0, speed?: number): void {
   for (let i = 0; i < count; i++) {
     const a = offset + (Math.PI * 2 * i) / count;
     shootAt(ctx, Math.cos(a), Math.sin(a), speed);
@@ -247,7 +255,7 @@ const bossMinotaur: Behaviour = (ctx) => {
     if (!enemy.body.blocked.none || now >= m.until) {
       m.state = 3;
       m.until = now + (enraged ? 500 : 900);
-      ctx.player.scene.cameras.main.shake(150, 0.01);
+      settings.shake(ctx.player.scene.cameras.main, 150, 0.01);
       if (enraged) ring(ctx, 8, ctx.rng.float(0, Math.PI), 220);
     }
   } else {
@@ -283,6 +291,83 @@ const bossHydra: Behaviour = (ctx) => {
   }
 };
 
+/**
+ * Boss: earthborn brute. Stalks slowly, then stomps (a ring of stones grows
+ * with lost health) and charges through the dust. Alcyoneus, Porphyrion, Talos.
+ */
+const bossGiant: Behaviour = (ctx) => {
+  const { enemy, player, now, rng } = ctx;
+  const m = enemy.memory;
+  const d = toPlayer(enemy, player);
+  const state = m.state ?? 0;
+  const wounded = enemy.hpRatio < 0.5;
+
+  if (state === 0) {
+    seek(enemy, d, enemy.speed, now);
+    if (now >= (m.cooldownUntil ?? 0)) {
+      m.state = 1;
+      m.until = now + 600;
+    }
+  } else if (state === 1) {
+    enemy.moveTowards(0, 0);
+    enemy.setTint(0xc0a080);
+    if (now >= m.until) {
+      enemy.clearTint();
+      settings.shake(player.scene.cameras.main, 200, 0.012);
+      ring(ctx, wounded ? 12 : 8, rng.float(0, Math.PI), 200);
+      const dir = d.clone().normalize();
+      m.cx = dir.x;
+      m.cy = dir.y;
+      m.state = 2;
+      m.until = now + 900;
+    }
+  } else if (state === 2) {
+    const s = (enemy.def.chargeSpeed ?? 450) * (wounded ? 1.2 : 1);
+    enemy.moveTowards(m.cx * s, m.cy * s);
+    if (!enemy.body.blocked.none || now >= m.until) {
+      m.state = 0;
+      m.cooldownUntil = now + (wounded ? 900 : 1500);
+    }
+  }
+};
+
+/**
+ * Boss: Titan. Keeps its distance and hurls thunder-like volleys; every third
+ * volley it blinks to the far side of the player. Menoetius, Campe.
+ */
+const bossTitan: Behaviour = (ctx) => {
+  const { enemy, player, now, rng } = ctx;
+  const m = enemy.memory;
+  const d = toPlayer(enemy, player);
+  const dist = d.length();
+  const keep = 260;
+  if (dist < keep - 40) seek(enemy, d.clone().negate(), enemy.speed, now);
+  else if (dist > keep + 60) seek(enemy, d, enemy.speed, now);
+  else {
+    const t = new Phaser.Math.Vector2(-d.y, d.x).normalize();
+    enemy.moveTowards(t.x * enemy.speed * 0.7, t.y * enemy.speed * 0.7);
+  }
+
+  if (m.nextFire === undefined) m.nextFire = now + 1100;
+  if (now >= m.nextFire) {
+    m.volley = (m.volley ?? 0) + 1;
+    m.nextFire = now + (enemy.def.fireInterval ?? 1300) * (enemy.hpRatio < 0.4 ? 0.7 : 1);
+    const aim = d.clone().normalize();
+    const base = Math.atan2(aim.y, aim.x);
+    const spread = enemy.hpRatio < 0.4 ? [-0.5, -0.25, 0, 0.25, 0.5] : [-0.3, 0, 0.3];
+    for (const off of spread) shootAt(ctx, Math.cos(base + off), Math.sin(base + off));
+    if (m.volley % 3 === 0) {
+      const a = rng.float(0, Math.PI * 2);
+      const scene = player.scene;
+      const nx = Phaser.Math.Clamp(player.x + Math.cos(a) * keep, 80, scene.scale.width - 80);
+      const ny = Phaser.Math.Clamp(player.y + Math.sin(a) * keep, 80, scene.scale.height - 80);
+      enemy.setPosition(nx, ny);
+      enemy.knock.set(0, 0);
+      ring(ctx, 6, a, 180);
+    }
+  }
+};
+
 export const BEHAVIOURS: Record<BehaviourName, Behaviour> = {
   chaser,
   wanderer,
@@ -292,4 +377,7 @@ export const BEHAVIOURS: Record<BehaviourName, Behaviour> = {
   orbiter,
   boss_minotaur: bossMinotaur,
   boss_hydra: bossHydra,
+  boss_giant: bossGiant,
+  boss_titan: bossTitan,
+  boss_directed: bossDirected,
 };

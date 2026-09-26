@@ -1,12 +1,18 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import { TOUCH } from '../core/input';
+import { CHARS_PER_SEC, settings } from '../core/settings';
+import { blip } from '../core/sfx';
 import type { DialogueOption, DialogueScript } from '../dialogue/types';
+import { voice, voiceSettings } from '../voice/provider';
+import type { VoiceProfile } from '../voice/types';
 
 export interface DialogueSceneData {
   script: DialogueScript;
   /** Called once with the chosen option (null for option-less flavour dialogues). */
   onDone: (option: DialogueOption | null) => void;
+  /** Speaks every line and reply with this voice (src/voice); silent if absent. */
+  voice?: VoiceProfile;
 }
 
 const mono = 'monospace';
@@ -14,12 +20,8 @@ const BOX_H = 200;
 const BOX_X = 32;
 const PORTRAIT = 120;
 const TEXT_X = BOX_X + PORTRAIT + 48;
-/** Typewriter speed in characters per second. */
-const CHARS_PER_SEC = 40;
 /** Key name used in hints: taps stand in for ENTER on touch devices. */
 const OK = TOUCH ? 'TAP' : 'ENTER';
-
-type Blip = 'move' | 'confirm' | 'advance';
 
 /**
  * Overlay that shows a DialogueScript: speaker lines (ENTER / tap to advance),
@@ -34,10 +36,10 @@ export class DialogueScene extends Phaser.Scene {
   private body!: Phaser.GameObjects.Text;
   private optionTexts: Phaser.GameObjects.Text[] = [];
   private hint!: Phaser.GameObjects.Text;
+  private voiceTag!: Phaser.GameObjects.Text;
   private fullText = '';
   private shown = 0;
   private typer?: Phaser.Time.TimerEvent;
-  private audioCtx?: AudioContext;
 
   constructor() {
     super('dialogue');
@@ -67,11 +69,17 @@ export class DialogueScene extends Phaser.Scene {
     }).setOrigin(0.5, 0);
 
     this.body = this.add.text(TEXT_X, top + 24, '', { fontFamily: mono, fontSize: '17px', color: '#eee', wordWrap: { width: GAME_WIDTH - TEXT_X - 64 }, lineSpacing: 4 });
+    this.voiceTag = this.add.text(GAME_WIDTH - 56, top + 10, this.voiceLabel(), { fontFamily: mono, fontSize: '11px', color: COLORS.textDim }).setOrigin(1, 0);
     this.hint = this.add.text(GAME_WIDTH - 56, top + BOX_H - 24, '', { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(1, 0);
 
     const kb = this.input.keyboard!;
     kb.on('keydown-ENTER', this.advance, this);
     kb.on('keydown-SPACE', this.advance, this);
+    kb.on('keydown-M', () => {
+      voiceSettings.enabled = !voiceSettings.enabled;
+      if (!voiceSettings.enabled) voice.stop();
+      this.voiceTag.setText(this.voiceLabel());
+    });
     kb.on('keydown-UP', () => this.moveSel(-1));
     kb.on('keydown-DOWN', () => this.moveSel(1));
     for (let i = 1; i <= 4; i++) {
@@ -121,13 +129,19 @@ export class DialogueScene extends Phaser.Scene {
 
   // ---- typewriter ---------------------------------------------------------
 
+  private voiceLabel(): string {
+    if (!this.data_.voice) return '';
+    return voiceSettings.enabled ? `♪ ${this.data_.voice.mood} · M mute` : '♪ muted · M';
+  }
+
   private typeOut(text: string): void {
+    if (this.data_.voice) voice.speak(text, this.data_.voice);
     this.typer?.remove(false);
     this.fullText = text;
     this.shown = 0;
     this.body.setText('');
     this.typer = this.time.addEvent({
-      delay: 1000 / CHARS_PER_SEC,
+      delay: 1000 / CHARS_PER_SEC[settings.data.textSpeed],
       loop: true,
       callback: () => {
         this.shown++;
@@ -147,32 +161,6 @@ export class DialogueScene extends Phaser.Scene {
     this.shown = this.fullText.length;
     this.body.setText(this.fullText);
     this.hint.setText(`${OK} ▸`);
-  }
-
-  // ---- sound --------------------------------------------------------------
-
-  private blip(kind: Blip): void {
-    try {
-      const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (!Ctx) return;
-      this.audioCtx ??= new Ctx();
-      const ctx = this.audioCtx;
-      if (ctx.state === 'suspended') void ctx.resume();
-      const [freq, dur, type]: [number, number, OscillatorType] =
-        kind === 'move' ? [660, 0.04, 'square'] : kind === 'confirm' ? [880, 0.09, 'triangle'] : [440, 0.05, 'square'];
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, ctx.currentTime);
-      if (kind === 'confirm') osc.frequency.exponentialRampToValueAtTime(freq * 1.5, ctx.currentTime + dur);
-      gain.gain.setValueAtTime(0.05, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0005, ctx.currentTime + dur);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + dur);
-    } catch {
-      /* audio is optional */
-    }
   }
 
   // ---- flow ---------------------------------------------------------------
@@ -213,7 +201,7 @@ export class DialogueScene extends Phaser.Scene {
   private setSel(i: number): void {
     if (this.phase !== 'options' || i === this.selected) return;
     this.selected = i;
-    this.blip('move');
+    blip('move');
     this.paintSelection();
   }
 
@@ -224,14 +212,14 @@ export class DialogueScene extends Phaser.Scene {
       return;
     }
     if (this.phase === 'lines') {
-      this.blip('advance');
+      blip('advance');
       this.lineIndex++;
       if (this.lineIndex < script.lines.length) return this.showLine();
       if (script.options.length === 0) return this.finish(null);
       return this.showOptions();
     }
     if (this.phase === 'options') {
-      this.blip('confirm');
+      blip('confirm');
       const opt = script.options[this.selected];
       this.optionTexts.forEach((t) => t.destroy());
       this.optionTexts = [];
@@ -241,12 +229,13 @@ export class DialogueScene extends Phaser.Scene {
       this.typeOut(opt.reply);
       return;
     }
-    this.blip('advance');
+    blip('advance');
     this.finish(script.options[this.selected]);
   }
 
   private finish(option: DialogueOption | null): void {
     this.typer?.remove(false);
+    voice.stop();
     const cb = this.data_.onDone;
     this.scene.stop();
     cb(option);
