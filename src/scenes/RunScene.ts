@@ -17,6 +17,9 @@ import { Pickup, PickupKind } from '../entities/Pickup';
 import { Player } from '../entities/Player';
 import { Projectile, ProjectilePool } from '../entities/Projectile';
 import { achievements } from '../systems/achievements';
+import { trials } from '../systems/trials';
+import { trialProvider } from '../trials/provider';
+import { describeObjective, TrialOffer } from '../trials/types';
 import { BEHAVIOURS, threaten } from '../systems/behaviours';
 import { weaknessDamageMul } from '../systems/bossAbilities';
 import { director } from '../systems/director';
@@ -114,6 +117,7 @@ export class RunScene extends Phaser.Scene {
 
     this.run = this.registry.get('run') as RunState;
     achievements.attachRun(this.run);
+    trials.attachRun(this.run);
     const map = this.run.ensureFloor();
     this.room = this.run.room ?? map.start;
     this.room.visited = true;
@@ -161,6 +165,60 @@ export class RunScene extends Phaser.Scene {
         this.time.delayedCall(250, () => this.startDialogue('boss_intro', this.bossSpeaker(boss)));
       }
     }
+
+    if (this.room === map.start && trials.offeredFloor !== this.run.floor) {
+      trials.offeredFloor = this.run.floor;
+      this.time.delayedCall(450, () => void this.offerTrial());
+    }
+  }
+
+  /** At the start of each floor a god or shade offers one AI-written trial (src/trials). */
+  private async offerTrial(): Promise<void> {
+    if (this.dead || this.transitioning || this.dialogueOpen) return;
+    this.dialogueOpen = true;
+    const room = this.room;
+    this.scene.pause();
+    let offer: TrialOffer;
+    try {
+      offer = await trialProvider.offer({
+        story: this.run.storySnapshot(),
+        seed: `${this.run.seed}:${this.run.floor}:trial`,
+        enemyPool: this.run.stage.enemyPool,
+        normalRooms: [...this.run.floorMap!.rooms.values()].filter((r) => r.type === 'normal').length,
+      });
+    } catch (err) {
+      console.warn('[trial] skipped:', err);
+      this.dialogueOpen = false;
+      this.scene.resume();
+      return;
+    }
+    if (this.room !== room || this.dead) return;
+    const script: DialogueScript = {
+      id: offer.id,
+      kind: 'shrine',
+      speakerId: `trial_${offer.giverName.toLowerCase().replace(/[^a-z]+/g, '_')}`,
+      speakerName: offer.giverName,
+      lines: [...offer.lines, `Trial: ${describeObjective(offer.objective)}.`],
+      options: [
+        { id: 'accept', text: offer.acceptText, reply: 'Then it is sworn.', effects: {} },
+        { id: 'refuse', text: offer.refuseText, reply: 'As you wish. The gods will remember.', effects: {} },
+      ],
+    };
+    const data: DialogueSceneData = {
+      script,
+      onDone: (option) => {
+        this.dialogueOpen = false;
+        this.scene.resume();
+        if (option?.id === 'accept') {
+          trials.accept(offer);
+        } else {
+          this.run.story.record({ kind: 'custom', subject: 'trial_refused', floor: this.run.floor, karmaDelta: 0, summary: `Refused ${offer.giverName}'s trial on floor ${this.run.floor}` });
+          this.run.story.addFlag('refused_trial');
+        }
+      },
+    };
+    this.scene.launch('dialogue', data);
+    this.scene.bringToTop('dialogue');
   }
 
   /** Boss dialogue speaker: the Director's title, persona and grudge on top of the authored persona. */

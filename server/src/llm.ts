@@ -24,7 +24,8 @@ export async function directRaw(req: DirectorRequest): Promise<unknown> {
   return generateJson(DIRECTOR_SYSTEM_PROMPT, req, req.language ?? 'en', 0.8);
 }
 
-async function generateJson(system: string, payload: unknown, language: string, temperature: number): Promise<unknown> {
+/** Generic JSON generation (dialogue, director, trials, …). Returns parsed JSON (unvalidated) or throws. */
+export async function generateJson(system: string, payload: unknown, language = 'en', temperature = 0.9): Promise<unknown> {
   if (!client) throw new Error('GEMINI_API_KEY is not set');
   const result = await client.models.generateContent({
     model: CONFIG.model,
@@ -39,3 +40,4 @@ async function generateJson(system: string, payload: unknown, language: string, 
   if (!text) throw new Error('empty completion');
   return JSON.parse(text);
 }
+

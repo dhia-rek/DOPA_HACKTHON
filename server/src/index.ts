@@ -4,8 +4,10 @@ import express from 'express';
 import { type DialogueRequest, validateScript } from '../../src/dialogue/types';
 import { cacheKey, ScriptCache } from './cache';
 import { CONFIG } from './config';
-import { directRaw, generateRaw, llmConfigured } from './llm';
+import { directRaw, generateJson, generateRaw, llmConfigured } from './llm';
 import { type DirectorRequest, type FloorDirective, validateDirective } from '../../src/director/types';
+import { TRIAL_SYSTEM_PROMPT } from '../../src/trials/prompt';
+import { type TrialOffer, type TrialRequest, validateTrial } from '../../src/trials/types';
 
 const KINDS = new Set(['boss_intro', 'boss_outro', 'npc', 'shrine']);
 
@@ -137,6 +139,57 @@ app.post('/director', async (req, res) => {
   }
 });
 
+function parseTrialRequest(body: unknown): TrialRequest | null {
+  if (typeof body !== 'object' || body === null) return null;
+  const b = body as Record<string, unknown>;
+  if (typeof b.seed !== 'string' || !b.seed) return null;
+  if (typeof b.story !== 'object' || b.story === null || Array.isArray(b.story)) return null;
+  if (JSON.stringify(b.story).length > 8000) return null;
+  if (!Array.isArray(b.enemyPool) || !b.enemyPool.every((e) => typeof e === 'string') || b.enemyPool.length > 20) return null;
+  if (typeof b.normalRooms !== 'number') return null;
+  if (b.language !== undefined && typeof b.language !== 'string') return null;
+  return b as unknown as TrialRequest;
+}
+
+const trialCache = new Map<string, TrialOffer>();
+
+app.post('/trial', async (req, res) => {
+  const request = parseTrialRequest(req.body);
+  if (!request) {
+    res.status(400).json({ error: 'body must be a TrialRequest' });
+    return;
+  }
+  if (!llmConfigured) {
+    res.status(503).json({ error: 'LLM not configured (GEMINI_API_KEY missing)' });
+    return;
+  }
+  const key = `${request.seed}:${request.language ?? 'en'}:${createHash('sha1').update(JSON.stringify(request.story)).digest('hex')}`;
+  const cached = trialCache.get(key);
+  if (cached) {
+    res.setHeader('x-cache', 'hit');
+    res.json(cached);
+    return;
+  }
+  if (!allowLlmCall(req.ip ?? 'unknown')) {
+    res.status(429).json({ error: 'too many requests, slow down' });
+    return;
+  }
+  try {
+    const offer = validateTrial(await generateJson(TRIAL_SYSTEM_PROMPT, request, request.language), request);
+    if (!offer) {
+      res.status(502).json({ error: 'LLM returned an invalid trial' });
+      return;
+    }
+    if (trialCache.size >= CONFIG.cacheSize) trialCache.clear();
+    trialCache.set(key, offer);
+    res.setHeader('x-cache', 'miss');
+    res.json(offer);
+  } catch (err) {
+    console.error('[trial]', err instanceof Error ? err.message : err);
+    res.status(502).json({ error: 'LLM request failed' });
+  }
+});
+
 app.listen(CONFIG.port, () => {
-  console.log(`nekyia dialogue+director server on http://localhost:${CONFIG.port} (model ${CONFIG.model}, llm ${llmConfigured ? 'ready' : 'NOT configured'})`);
+  console.log(`nekyia dialogue+director+trial server on http://localhost:${CONFIG.port} (model ${CONFIG.model}, llm ${llmConfigured ? 'ready' : 'NOT configured'})`);
 });
