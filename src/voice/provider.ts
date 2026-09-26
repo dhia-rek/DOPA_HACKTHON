@@ -8,6 +8,8 @@ export interface VoiceProvider {
 }
 
 const STORAGE_KEY = 'nekyia.voice';
+/** Synthesized lines kept as object URLs (LRU); older ones are revoked. */
+const VOICE_CACHE_MAX = 40;
 
 /** Voice on/off, persisted. Toggle with M in dialogue. */
 export const voiceSettings = {
@@ -45,6 +47,8 @@ export class HttpVoiceProvider implements VoiceProvider {
   private audio: HTMLAudioElement | null = null;
   private token = 0;
   private readonly cache = new Map<string, string>();
+  /** Evicted from the cache while playing; revoked on the next stop(). */
+  private evictedPlaying: string | null = null;
 
   constructor(
     private readonly url: string,
@@ -72,13 +76,19 @@ export class HttpVoiceProvider implements VoiceProvider {
     this.token++;
     this.audio?.pause();
     this.audio = null;
+    if (this.evictedPlaying) URL.revokeObjectURL(this.evictedPlaying);
+    this.evictedPlaying = null;
     this.fallback.stop();
   }
 
   private async fetchAudio(text: string, profile: VoiceProfile): Promise<string> {
     const key = `${profile.speakerId ?? ''}:${profile.voice}:${profile.mood}:${text}`;
     const hit = this.cache.get(key);
-    if (hit) return hit;
+    if (hit) {
+      this.cache.delete(key);
+      this.cache.set(key, hit);
+      return hit;
+    }
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), this.timeoutMs);
     try {
@@ -91,6 +101,12 @@ export class HttpVoiceProvider implements VoiceProvider {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const src = URL.createObjectURL(await res.blob());
       this.cache.set(key, src);
+      while (this.cache.size > VOICE_CACHE_MAX) {
+        const [oldKey, oldSrc] = this.cache.entries().next().value!;
+        this.cache.delete(oldKey);
+        if (this.audio?.src === oldSrc) this.evictedPlaying = oldSrc;
+        else URL.revokeObjectURL(oldSrc);
+      }
       return src;
     } finally {
       clearTimeout(timer);
