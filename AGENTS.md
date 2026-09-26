@@ -18,29 +18,29 @@ that stream's files. Touching another stream's files needs a note in the PR
 and a ping to its owner. `src/dialogue/types.ts` is the shared contract:
 changes to it need review from all three.
 
-## Task boards (tick items here as they land on `main`)
+## Task boards (tick items here as they land on `develop`/`main`)
 
 ### Stream A — Dhia
 - [x] New NPCs with personas: `priestess`, `child`, `wounded_soldier` (`src/data/enemies.ts`, `innocent: true`), add to stage `npcPool`s
-- [ ] Boss personas + list of `flags` each boss reacts to (Minotaur, Hydra, next bosses)
-- [ ] Moral achievements: `saint`, `butcher`, `oathbreaker` (`src/data/achievements.ts`)
+- [x] Boss personas + list of `flags` each boss reacts to (Minotaur, Hydra, next bosses)
+- [x] Moral achievements: `saint`, `butcher`, `oathbreaker` (`src/data/achievements.ts`)
 - [x] Tune karma values and the `takeBossMods()` curve in `src/core/story.ts`
-- [ ] Kratos hook: starts at karma −40, gods refuse his shrine offerings
+- [x] Kratos hook: starts at karma −40, gods refuse his shrine offerings
 - [x] Boss outro dialogue kind (`boss_outro`) content in the mock provider
 
 ### Stream B — Julien
-- [ ] `DialogueScene` look & feel: speaker portrait box, typewriter text, selection sound
-- [ ] Karma / alignment indicator in `HudScene` (listen to `story_changed` event)
-- [ ] NPC visuals: distinct look, "!" bubble when talkable, flee animation
-- [ ] Shrine room type + altar sprite → opens a `kind: 'shrine'` dialogue
-- [ ] Boss outro: trigger `boss_outro` dialogue when a boss dies (`RunScene.killEnemy`)
+- [x] `DialogueScene` look & feel: speaker portrait box, typewriter text, selection sound
+- [x] Karma / alignment indicator in `HudScene` (listen to `story_changed` event)
+- [x] NPC visuals: distinct look, "!" bubble when talkable, flee animation
+- [x] Shrine room type + altar sprite → opens a `kind: 'shrine'` dialogue
+- [x] Boss outro: trigger `boss_outro` dialogue when a boss dies (`RunScene.killEnemy`)
 - [ ] General art/feel pass (room palettes, hit feedback, menu)
 
 ### Stream C — Parthiv
-- [ ] `server/`: HTTP service `POST DialogueRequest -> DialogueScript` (any stack; key stays server-side)
-- [ ] Server-side validation mirroring `validateScript()`; return 502 on bad LLM output
-- [ ] Local dev recipe in `server/README.md` + `.env.example` for the server
-- [ ] `HttpDialogueProvider`: retries, cache by `request.seed`, prefetch boss intro on floor start
+- [x] `server/`: HTTP service `POST DialogueRequest -> DialogueScript` (any stack; key stays server-side)
+- [x] Server-side validation mirroring `validateScript()`; return 502 on bad LLM output
+- [x] Local dev recipe in `server/README.md` + `.env.example` for the server
+- [x] `HttpDialogueProvider`: retries, cache by `request.seed`, prefetch boss intro on floor start
 - [ ] Deploy (Vercel/Cloudflare/Render…) and document the `VITE_DIALOGUE_API` URL
 - [ ] Later: LLM room generator behind the same pattern (13×7 grid contract in `src/gen/roomGen.ts`)
 

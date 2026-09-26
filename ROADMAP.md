@@ -80,7 +80,7 @@ POST {VITE_DIALOGUE_API}            body: DialogueRequest   (src/dialogue/types.
   on failure — the client then falls back to the mock automatically.
 * Never ship the API key to the browser. Client reads only `VITE_DIALOGUE_API`.
 * Nice-to-have: cache by `request.seed` (replays), prefetch the boss intro
-  when the floor starts, 8 s timeout (client already aborts at 8 s).
+  when the floor starts, 15 s client timeout (server LLM timeout 12 s; Gemini minimum is 10 s).
 
 ### Stream B — first tasks (Julien)
 * Make `DialogueScene` pretty: portrait box for the speaker (`def.shape/color`
