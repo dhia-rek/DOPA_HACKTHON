@@ -1,0 +1,1967 @@
+[
+ {
+  "key": "villager/a559f8be",
+  "speakerId": "villager",
+  "text": "Don't hurt me! I know a secret of this place…"
+ },
+ {
+  "key": "villager/43c14c09",
+  "speakerId": "villager",
+  "text": "May the gods remember this."
+ },
+ {
+  "key": "villager/a7b0274b",
+  "speakerId": "villager",
+  "text": "Take it… just go."
+ },
+ {
+  "key": "villager/be034cf6",
+  "speakerId": "villager",
+  "text": "The beast below fears fire… and pride."
+ },
+ {
+  "key": "priestess/a4db3cf2",
+  "speakerId": "priestess",
+  "text": "Athena sees all you have done, Achilles. Speak, and be judged."
+ },
+ {
+  "key": "priestess/43c14c09",
+  "speakerId": "priestess",
+  "text": "May the gods remember this."
+ },
+ {
+  "key": "priestess/a7b0274b",
+  "speakerId": "priestess",
+  "text": "Take it… just go."
+ },
+ {
+  "key": "priestess/be034cf6",
+  "speakerId": "priestess",
+  "text": "The beast below fears fire… and pride."
+ },
+ {
+  "key": "child/ef3d463c",
+  "speakerId": "child",
+  "text": "The monsters took everyone. Please don't leave me here."
+ },
+ {
+  "key": "child/43c14c09",
+  "speakerId": "child",
+  "text": "May the gods remember this."
+ },
+ {
+  "key": "child/a7b0274b",
+  "speakerId": "child",
+  "text": "Take it… just go."
+ },
+ {
+  "key": "child/be034cf6",
+  "speakerId": "child",
+  "text": "The beast below fears fire… and pride."
+ },
+ {
+  "key": "wounded_soldier/bdf23c9c",
+  "speakerId": "wounded_soldier",
+  "text": "Water… or a quick end, Achilles. Either is a kindness."
+ },
+ {
+  "key": "wounded_soldier/43c14c09",
+  "speakerId": "wounded_soldier",
+  "text": "May the gods remember this."
+ },
+ {
+  "key": "wounded_soldier/a7b0274b",
+  "speakerId": "wounded_soldier",
+  "text": "Take it… just go."
+ },
+ {
+  "key": "wounded_soldier/be034cf6",
+  "speakerId": "wounded_soldier",
+  "text": "The beast below fears fire… and pride."
+ },
+ {
+  "key": "altar/87b7f841",
+  "speakerId": "altar",
+  "text": "An altar hums with divine attention. What do you offer?"
+ },
+ {
+  "key": "altar/7e617da6",
+  "speakerId": "altar",
+  "text": "Ares approves."
+ },
+ {
+  "key": "altar/0fe496ea",
+  "speakerId": "altar",
+  "text": "Hermes smiles."
+ },
+ {
+  "key": "altar/bdb5fe5c",
+  "speakerId": "altar",
+  "text": "The gods take note."
+ },
+ {
+  "key": "altar/efb36c98",
+  "speakerId": "altar",
+  "text": "The flame gutters and dies. No god will hear a godslayer's prayer."
+ },
+ {
+  "key": "altar/cd99d840",
+  "speakerId": "altar",
+  "text": "What do you offer to those who have already turned away?"
+ },
+ {
+  "key": "altar/f4bbedd4",
+  "speakerId": "altar",
+  "text": "Your blood hisses on the stone. Nothing answers."
+ },
+ {
+  "key": "altar/d578b67f",
+  "speakerId": "altar",
+  "text": "The coins slide off the altar into the dark. Spurned."
+ },
+ {
+  "key": "altar/814b387e",
+  "speakerId": "altar",
+  "text": "You need no gods. They need to fear you."
+ },
+ {
+  "key": "villager/15b08e12",
+  "speakerId": "villager",
+  "text": "Please, Achilles, I am no fighter. I only tend the goats."
+ },
+ {
+  "key": "priestess/77b5ab62",
+  "speakerId": "priestess",
+  "text": "I do not beg. The goddess weighs your deeds, not my life."
+ },
+ {
+  "key": "child/f953ddf0",
+  "speakerId": "child",
+  "text": "Are you… are you my father? You look like a hero from the stories."
+ },
+ {
+  "key": "altar/425983e5",
+  "speakerId": "altar",
+  "text": "The altar goes cold as you approach. Olympus remembers what you did, Achilles."
+ },
+ {
+  "key": "wounded_soldier/f7dea18a",
+  "speakerId": "wounded_soldier",
+  "text": "I held this line until my shield broke. I know what waits ahead."
+ },
+ {
+  "key": "villager/f7d8779a",
+  "speakerId": "villager",
+  "text": "The Titans promise a golden age. My son believed them. Have you seen him?"
+ },
+ {
+  "key": "villager/5b11ba60",
+  "speakerId": "villager",
+  "text": "The Titan below keeps its distance and blinks away when cornered. Stay close, strike when it lands."
+ },
+ {
+  "key": "priestess/dff05262",
+  "speakerId": "priestess",
+  "text": "The Titans hold these halls now. They make us burn the altars of Zeus."
+ },
+ {
+  "key": "priestess/5b11ba60",
+  "speakerId": "priestess",
+  "text": "The Titan below keeps its distance and blinks away when cornered. Stay close, strike when it lands."
+ },
+ {
+  "key": "child/dff05262",
+  "speakerId": "child",
+  "text": "The Titans hold these halls now. They make us burn the altars of Zeus."
+ },
+ {
+  "key": "child/5b11ba60",
+  "speakerId": "child",
+  "text": "The Titan below keeps its distance and blinks away when cornered. Stay close, strike when it lands."
+ },
+ {
+  "key": "wounded_soldier/dff05262",
+  "speakerId": "wounded_soldier",
+  "text": "The Titans hold these halls now. They make us burn the altars of Zeus."
+ },
+ {
+  "key": "wounded_soldier/5b11ba60",
+  "speakerId": "wounded_soldier",
+  "text": "The Titan below keeps its distance and blinks away when cornered. Stay close, strike when it lands."
+ },
+ {
+  "key": "villager/f965ae56",
+  "speakerId": "villager",
+  "text": "They took the temple and made us burn Zeus's altars. Please, I only did as I was told."
+ },
+ {
+  "key": "villager/f2730b80",
+  "speakerId": "villager",
+  "text": "Don't let them feed me to the earth…"
+ },
+ {
+  "key": "villager/426217c5",
+  "speakerId": "villager",
+  "text": "The Giant stomps before it charges. When the earth trembles, run to its side, not away."
+ },
+ {
+  "key": "priestess/ccf18a65",
+  "speakerId": "priestess",
+  "text": "The ground here is hungry. Gaia's children are close."
+ },
+ {
+  "key": "priestess/426217c5",
+  "speakerId": "priestess",
+  "text": "The Giant stomps before it charges. When the earth trembles, run to its side, not away."
+ },
+ {
+  "key": "child/ccf18a65",
+  "speakerId": "child",
+  "text": "The ground here is hungry. Gaia's children are close."
+ },
+ {
+  "key": "child/426217c5",
+  "speakerId": "child",
+  "text": "The Giant stomps before it charges. When the earth trembles, run to its side, not away."
+ },
+ {
+  "key": "wounded_soldier/ccf18a65",
+  "speakerId": "wounded_soldier",
+  "text": "The ground here is hungry. Gaia's children are close."
+ },
+ {
+  "key": "wounded_soldier/426217c5",
+  "speakerId": "wounded_soldier",
+  "text": "The Giant stomps before it charges. When the earth trembles, run to its side, not away."
+ },
+ {
+  "key": "villager/f502ddd0",
+  "speakerId": "villager",
+  "text": "The ground opened and swallowed my street, Achilles. Gaia is angry. Is it true it is your fault?"
+ },
+ {
+  "key": "minotaur/7b881036",
+  "speakerId": "minotaur",
+  "text": "Another hero comes to die in the Ruined Polis."
+ },
+ {
+  "key": "minotaur/8a48c5d7",
+  "speakerId": "minotaur",
+  "text": "Choose your last words carefully."
+ },
+ {
+  "key": "minotaur/7ea5494e",
+  "speakerId": "minotaur",
+  "text": "You call on the sky. The sky is far, and I am here."
+ },
+ {
+  "key": "minotaur/9066bb78",
+  "speakerId": "minotaur",
+  "text": "Pathetic. I will be gentle, so you feel every blow."
+ },
+ {
+  "key": "minotaur/53ede332",
+  "speakerId": "minotaur",
+  "text": "Gold buys little in the dark, but I will take it."
+ },
+ {
+  "key": "minotaur/86c62c30",
+  "speakerId": "minotaur",
+  "text": "The labyrinth… is quiet at last."
+ },
+ {
+  "key": "minotaur/58fa2549",
+  "speakerId": "minotaur",
+  "text": "Another hero for the maze to forget."
+ },
+ {
+  "key": "minotaur/a9128ae3",
+  "speakerId": "minotaur",
+  "text": "Below, the stone is wet. Nothing that drinks there stays dead."
+ },
+ {
+  "key": "minotaur/67f542cb",
+  "speakerId": "minotaur",
+  "text": "Honour… a word I had forgotten. Very well."
+ },
+ {
+  "key": "minotaur/d5b01de0",
+  "speakerId": "minotaur",
+  "text": "Then die proud."
+ },
+ {
+  "key": "minotaur/523c7b6c",
+  "speakerId": "minotaur",
+  "text": "Asterion. My name was Asterion. Say it, Achilles."
+ },
+ {
+  "key": "minotaur/e95ee388",
+  "speakerId": "minotaur",
+  "text": "So the Ruined Polis sends me Achilles."
+ },
+ {
+  "key": "minotaur/ed06f171",
+  "speakerId": "minotaur",
+  "text": "What do you want, mortal?"
+ },
+ {
+  "key": "minotaur/5b1c6805",
+  "speakerId": "minotaur",
+  "text": "Neither cruel nor kind… you simply came, and I simply died."
+ },
+ {
+  "key": "minotaur/5c0d6523",
+  "speakerId": "minotaur",
+  "text": "The Hydra sleeps below. Every head you cut will remember you."
+ },
+ {
+  "key": "minotaur/4d89152f",
+  "speakerId": "minotaur",
+  "text": "Speak, before I end you."
+ },
+ {
+  "key": "minotaur/c359a5af",
+  "speakerId": "minotaur",
+  "text": "You have not seen the rest of the maze. Nor has anyone who lived."
+ },
+ {
+  "key": "minotaur/e12c03ca",
+  "speakerId": "minotaur",
+  "text": "Not a monster. Tell them… I was not a monster."
+ },
+ {
+  "key": "minotaur/7f32bc0a",
+  "speakerId": "minotaur",
+  "text": "My horns… you said you would take them. Take them, then."
+ },
+ {
+  "key": "minotaur/95d7381a",
+  "speakerId": "minotaur",
+  "text": "Mercy, from Achilles? The gods must be laughing."
+ },
+ {
+  "key": "minotaur/1929eb7f",
+  "speakerId": "minotaur",
+  "text": "You spared the weak. Mercy… I never knew it. Perhaps you will teach it to the dark."
+ },
+ {
+  "key": "minotaur/a8b2ab86",
+  "speakerId": "minotaur",
+  "text": "You let the shepherds live. Somewhere, a bull-headed boy would have wept at that."
+ },
+ {
+  "key": "minotaur/963be4c1",
+  "speakerId": "minotaur",
+  "text": "They say you spared the weak. Weakness recognises weakness."
+ },
+ {
+  "key": "minotaur/6e503715",
+  "speakerId": "minotaur",
+  "text": "So many spared… you carry their gratitude like armour. Let us see if it holds."
+ },
+ {
+  "key": "minotaur/3cea13ed",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Achilles. It will not save you here."
+ },
+ {
+  "key": "minotaur/1a5c3095",
+  "speakerId": "minotaur",
+  "text": "Your word is worth less than the dust of this place, oathbreaker."
+ },
+ {
+  "key": "minotaur/9f4a6131",
+  "speakerId": "minotaur",
+  "text": "You swore an oath to me, Achilles, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "minotaur/36a3ffde",
+  "speakerId": "minotaur",
+  "text": "I remember your blade, Achilles. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "minotaur/97da636e",
+  "speakerId": "minotaur",
+  "text": "You again, Achilles? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "minotaur/a341d86f",
+  "speakerId": "minotaur",
+  "text": "So you are the one who killed the Hydra. I will not fall so easily."
+ },
+ {
+  "key": "minotaur/ed895fb4",
+  "speakerId": "minotaur",
+  "text": "I was made a monster. You chose to become one."
+ },
+ {
+  "key": "minotaur/d96f8623",
+  "speakerId": "minotaur",
+  "text": "You strike like something that hates the living. The dark below will recognise you."
+ },
+ {
+  "key": "minotaur/1e991754",
+  "speakerId": "minotaur",
+  "text": "A true hero. Theseus was never so kind."
+ },
+ {
+  "key": "minotaur/ec6fc34b",
+  "speakerId": "minotaur",
+  "text": "Go with my blessing, Achilles. Few have earned it."
+ },
+ {
+  "key": "minotaur/9d387548",
+  "speakerId": "minotaur",
+  "text": "Another hero comes to die in the Labyrinth of Knossos."
+ },
+ {
+  "key": "minotaur/0b56914e",
+  "speakerId": "minotaur",
+  "text": "So the Labyrinth of Knossos sends me Achilles."
+ },
+ {
+  "key": "minotaur/bff8f083",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Achilles. It will not save you here."
+ },
+ {
+  "key": "minotaur/429f10d9",
+  "speakerId": "minotaur",
+  "text": "Another hero comes to die in the Gates of Tartarus."
+ },
+ {
+  "key": "minotaur/d3656407",
+  "speakerId": "minotaur",
+  "text": "So the Gates of Tartarus sends me Achilles."
+ },
+ {
+  "key": "minotaur/b6f2c9e4",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Achilles. It will not save you here."
+ },
+ {
+  "key": "hydra/7b881036",
+  "speakerId": "hydra",
+  "text": "Another hero comes to die in the Ruined Polis."
+ },
+ {
+  "key": "hydra/4d89152f",
+  "speakerId": "hydra",
+  "text": "Speak, before I end you."
+ },
+ {
+  "key": "hydra/267d1dba",
+  "speakerId": "hydra",
+  "text": "The Mother tastes you… and lets you pass lighter."
+ },
+ {
+  "key": "hydra/53ede332",
+  "speakerId": "hydra",
+  "text": "Gold buys little in the dark, but I will take it."
+ },
+ {
+  "key": "hydra/d5b01de0",
+  "speakerId": "hydra",
+  "text": "Then die proud."
+ },
+ {
+  "key": "hydra/7cc50fa1",
+  "speakerId": "hydra",
+  "text": "Cut the last head and still we whisper, Achilles. Riddles do not bleed."
+ },
+ {
+  "key": "hydra/5b70944a",
+  "speakerId": "hydra",
+  "text": "Nothing to remember, nothing to curse. The heads have already forgotten your face."
+ },
+ {
+  "key": "hydra/8bd9ffcf",
+  "speakerId": "hydra",
+  "text": "Deeper, Achilles. The stairs go deeper than the light."
+ },
+ {
+  "key": "hydra/e95ee388",
+  "speakerId": "hydra",
+  "text": "So the Ruined Polis sends me Achilles."
+ },
+ {
+  "key": "hydra/ed06f171",
+  "speakerId": "hydra",
+  "text": "What do you want, mortal?"
+ },
+ {
+  "key": "hydra/67f542cb",
+  "speakerId": "hydra",
+  "text": "Honour… a word I had forgotten. Very well."
+ },
+ {
+  "key": "hydra/e8fc68f3",
+  "speakerId": "hydra",
+  "text": "One head speaks: \"Impossible.\" Another: \"Inevitable.\" The rest are silent."
+ },
+ {
+  "key": "hydra/9066bb78",
+  "speakerId": "hydra",
+  "text": "Pathetic. I will be gentle, so you feel every blow."
+ },
+ {
+  "key": "hydra/af16afda",
+  "speakerId": "hydra",
+  "text": "Below us waits something with no heads at all… and it does not need them."
+ },
+ {
+  "key": "hydra/8a48c5d7",
+  "speakerId": "hydra",
+  "text": "Choose your last words carefully."
+ },
+ {
+  "key": "hydra/2bccfe44",
+  "speakerId": "hydra",
+  "text": "You came, you cut, you leave. So do all of them."
+ },
+ {
+  "key": "hydra/884f892e",
+  "speakerId": "hydra",
+  "text": "A thousand years of voices… and now only echoes."
+ },
+ {
+  "key": "hydra/06366c15",
+  "speakerId": "hydra",
+  "text": "The riddle was never us. Descend and learn the answer."
+ },
+ {
+  "key": "hydra/4224b42c",
+  "speakerId": "hydra",
+  "text": "We fall… we fall… we FALL… no, only one of us is finished."
+ },
+ {
+  "key": "hydra/95d7381a",
+  "speakerId": "hydra",
+  "text": "Mercy, from Achilles? The gods must be laughing."
+ },
+ {
+  "key": "hydra/14be60b2",
+  "speakerId": "hydra",
+  "text": "You spared the small ones. The heads argue whether that was wisdom or weakness."
+ },
+ {
+  "key": "hydra/963be4c1",
+  "speakerId": "hydra",
+  "text": "They say you spared the weak. Weakness recognises weakness."
+ },
+ {
+  "key": "hydra/a81b7b53",
+  "speakerId": "hydra",
+  "text": "Mercy for the weak, death for us. The gods will riddle over that one."
+ },
+ {
+  "key": "hydra/6e503715",
+  "speakerId": "hydra",
+  "text": "So many spared… you carry their gratitude like armour. Let us see if it holds."
+ },
+ {
+  "key": "hydra/3cea13ed",
+  "speakerId": "hydra",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Achilles. It will not save you here."
+ },
+ {
+  "key": "hydra/1a5c3095",
+  "speakerId": "hydra",
+  "text": "Your word is worth less than the dust of this place, oathbreaker."
+ },
+ {
+  "key": "hydra/9f4a6131",
+  "speakerId": "hydra",
+  "text": "You swore an oath to me, Achilles, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "hydra/36a3ffde",
+  "speakerId": "hydra",
+  "text": "I remember your blade, Achilles. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "hydra/97da636e",
+  "speakerId": "hydra",
+  "text": "You again, Achilles? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "hydra/7c0c3d14",
+  "speakerId": "hydra",
+  "text": "So you are the one who killed the Minotaur. I will not fall so easily."
+ },
+ {
+  "key": "hydra/ca371a97",
+  "speakerId": "hydra",
+  "text": "Cruelty grows heads too, mortal. Cut one and two more come."
+ },
+ {
+  "key": "hydra/77b91e20",
+  "speakerId": "hydra",
+  "text": "Every head we lost was a warning. Every innocent you killed was a promise."
+ },
+ {
+  "key": "hydra/41cc2e62",
+  "speakerId": "hydra",
+  "text": "Heracles had your eyes. He also had our hatred. You have only our respect."
+ },
+ {
+  "key": "hydra/ee4b17ec",
+  "speakerId": "hydra",
+  "text": "A hero of the old kind. The heads fall silent for you, Achilles."
+ },
+ {
+  "key": "hydra/9d387548",
+  "speakerId": "hydra",
+  "text": "Another hero comes to die in the Labyrinth of Knossos."
+ },
+ {
+  "key": "hydra/0b56914e",
+  "speakerId": "hydra",
+  "text": "So the Labyrinth of Knossos sends me Achilles."
+ },
+ {
+  "key": "hydra/bff8f083",
+  "speakerId": "hydra",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Achilles. It will not save you here."
+ },
+ {
+  "key": "hydra/429f10d9",
+  "speakerId": "hydra",
+  "text": "Another hero comes to die in the Gates of Tartarus."
+ },
+ {
+  "key": "hydra/d3656407",
+  "speakerId": "hydra",
+  "text": "So the Gates of Tartarus sends me Achilles."
+ },
+ {
+  "key": "hydra/b6f2c9e4",
+  "speakerId": "hydra",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Achilles. It will not save you here."
+ },
+ {
+  "key": "trial_nemesis/6c5cc1f6",
+  "speakerId": "trial_nemesis",
+  "text": "Innocent blood. I keep the ledger, Achilles."
+ },
+ {
+  "key": "trial_nemesis/53f9920d",
+  "speakerId": "trial_nemesis",
+  "text": "Spill no more innocent blood before this floor’s master falls, and I may yet close the book."
+ },
+ {
+  "key": "trial_nemesis/73a5e3e2",
+  "speakerId": "trial_nemesis",
+  "text": "Trial: Kill no innocent this floor."
+ },
+ {
+  "key": "trial_nemesis/a78faf54",
+  "speakerId": "trial_nemesis",
+  "text": "Then it is sworn."
+ },
+ {
+  "key": "trial_nemesis/f897ba6c",
+  "speakerId": "trial_nemesis",
+  "text": "As you wish. The gods will remember."
+ },
+ {
+  "key": "trial_ares/4b60689c",
+  "speakerId": "trial_ares",
+  "text": "I like you, Achilles. The weak scatter before you."
+ },
+ {
+  "key": "trial_ares/7133057a",
+  "speakerId": "trial_ares",
+  "text": "Bring me 4 of the bandits and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/688f8ea7",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 4 bandits."
+ },
+ {
+  "key": "trial_ares/a78faf54",
+  "speakerId": "trial_ares",
+  "text": "Then it is sworn."
+ },
+ {
+  "key": "trial_ares/f897ba6c",
+  "speakerId": "trial_ares",
+  "text": "As you wish. The gods will remember."
+ },
+ {
+  "key": "trial_ares/2b53cc54",
+  "speakerId": "trial_ares",
+  "text": "Bring me 3 of the centaur archers and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/9426008f",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 3 centaur archers."
+ },
+ {
+  "key": "trial_ares/efb6eb6a",
+  "speakerId": "trial_ares",
+  "text": "Bring me 4 of the harpys and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/8deb6a7d",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 4 harpys."
+ },
+ {
+  "key": "trial_ares/24bb8869",
+  "speakerId": "trial_ares",
+  "text": "Bring me 4 of the living statues and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/85845f1e",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 4 living statues."
+ },
+ {
+  "key": "trial_ares/2604a585",
+  "speakerId": "trial_ares",
+  "text": "Bring me 3 of the harpys and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/d6f36874",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 3 harpys."
+ },
+ {
+  "key": "trial_ares/408b5561",
+  "speakerId": "trial_ares",
+  "text": "Bring me 4 of the centaur archers and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/6cc25874",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 4 centaur archers."
+ },
+ {
+  "key": "trial_ares/3829dd24",
+  "speakerId": "trial_ares",
+  "text": "Bring me 5 of the skeletons and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/bb7b6c67",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 5 skeletons."
+ },
+ {
+  "key": "trial_ares/148c7850",
+  "speakerId": "trial_ares",
+  "text": "Bring me 4 of the boars and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/45de7481",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 4 boars."
+ },
+ {
+  "key": "trial_ares/6eda7506",
+  "speakerId": "trial_ares",
+  "text": "Bring me 5 of the centaur archers and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/14989a89",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 5 centaur archers."
+ },
+ {
+  "key": "trial_ares/505dda3b",
+  "speakerId": "trial_ares",
+  "text": "Bring me 4 of the skeletons and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/5f595c06",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 4 skeletons."
+ },
+ {
+  "key": "trial_ares/821ef847",
+  "speakerId": "trial_ares",
+  "text": "Bring me 5 of the harpys and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/6c4daf66",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 5 harpys."
+ },
+ {
+  "key": "trial_ares/4d68a6a5",
+  "speakerId": "trial_ares",
+  "text": "Bring me 5 of the bandits and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/14d6d796",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 5 bandits."
+ },
+ {
+  "key": "trial_ares/a70cf4c2",
+  "speakerId": "trial_ares",
+  "text": "Bring me 3 of the living statues and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/c41074cb",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 3 living statues."
+ },
+ {
+  "key": "trial_ares/3411f1aa",
+  "speakerId": "trial_ares",
+  "text": "Bring me 3 of the skeletons and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/72d0604d",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 3 skeletons."
+ },
+ {
+  "key": "trial_ares/4577d3a0",
+  "speakerId": "trial_ares",
+  "text": "Bring me 5 of the living statues and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/122f7c11",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 5 living statues."
+ },
+ {
+  "key": "trial_ares/b782a30f",
+  "speakerId": "trial_ares",
+  "text": "Bring me 5 of the boars and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/0e5711a0",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 5 boars."
+ },
+ {
+  "key": "trial_ares/99fd347b",
+  "speakerId": "trial_ares",
+  "text": "Bring me 3 of the bandits and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/72a0e1cc",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 3 bandits."
+ },
+ {
+  "key": "trial_ares/9d69f7d9",
+  "speakerId": "trial_ares",
+  "text": "Bring me 3 of the boars and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/da1d5d12",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 3 boars."
+ },
+ {
+  "key": "trial_athena/2f603011",
+  "speakerId": "trial_athena",
+  "text": "Your mercy is known on Olympus, Achilles. Now show me your skill."
+ },
+ {
+  "key": "trial_athena/162f18e6",
+  "speakerId": "trial_athena",
+  "text": "Cross 1 chambers and let no blade touch you."
+ },
+ {
+  "key": "trial_athena/330adfdc",
+  "speakerId": "trial_athena",
+  "text": "Trial: Clear 1 room without being hit."
+ },
+ {
+  "key": "trial_athena/a78faf54",
+  "speakerId": "trial_athena",
+  "text": "Then it is sworn."
+ },
+ {
+  "key": "trial_athena/f897ba6c",
+  "speakerId": "trial_athena",
+  "text": "As you wish. The gods will remember."
+ },
+ {
+  "key": "trial_athena/98b5422d",
+  "speakerId": "trial_athena",
+  "text": "Cross 2 chambers and let no blade touch you."
+ },
+ {
+  "key": "trial_athena/ca8257b8",
+  "speakerId": "trial_athena",
+  "text": "Trial: Clear 2 rooms without being hit."
+ },
+ {
+  "key": "trial_athena/cc4bc0c0",
+  "speakerId": "trial_athena",
+  "text": "Cross 3 chambers and let no blade touch you."
+ },
+ {
+  "key": "trial_athena/0961405d",
+  "speakerId": "trial_athena",
+  "text": "Trial: Clear 3 rooms without being hit."
+ },
+ {
+  "key": "trial_hermes/0556590d",
+  "speakerId": "trial_hermes",
+  "text": "Still undecided, Achilles? Then at least be quick."
+ },
+ {
+  "key": "trial_hermes/9348b849",
+  "speakerId": "trial_hermes",
+  "text": "Race me to the lair of this floor’s master."
+ },
+ {
+  "key": "trial_hermes/239377a2",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 91s."
+ },
+ {
+  "key": "trial_hermes/a78faf54",
+  "speakerId": "trial_hermes",
+  "text": "Then it is sworn."
+ },
+ {
+  "key": "trial_hermes/f897ba6c",
+  "speakerId": "trial_hermes",
+  "text": "As you wish. The gods will remember."
+ },
+ {
+  "key": "trial_hermes/214b86f0",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 110s."
+ },
+ {
+  "key": "trial_charon/08d6fc97",
+  "speakerId": "trial_charon",
+  "text": "Every soul pays the ferryman, hero."
+ },
+ {
+  "key": "trial_charon/ad0665e4",
+  "speakerId": "trial_charon",
+  "text": "Gather my fare before the boss falls and I will remember your face."
+ },
+ {
+  "key": "trial_charon/47a59130",
+  "speakerId": "trial_charon",
+  "text": "Trial: Gather 6 coins."
+ },
+ {
+  "key": "trial_charon/a78faf54",
+  "speakerId": "trial_charon",
+  "text": "Then it is sworn."
+ },
+ {
+  "key": "trial_charon/f897ba6c",
+  "speakerId": "trial_charon",
+  "text": "As you wish. The gods will remember."
+ },
+ {
+  "key": "trial_hermes/26875722",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 145s."
+ },
+ {
+  "key": "trial_charon/5f7f41df",
+  "speakerId": "trial_charon",
+  "text": "Trial: Gather 5 coins."
+ },
+ {
+  "key": "trial_hermes/3cb97cec",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 136s."
+ },
+ {
+  "key": "trial_hermes/1081dcba",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 127s."
+ },
+ {
+  "key": "trial_artemis/03878be6",
+  "speakerId": "trial_artemis",
+  "text": "A hunt, Achilles. Nothing more, nothing less."
+ },
+ {
+  "key": "trial_artemis/e1f7ad87",
+  "speakerId": "trial_artemis",
+  "text": "Thin the beasts of this place and I will guide your aim."
+ },
+ {
+  "key": "trial_artemis/78e2ea56",
+  "speakerId": "trial_artemis",
+  "text": "Trial: Slay 7 foes."
+ },
+ {
+  "key": "trial_artemis/a78faf54",
+  "speakerId": "trial_artemis",
+  "text": "Then it is sworn."
+ },
+ {
+  "key": "trial_artemis/f897ba6c",
+  "speakerId": "trial_artemis",
+  "text": "As you wish. The gods will remember."
+ },
+ {
+  "key": "trial_hermes/a55b4eee",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 105s."
+ },
+ {
+  "key": "trial_hermes/da70edde",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 116s."
+ },
+ {
+  "key": "trial_artemis/f601d507",
+  "speakerId": "trial_artemis",
+  "text": "Trial: Slay 8 foes."
+ },
+ {
+  "key": "trial_artemis/6dac20c1",
+  "speakerId": "trial_artemis",
+  "text": "Trial: Slay 6 foes."
+ },
+ {
+  "key": "trial_hermes/f083be9a",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 101s."
+ },
+ {
+  "key": "trial_hermes/f3a8c7d7",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 106s."
+ },
+ {
+  "key": "trial_artemis/13c9dd60",
+  "speakerId": "trial_artemis",
+  "text": "Trial: Slay 5 foes."
+ },
+ {
+  "key": "trial_charon/b5ae4889",
+  "speakerId": "trial_charon",
+  "text": "Trial: Gather 7 coins."
+ },
+ {
+  "key": "trial_hermes/29bbe3c0",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 103s."
+ },
+ {
+  "key": "trial_hermes/a5f9a095",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 126s."
+ },
+ {
+  "key": "trial_hermes/2731f75f",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 142s."
+ },
+ {
+  "key": "trial_hermes/7a8d7ebf",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 128s."
+ },
+ {
+  "key": "trial_charon/0d8570e6",
+  "speakerId": "trial_charon",
+  "text": "Trial: Gather 4 coins."
+ },
+ {
+  "key": "trial_hermes/3449201c",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 143s."
+ },
+ {
+  "key": "trial_hermes/f523b86b",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 146s."
+ },
+ {
+  "key": "trial_hermes/5f1f88c3",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 102s."
+ },
+ {
+  "key": "trial_hermes/e95df58c",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 150s."
+ },
+ {
+  "key": "trial_hermes/7e44be14",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 107s."
+ },
+ {
+  "key": "trial_hermes/4faa39b5",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 98s."
+ },
+ {
+  "key": "trial_hermes/455a368e",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 123s."
+ },
+ {
+  "key": "trial_hermes/05fab8f5",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 100s."
+ },
+ {
+  "key": "trial_hermes/1e43a5b4",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 121s."
+ },
+ {
+  "key": "trial_hermes/243e17df",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 96s."
+ },
+ {
+  "key": "trial_hermes/f1feaf2e",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 149s."
+ },
+ {
+  "key": "trial_hermes/4811e4aa",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 138s."
+ },
+ {
+  "key": "trial_hermes/58959616",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 141s."
+ },
+ {
+  "key": "trial_hermes/18f85221",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 135s."
+ },
+ {
+  "key": "trial_hermes/ff1e7063",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 124s."
+ },
+ {
+  "key": "trial_hermes/efe7e839",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 117s."
+ },
+ {
+  "key": "trial_hermes/cc353460",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 125s."
+ },
+ {
+  "key": "trial_hermes/e46faa2d",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 131s."
+ },
+ {
+  "key": "trial_hermes/63805be6",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 134s."
+ },
+ {
+  "key": "trial_hermes/721d21ef",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 137s."
+ },
+ {
+  "key": "trial_hermes/9d95925b",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 119s."
+ },
+ {
+  "key": "trial_hermes/2ef7b3f2",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 130s."
+ },
+ {
+  "key": "trial_hermes/3858a9c9",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 104s."
+ },
+ {
+  "key": "trial_hermes/d7698de2",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 109s."
+ },
+ {
+  "key": "trial_hermes/a812fd0a",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 112s."
+ },
+ {
+  "key": "trial_hermes/ce0d2791",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 140s."
+ },
+ {
+  "key": "trial_hermes/87767309",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 148s."
+ },
+ {
+  "key": "trial_hermes/fc7ce6c8",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 93s."
+ },
+ {
+  "key": "trial_hermes/3d9479fb",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 133s."
+ },
+ {
+  "key": "trial_hermes/5d88df05",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 139s."
+ },
+ {
+  "key": "trial_hermes/5ad130e9",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 122s."
+ },
+ {
+  "key": "trial_hermes/990b091d",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 90s."
+ },
+ {
+  "key": "trial_hermes/f22fd8eb",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 92s."
+ },
+ {
+  "key": "trial_hermes/3d8ac0e5",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 113s."
+ },
+ {
+  "key": "trial_hermes/b5d4c604",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 114s."
+ },
+ {
+  "key": "trial_hermes/55a1b696",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 95s."
+ },
+ {
+  "key": "trial_hermes/9bfee89d",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 144s."
+ },
+ {
+  "key": "trial_hermes/e8be0207",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 115s."
+ },
+ {
+  "key": "trial_hermes/3155409c",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 97s."
+ },
+ {
+  "key": "priestess/cd8ef21f",
+  "speakerId": "priestess",
+  "text": "Athena sees all you have done, Atalanta. Speak, and be judged."
+ },
+ {
+  "key": "wounded_soldier/b0331605",
+  "speakerId": "wounded_soldier",
+  "text": "Water… or a quick end, Atalanta. Either is a kindness."
+ },
+ {
+  "key": "villager/5219569f",
+  "speakerId": "villager",
+  "text": "Please, Atalanta, I am no fighter. I only tend the goats."
+ },
+ {
+  "key": "altar/381b2fe4",
+  "speakerId": "altar",
+  "text": "The altar goes cold as you approach. Olympus remembers what you did, Atalanta."
+ },
+ {
+  "key": "villager/79f71e71",
+  "speakerId": "villager",
+  "text": "The ground opened and swallowed my street, Atalanta. Gaia is angry. Is it true it is your fault?"
+ },
+ {
+  "key": "minotaur/67ae6789",
+  "speakerId": "minotaur",
+  "text": "Asterion. My name was Asterion. Say it, Atalanta."
+ },
+ {
+  "key": "minotaur/cff4a8dd",
+  "speakerId": "minotaur",
+  "text": "So the Ruined Polis sends me Atalanta."
+ },
+ {
+  "key": "minotaur/0e089a91",
+  "speakerId": "minotaur",
+  "text": "Mercy, from Atalanta? The gods must be laughing."
+ },
+ {
+  "key": "minotaur/6cda06a6",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Atalanta. It will not save you here."
+ },
+ {
+  "key": "minotaur/2e3cf86c",
+  "speakerId": "minotaur",
+  "text": "You swore an oath to me, Atalanta, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "minotaur/53e5e765",
+  "speakerId": "minotaur",
+  "text": "I remember your blade, Atalanta. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "minotaur/f1dc317d",
+  "speakerId": "minotaur",
+  "text": "You again, Atalanta? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "minotaur/25cc69da",
+  "speakerId": "minotaur",
+  "text": "Go with my blessing, Atalanta. Few have earned it."
+ },
+ {
+  "key": "minotaur/698af49f",
+  "speakerId": "minotaur",
+  "text": "So the Labyrinth of Knossos sends me Atalanta."
+ },
+ {
+  "key": "minotaur/c3fa6938",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Atalanta. It will not save you here."
+ },
+ {
+  "key": "minotaur/4ca32f92",
+  "speakerId": "minotaur",
+  "text": "So the Gates of Tartarus sends me Atalanta."
+ },
+ {
+  "key": "minotaur/57d8bbdb",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Atalanta. It will not save you here."
+ },
+ {
+  "key": "hydra/860716a0",
+  "speakerId": "hydra",
+  "text": "Cut the last head and still we whisper, Atalanta. Riddles do not bleed."
+ },
+ {
+  "key": "hydra/3ce52844",
+  "speakerId": "hydra",
+  "text": "Deeper, Atalanta. The stairs go deeper than the light."
+ },
+ {
+  "key": "hydra/cff4a8dd",
+  "speakerId": "hydra",
+  "text": "So the Ruined Polis sends me Atalanta."
+ },
+ {
+  "key": "hydra/0e089a91",
+  "speakerId": "hydra",
+  "text": "Mercy, from Atalanta? The gods must be laughing."
+ },
+ {
+  "key": "hydra/6cda06a6",
+  "speakerId": "hydra",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Atalanta. It will not save you here."
+ },
+ {
+  "key": "hydra/2e3cf86c",
+  "speakerId": "hydra",
+  "text": "You swore an oath to me, Atalanta, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "hydra/53e5e765",
+  "speakerId": "hydra",
+  "text": "I remember your blade, Atalanta. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "hydra/f1dc317d",
+  "speakerId": "hydra",
+  "text": "You again, Atalanta? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "hydra/03bd0409",
+  "speakerId": "hydra",
+  "text": "A hero of the old kind. The heads fall silent for you, Atalanta."
+ },
+ {
+  "key": "hydra/698af49f",
+  "speakerId": "hydra",
+  "text": "So the Labyrinth of Knossos sends me Atalanta."
+ },
+ {
+  "key": "hydra/c3fa6938",
+  "speakerId": "hydra",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Atalanta. It will not save you here."
+ },
+ {
+  "key": "hydra/4ca32f92",
+  "speakerId": "hydra",
+  "text": "So the Gates of Tartarus sends me Atalanta."
+ },
+ {
+  "key": "hydra/57d8bbdb",
+  "speakerId": "hydra",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Atalanta. It will not save you here."
+ },
+ {
+  "key": "trial_nemesis/f01ca707",
+  "speakerId": "trial_nemesis",
+  "text": "Innocent blood. I keep the ledger, Atalanta."
+ },
+ {
+  "key": "trial_ares/eb375b4f",
+  "speakerId": "trial_ares",
+  "text": "I like you, Atalanta. The weak scatter before you."
+ },
+ {
+  "key": "trial_athena/f6027ae8",
+  "speakerId": "trial_athena",
+  "text": "Your mercy is known on Olympus, Atalanta. Now show me your skill."
+ },
+ {
+  "key": "trial_hermes/5baf12e8",
+  "speakerId": "trial_hermes",
+  "text": "Still undecided, Atalanta? Then at least be quick."
+ },
+ {
+  "key": "trial_artemis/aa3e7007",
+  "speakerId": "trial_artemis",
+  "text": "A hunt, Atalanta. Nothing more, nothing less."
+ },
+ {
+  "key": "priestess/3f5e8354",
+  "speakerId": "priestess",
+  "text": "Athena sees all you have done, Heracles. Speak, and be judged."
+ },
+ {
+  "key": "wounded_soldier/174d27e6",
+  "speakerId": "wounded_soldier",
+  "text": "Water… or a quick end, Heracles. Either is a kindness."
+ },
+ {
+  "key": "villager/5ba23588",
+  "speakerId": "villager",
+  "text": "Please, Heracles, I am no fighter. I only tend the goats."
+ },
+ {
+  "key": "altar/4dff881f",
+  "speakerId": "altar",
+  "text": "The altar goes cold as you approach. Olympus remembers what you did, Heracles."
+ },
+ {
+  "key": "villager/c2d9236e",
+  "speakerId": "villager",
+  "text": "The ground opened and swallowed my street, Heracles. Gaia is angry. Is it true it is your fault?"
+ },
+ {
+  "key": "minotaur/7bfd0e76",
+  "speakerId": "minotaur",
+  "text": "Asterion. My name was Asterion. Say it, Heracles."
+ },
+ {
+  "key": "minotaur/6e9cbcd2",
+  "speakerId": "minotaur",
+  "text": "So the Ruined Polis sends me Heracles."
+ },
+ {
+  "key": "minotaur/5b3be944",
+  "speakerId": "minotaur",
+  "text": "Mercy, from Heracles? The gods must be laughing."
+ },
+ {
+  "key": "minotaur/9dbd0e87",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Heracles. It will not save you here."
+ },
+ {
+  "key": "minotaur/63978343",
+  "speakerId": "minotaur",
+  "text": "You swore an oath to me, Heracles, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "minotaur/cd26b1a0",
+  "speakerId": "minotaur",
+  "text": "I remember your blade, Heracles. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "minotaur/b2e6f71c",
+  "speakerId": "minotaur",
+  "text": "You again, Heracles? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "minotaur/b31a8025",
+  "speakerId": "minotaur",
+  "text": "Go with my blessing, Heracles. Few have earned it."
+ },
+ {
+  "key": "minotaur/4250b154",
+  "speakerId": "minotaur",
+  "text": "So the Labyrinth of Knossos sends me Heracles."
+ },
+ {
+  "key": "minotaur/c8043c71",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Heracles. It will not save you here."
+ },
+ {
+  "key": "minotaur/57dc5c95",
+  "speakerId": "minotaur",
+  "text": "So the Gates of Tartarus sends me Heracles."
+ },
+ {
+  "key": "minotaur/11ab2ffa",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Heracles. It will not save you here."
+ },
+ {
+  "key": "hydra/4585817f",
+  "speakerId": "hydra",
+  "text": "Cut the last head and still we whisper, Heracles. Riddles do not bleed."
+ },
+ {
+  "key": "hydra/8ef01fa5",
+  "speakerId": "hydra",
+  "text": "Deeper, Heracles. The stairs go deeper than the light."
+ },
+ {
+  "key": "hydra/6e9cbcd2",
+  "speakerId": "hydra",
+  "text": "So the Ruined Polis sends me Heracles."
+ },
+ {
+  "key": "hydra/5b3be944",
+  "speakerId": "hydra",
+  "text": "Mercy, from Heracles? The gods must be laughing."
+ },
+ {
+  "key": "hydra/9dbd0e87",
+  "speakerId": "hydra",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Heracles. It will not save you here."
+ },
+ {
+  "key": "hydra/63978343",
+  "speakerId": "hydra",
+  "text": "You swore an oath to me, Heracles, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "hydra/cd26b1a0",
+  "speakerId": "hydra",
+  "text": "I remember your blade, Heracles. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "hydra/b2e6f71c",
+  "speakerId": "hydra",
+  "text": "You again, Heracles? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "hydra/180baaf6",
+  "speakerId": "hydra",
+  "text": "A hero of the old kind. The heads fall silent for you, Heracles."
+ },
+ {
+  "key": "hydra/4250b154",
+  "speakerId": "hydra",
+  "text": "So the Labyrinth of Knossos sends me Heracles."
+ },
+ {
+  "key": "hydra/c8043c71",
+  "speakerId": "hydra",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Heracles. It will not save you here."
+ },
+ {
+  "key": "hydra/57dc5c95",
+  "speakerId": "hydra",
+  "text": "So the Gates of Tartarus sends me Heracles."
+ },
+ {
+  "key": "hydra/11ab2ffa",
+  "speakerId": "hydra",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Heracles. It will not save you here."
+ },
+ {
+  "key": "trial_nemesis/af34433c",
+  "speakerId": "trial_nemesis",
+  "text": "Innocent blood. I keep the ledger, Heracles."
+ },
+ {
+  "key": "trial_ares/3f28f68a",
+  "speakerId": "trial_ares",
+  "text": "I like you, Heracles. The weak scatter before you."
+ },
+ {
+  "key": "trial_athena/5e42bfb7",
+  "speakerId": "trial_athena",
+  "text": "Your mercy is known on Olympus, Heracles. Now show me your skill."
+ },
+ {
+  "key": "trial_hermes/18bedeeb",
+  "speakerId": "trial_hermes",
+  "text": "Still undecided, Heracles? Then at least be quick."
+ },
+ {
+  "key": "trial_artemis/3cbebec4",
+  "speakerId": "trial_artemis",
+  "text": "A hunt, Heracles. Nothing more, nothing less."
+ },
+ {
+  "key": "priestess/790c760b",
+  "speakerId": "priestess",
+  "text": "Athena sees all you have done, Orpheus. Speak, and be judged."
+ },
+ {
+  "key": "wounded_soldier/4222208d",
+  "speakerId": "wounded_soldier",
+  "text": "Water… or a quick end, Orpheus. Either is a kindness."
+ },
+ {
+  "key": "villager/8e690531",
+  "speakerId": "villager",
+  "text": "Please, Orpheus, I am no fighter. I only tend the goats."
+ },
+ {
+  "key": "altar/2400214c",
+  "speakerId": "altar",
+  "text": "The altar goes cold as you approach. Olympus remembers what you did, Orpheus."
+ },
+ {
+  "key": "villager/ca1c45d9",
+  "speakerId": "villager",
+  "text": "The ground opened and swallowed my street, Orpheus. Gaia is angry. Is it true it is your fault?"
+ },
+ {
+  "key": "minotaur/0c843347",
+  "speakerId": "minotaur",
+  "text": "Asterion. My name was Asterion. Say it, Orpheus."
+ },
+ {
+  "key": "minotaur/c1b246ab",
+  "speakerId": "minotaur",
+  "text": "So the Ruined Polis sends me Orpheus."
+ },
+ {
+  "key": "minotaur/3d7ec45f",
+  "speakerId": "minotaur",
+  "text": "Mercy, from Orpheus? The gods must be laughing."
+ },
+ {
+  "key": "minotaur/8a681062",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Orpheus. It will not save you here."
+ },
+ {
+  "key": "minotaur/e9e9ae64",
+  "speakerId": "minotaur",
+  "text": "You swore an oath to me, Orpheus, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "minotaur/27d48b59",
+  "speakerId": "minotaur",
+  "text": "I remember your blade, Orpheus. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "minotaur/5d7816e9",
+  "speakerId": "minotaur",
+  "text": "You again, Orpheus? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "minotaur/1b2a6e72",
+  "speakerId": "minotaur",
+  "text": "Go with my blessing, Orpheus. Few have earned it."
+ },
+ {
+  "key": "minotaur/ff9b98d1",
+  "speakerId": "minotaur",
+  "text": "So the Labyrinth of Knossos sends me Orpheus."
+ },
+ {
+  "key": "minotaur/f15fca10",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Orpheus. It will not save you here."
+ },
+ {
+  "key": "minotaur/6fdc8c56",
+  "speakerId": "minotaur",
+  "text": "So the Gates of Tartarus sends me Orpheus."
+ },
+ {
+  "key": "minotaur/57ce4eb5",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Orpheus. It will not save you here."
+ },
+ {
+  "key": "hydra/90ccb14a",
+  "speakerId": "hydra",
+  "text": "Cut the last head and still we whisper, Orpheus. Riddles do not bleed."
+ },
+ {
+  "key": "hydra/050e31e8",
+  "speakerId": "hydra",
+  "text": "Deeper, Orpheus. The stairs go deeper than the light."
+ },
+ {
+  "key": "hydra/c1b246ab",
+  "speakerId": "hydra",
+  "text": "So the Ruined Polis sends me Orpheus."
+ },
+ {
+  "key": "hydra/3d7ec45f",
+  "speakerId": "hydra",
+  "text": "Mercy, from Orpheus? The gods must be laughing."
+ },
+ {
+  "key": "hydra/8a681062",
+  "speakerId": "hydra",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Orpheus. It will not save you here."
+ },
+ {
+  "key": "hydra/e9e9ae64",
+  "speakerId": "hydra",
+  "text": "You swore an oath to me, Orpheus, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "hydra/27d48b59",
+  "speakerId": "hydra",
+  "text": "I remember your blade, Orpheus. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "hydra/5d7816e9",
+  "speakerId": "hydra",
+  "text": "You again, Orpheus? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "hydra/48eef4c7",
+  "speakerId": "hydra",
+  "text": "A hero of the old kind. The heads fall silent for you, Orpheus."
+ },
+ {
+  "key": "hydra/ff9b98d1",
+  "speakerId": "hydra",
+  "text": "So the Labyrinth of Knossos sends me Orpheus."
+ },
+ {
+  "key": "hydra/f15fca10",
+  "speakerId": "hydra",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Orpheus. It will not save you here."
+ },
+ {
+  "key": "hydra/6fdc8c56",
+  "speakerId": "hydra",
+  "text": "So the Gates of Tartarus sends me Orpheus."
+ },
+ {
+  "key": "hydra/57ce4eb5",
+  "speakerId": "hydra",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Orpheus. It will not save you here."
+ },
+ {
+  "key": "trial_nemesis/691422a9",
+  "speakerId": "trial_nemesis",
+  "text": "Innocent blood. I keep the ledger, Orpheus."
+ },
+ {
+  "key": "trial_ares/626edecb",
+  "speakerId": "trial_ares",
+  "text": "I like you, Orpheus. The weak scatter before you."
+ },
+ {
+  "key": "trial_athena/4f08a29a",
+  "speakerId": "trial_athena",
+  "text": "Your mercy is known on Olympus, Orpheus. Now show me your skill."
+ },
+ {
+  "key": "trial_hermes/b131d3ec",
+  "speakerId": "trial_hermes",
+  "text": "Still undecided, Orpheus? Then at least be quick."
+ },
+ {
+  "key": "trial_artemis/b67b6739",
+  "speakerId": "trial_artemis",
+  "text": "A hunt, Orpheus. Nothing more, nothing less."
+ },
+ {
+  "key": "priestess/fbbc7e71",
+  "speakerId": "priestess",
+  "text": "Athena sees all you have done, Kratos. Speak, and be judged."
+ },
+ {
+  "key": "wounded_soldier/7de8f59f",
+  "speakerId": "wounded_soldier",
+  "text": "Water… or a quick end, Kratos. Either is a kindness."
+ },
+ {
+  "key": "villager/f1d68e35",
+  "speakerId": "villager",
+  "text": "Please, Kratos, I am no fighter. I only tend the goats."
+ },
+ {
+  "key": "altar/4725f27e",
+  "speakerId": "altar",
+  "text": "The altar goes cold as you approach. Olympus remembers what you did, Kratos."
+ },
+ {
+  "key": "villager/2195dae7",
+  "speakerId": "villager",
+  "text": "The ground opened and swallowed my street, Kratos. Gaia is angry. Is it true it is your fault?"
+ },
+ {
+  "key": "minotaur/a6fac71b",
+  "speakerId": "minotaur",
+  "text": "Asterion. My name was Asterion. Say it, Kratos."
+ },
+ {
+  "key": "minotaur/b1d38b4f",
+  "speakerId": "minotaur",
+  "text": "So the Ruined Polis sends me Kratos."
+ },
+ {
+  "key": "minotaur/d90217a3",
+  "speakerId": "minotaur",
+  "text": "Mercy, from Kratos? The gods must be laughing."
+ },
+ {
+  "key": "minotaur/a94820e0",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Kratos. It will not save you here."
+ },
+ {
+  "key": "minotaur/7f1486d6",
+  "speakerId": "minotaur",
+  "text": "You swore an oath to me, Kratos, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "minotaur/512c4fff",
+  "speakerId": "minotaur",
+  "text": "I remember your blade, Kratos. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "minotaur/5d5a26a3",
+  "speakerId": "minotaur",
+  "text": "You again, Kratos? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "minotaur/6d7a347c",
+  "speakerId": "minotaur",
+  "text": "Go with my blessing, Kratos. Few have earned it."
+ },
+ {
+  "key": "minotaur/b261276d",
+  "speakerId": "minotaur",
+  "text": "So the Labyrinth of Knossos sends me Kratos."
+ },
+ {
+  "key": "minotaur/df587d5e",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Kratos. It will not save you here."
+ },
+ {
+  "key": "minotaur/1ee53c38",
+  "speakerId": "minotaur",
+  "text": "So the Gates of Tartarus sends me Kratos."
+ },
+ {
+  "key": "minotaur/e8663591",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Kratos. It will not save you here."
+ },
+ {
+  "key": "hydra/d4974c6e",
+  "speakerId": "hydra",
+  "text": "Cut the last head and still we whisper, Kratos. Riddles do not bleed."
+ },
+ {
+  "key": "hydra/6bdcd7ba",
+  "speakerId": "hydra",
+  "text": "Deeper, Kratos. The stairs go deeper than the light."
+ },
+ {
+  "key": "hydra/b1d38b4f",
+  "speakerId": "hydra",
+  "text": "So the Ruined Polis sends me Kratos."
+ },
+ {
+  "key": "hydra/d90217a3",
+  "speakerId": "hydra",
+  "text": "Mercy, from Kratos? The gods must be laughing."
+ },
+ {
+  "key": "hydra/a94820e0",
+  "speakerId": "hydra",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Kratos. It will not save you here."
+ },
+ {
+  "key": "hydra/7f1486d6",
+  "speakerId": "hydra",
+  "text": "You swore an oath to me, Kratos, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "hydra/512c4fff",
+  "speakerId": "hydra",
+  "text": "I remember your blade, Kratos. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "hydra/5d5a26a3",
+  "speakerId": "hydra",
+  "text": "You again, Kratos? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "hydra/0103ef9b",
+  "speakerId": "hydra",
+  "text": "A hero of the old kind. The heads fall silent for you, Kratos."
+ },
+ {
+  "key": "hydra/b261276d",
+  "speakerId": "hydra",
+  "text": "So the Labyrinth of Knossos sends me Kratos."
+ },
+ {
+  "key": "hydra/df587d5e",
+  "speakerId": "hydra",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Kratos. It will not save you here."
+ },
+ {
+  "key": "hydra/1ee53c38",
+  "speakerId": "hydra",
+  "text": "So the Gates of Tartarus sends me Kratos."
+ },
+ {
+  "key": "hydra/e8663591",
+  "speakerId": "hydra",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Kratos. It will not save you here."
+ },
+ {
+  "key": "trial_nemesis/674c5b15",
+  "speakerId": "trial_nemesis",
+  "text": "Innocent blood. I keep the ledger, Kratos."
+ },
+ {
+  "key": "trial_ares/c430e695",
+  "speakerId": "trial_ares",
+  "text": "I like you, Kratos. The weak scatter before you."
+ },
+ {
+  "key": "trial_athena/7f3d894e",
+  "speakerId": "trial_athena",
+  "text": "Your mercy is known on Olympus, Kratos. Now show me your skill."
+ },
+ {
+  "key": "trial_hermes/b218dbbe",
+  "speakerId": "trial_hermes",
+  "text": "Still undecided, Kratos? Then at least be quick."
+ },
+ {
+  "key": "trial_artemis/c124d155",
+  "speakerId": "trial_artemis",
+  "text": "A hunt, Kratos. Nothing more, nothing less."
+ }
+]
