@@ -35,6 +35,8 @@ function detectTouch(): boolean {
 
 /** True when the game should show touch controls and touch-worded hints. */
 export const TOUCH = detectTouch();
+/** Confirm key named in hints: a tap stands in for ENTER on touch devices. */
+export const OK_KEY = TOUCH ? 'TAP' : 'ENTER';
 
 if (typeof window !== 'undefined') {
   window.addEventListener('keydown', (e) => down.add(e.code));

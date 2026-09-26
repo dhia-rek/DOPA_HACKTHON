@@ -48,8 +48,8 @@ export class HudScene extends Phaser.Scene {
     this.hearts = this.add.group();
     this.info = this.add.text(12, 42, '', { fontFamily: 'monospace', fontSize: '16px', color: COLORS.text });
     this.stageText = this.add.text(12, GAME_HEIGHT - 28, '', { fontFamily: 'monospace', fontSize: '14px', color: COLORS.textDim });
-    this.questText = this.add.text(GAME_WIDTH - 12, GAME_HEIGHT - 50, '', { fontFamily: 'monospace', fontSize: '13px', color: '#8fd0ff', backgroundColor: '#0b0a0fbb', padding: { x: 6, y: 3 } }).setOrigin(1, 0);
-    this.trialText = this.add.text(12, GAME_HEIGHT - 50, '', { fontFamily: 'monospace', fontSize: '14px', color: '#ffe08a' });
+    this.questText = this.add.text(8, GAME_HEIGHT - 50, '', { fontFamily: 'monospace', fontSize: '13px', color: '#8fd0ff', backgroundColor: '#0b0a0fbb', padding: { x: 6, y: 3 } });
+    this.trialText = this.add.text(12, GAME_HEIGHT - 72, '', { fontFamily: 'monospace', fontSize: '14px', color: '#ffe08a' });
     this.time.addEvent({ delay: 250, loop: true, callback: this.refreshTrial, callbackScope: this });
     this.items = this.add.container(12, 68);
     this.minimap = this.add.graphics();

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
-import { TOUCH } from '../core/input';
+import { OK_KEY, TOUCH } from '../core/input';
 import { CHARS_PER_SEC, settings } from '../core/settings';
 import { blip } from '../core/sfx';
 import type { DialogueOption, DialogueScript } from '../dialogue/types';
@@ -20,9 +20,6 @@ const BOX_H = 200;
 const BOX_X = 32;
 const PORTRAIT = 120;
 const TEXT_X = BOX_X + PORTRAIT + 48;
-/** Key name used in hints: taps stand in for ENTER on touch devices. */
-const OK = TOUCH ? 'TAP' : 'ENTER';
-
 /**
  * Overlay that shows a DialogueScript: speaker lines (ENTER / tap to advance),
  * then numbered options (1-4, ↑↓ + ENTER, or tap). The scene that launched it
@@ -75,11 +72,19 @@ export class DialogueScene extends Phaser.Scene {
     const kb = this.input.keyboard!;
     kb.on('keydown-ENTER', this.advance, this);
     kb.on('keydown-SPACE', this.advance, this);
-    kb.on('keydown-M', () => {
+    const toggleVoice = (): void => {
       voiceSettings.enabled = !voiceSettings.enabled;
       if (!voiceSettings.enabled) voice.stop();
       this.voiceTag.setText(this.voiceLabel());
-    });
+    };
+    kb.on('keydown-M', toggleVoice);
+    if (this.data_.voice) {
+      this.voiceTag.setPadding(12, 8, 12, 8).setInteractive({ useHandCursor: true });
+      this.voiceTag.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
+        ev.stopPropagation();
+        toggleVoice();
+      });
+    }
     kb.on('keydown-UP', () => this.moveSel(-1));
     kb.on('keydown-DOWN', () => this.moveSel(1));
     for (let i = 1; i <= 4; i++) {
@@ -131,7 +136,8 @@ export class DialogueScene extends Phaser.Scene {
 
   private voiceLabel(): string {
     if (!this.data_.voice) return '';
-    return voiceSettings.enabled ? `♪ ${this.data_.voice.mood} · M mute` : '♪ muted · M';
+    const key = TOUCH ? 'TAP' : 'M';
+    return voiceSettings.enabled ? `♪ ${this.data_.voice.mood} · ${key} mute` : `♪ muted · ${key}`;
   }
 
   private typeOut(text: string): void {
@@ -160,13 +166,13 @@ export class DialogueScene extends Phaser.Scene {
     this.typer = undefined;
     this.shown = this.fullText.length;
     this.body.setText(this.fullText);
-    this.hint.setText(`${OK} ▸`);
+    this.hint.setText(`${OK_KEY} ▸`);
   }
 
   // ---- flow ---------------------------------------------------------------
 
   private showLine(): void {
-    this.hint.setText(`${OK} ▸▸`);
+    this.hint.setText(`${OK_KEY} ▸▸`);
     this.typeOut(this.data_.script.lines[this.lineIndex]);
   }
 
@@ -225,7 +231,7 @@ export class DialogueScene extends Phaser.Scene {
       this.optionTexts = [];
       if (!opt.reply) return this.finish(opt);
       this.phase = 'reply';
-      this.hint.setText(`${OK} ▸▸`);
+      this.hint.setText(`${OK_KEY} ▸▸`);
       this.typeOut(opt.reply);
       return;
     }

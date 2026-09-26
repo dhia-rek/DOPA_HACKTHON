@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import { events } from '../core/events';
-import { TOUCH } from '../core/input';
+import { OK_KEY, TOUCH } from '../core/input';
 import { Rng } from '../core/rng';
 import { RunState } from '../core/run';
 import { save } from '../core/save';
@@ -217,7 +217,7 @@ export class MenuScene extends Phaser.Scene {
     const divider = this.add.graphics();
     divider.lineStyle(1, COLORS.uiBorder, 0.7).lineBetween(40, 450, GAME_WIDTH - 40, 450);
     add(divider);
-    const descend = this.add.text(cx, 478, locked ? 'LOCKED' : `${TOUCH ? 'TAP' : 'ENTER'}  ·  DESCEND`, { fontFamily: mono, fontSize: '18px', color: locked ? COLORS.textDim : COLORS.text })
+    const descend = this.add.text(cx, 478, locked ? 'LOCKED' : `${OK_KEY}  ·  DESCEND`, { fontFamily: mono, fontSize: '18px', color: locked ? COLORS.textDim : COLORS.text })
       .setOrigin(0.5).setPadding(16, 6, 16, 6).setInteractive({ useHandCursor: !locked });
     descend.on('pointerover', () => !locked && descend.setColor(COLORS.uiIvory));
     descend.on('pointerout', () => !locked && descend.setColor(COLORS.text));
