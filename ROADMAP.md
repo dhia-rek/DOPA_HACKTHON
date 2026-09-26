@@ -57,6 +57,19 @@ bosses say, how hard they hit, and how the story ends.
 
 ---
 
+## 1b. Phase 3: the Director (designed, contract on `main`)
+
+Once per floor an LLM reads a `PlayerProfile` (deeds, dialogue voice, build,
+skill/style telemetry, orbs = divine attention, shrine prophecies, quests) and
+returns a validated `FloorDirective`: stage mutators, enemy weights, a quest,
+NPC casting and a composed boss (archetype + ability modules + grudge +
+weakness the player earned), all within a difficulty budget. The LLM only
+picks catalog ids and writes text. Design, wiring plan and per-stream tasks:
+**[docs/DIRECTOR.md](docs/DIRECTOR.md)**. Code: `src/director/*`,
+`src/core/profile.ts`, `src/data/{gods,mutators,abilities,quests}.ts`.
+
+---
+
 ## 2. Team split (3 streams, 3 branches)
 
 | Stream | Owner | Branch | Owns (files) | Must NOT edit without a ping |

@@ -1,11 +1,14 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from './config';
+import { telemetry } from './core/profile';
 import { BootScene } from './scenes/BootScene';
 import { DialogueScene } from './scenes/DialogueScene';
 import { GameOverScene } from './scenes/GameOverScene';
 import { HudScene } from './scenes/HudScene';
 import { MenuScene } from './scenes/MenuScene';
 import { RunScene } from './scenes/RunScene';
+
+telemetry.listen();
 
 new Phaser.Game({
   type: Phaser.AUTO,
