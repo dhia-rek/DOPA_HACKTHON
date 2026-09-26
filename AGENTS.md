@@ -29,7 +29,7 @@ Phase 3 (the LLM Director that reshapes each floor) is designed in `docs/DIRECTO
 - [x] Kratos hook: starts at karma −40, gods refuse his shrine offerings
 - [x] Boss outro dialogue kind (`boss_outro`) content in the mock provider
 - [ ] Director: boons/curses catalog (`src/data/boons.ts`) and epithet achievements (`the Merciful`, `the Butcher`, `Oathbreaker`…)
-- [ ] Director: shrine content that makes prophecies (`story.promise`), orb flags (`orb_fire`, `orb_holy`) → `earnedWeaknesses`
+- [x] Director: shrine content that makes prophecies (`story.promise`), orb flags (`orb_fire`, `orb_holy`) → `earnedWeaknesses`
 - [ ] Director: tune `budgetFor()` / trait thresholds in `src/core/profile.ts`, prompt wording in `src/director/prompt.ts`
 
 ### Stream B — Julien
@@ -39,10 +39,10 @@ Phase 3 (the LLM Director that reshapes each floor) is designed in `docs/DIRECTO
 - [x] Shrine room type + altar sprite → opens a `kind: 'shrine'` dialogue
 - [x] Boss outro: trigger `boss_outro` dialogue when a boss dies (`RunScene.killEnemy`)
 - [ ] General art/feel pass (room palettes, hit feedback, menu)
-- [ ] Director: prefetch `directorRequest(run, floor+1)` at boss-room entry, apply on `floor_started`; `floorTitle` + `verdict` between floors; `?director=1` overlay showing `reason`
-- [ ] Director: composable boss abilities (`charge`, `summon_minions`, `orbit_shields`, `call_shades`, `enrage_below`) + `Enemy.compose(BossBlueprint)` in `behaviours.ts`
-- [ ] Director: mutators `palette_shift`, `haunted`, `flooded`, `arena`; `enemyWeights` in spawning
-- [ ] Director: god-coloured orb pickups → `story.favour(god)`; quest tracker (`systems/quests.ts`) + HUD line
+- [x] Director: prefetch `directorRequest(run, floor+1)` at boss-room entry, apply on `floor_started`; `floorTitle` + `verdict` between floors; `?director=1` overlay showing `reason`
+- [x] Director: composable boss abilities (`charge`, `summon_minions`, `orbit_shields`, `call_shades`, `enrage_below`) + `Enemy.compose(BossBlueprint)` in `behaviours.ts`
+- [x] Director: mutators `palette_shift`, `haunted`, `flooded`, `arena`; `enemyWeights` in spawning
+- [x] Director: shrine offerings → `story.favour(god)`; quest tracker (`systems/quests.ts`) + HUD line (orb pickups still open)
 
 ### Stream C — Parthiv
 - [x] `server/`: HTTP service `POST DialogueRequest -> DialogueScript` (any stack; key stays server-side)
@@ -51,8 +51,8 @@ Phase 3 (the LLM Director that reshapes each floor) is designed in `docs/DIRECTO
 - [x] `HttpDialogueProvider`: retries, cache by `request.seed`, prefetch boss intro on floor start
 - [ ] Deploy (Vercel/Cloudflare/Render…) and document the `VITE_DIALOGUE_API` URL
 - [ ] Later: LLM room generator behind the same pattern (13×7 grid contract in `src/gen/roomGen.ts`)
-- [ ] Director: `POST /director` (`DirectorRequest -> FloorDirective`) using `DIRECTOR_SYSTEM_PROMPT` + `validateDirective`, cache by `request.seed`, 502 on invalid → client falls back to mock
-- [ ] Director: document `VITE_DIRECTOR_API` next to `VITE_DIALOGUE_API`
+- [x] Director: `POST /director` (`DirectorRequest -> FloorDirective`) using `DIRECTOR_SYSTEM_PROMPT` + `validateDirective`, cache by `request.seed`, 502 on invalid → client falls back to mock
+- [x] Director: document `VITE_DIRECTOR_API` next to `VITE_DIALOGUE_API`
 
 ## Rules for every change
 

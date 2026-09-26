@@ -3,6 +3,7 @@ import { GAME_HEIGHT, GAME_WIDTH } from './config';
 import { telemetry } from './core/profile';
 import { BootScene } from './scenes/BootScene';
 import { DialogueScene } from './scenes/DialogueScene';
+import { FloorIntroScene } from './scenes/FloorIntroScene';
 import { GameOverScene } from './scenes/GameOverScene';
 import { HudScene } from './scenes/HudScene';
 import { MenuScene } from './scenes/MenuScene';
@@ -25,5 +26,5 @@ new Phaser.Game({
     default: 'arcade',
     arcade: { debug: false },
   },
-  scene: [BootScene, MenuScene, RunScene, HudScene, DialogueScene, GameOverScene],
+  scene: [BootScene, MenuScene, FloorIntroScene, RunScene, HudScene, DialogueScene, GameOverScene],
 });

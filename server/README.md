@@ -9,8 +9,17 @@ POST /            body: DialogueRequest  ->  200 DialogueScript
                                              502 LLM failed / returned an invalid script
                                              429 over RATE_LIMIT_PER_MIN LLM calls for this IP
                                              503 GEMINI_API_KEY not set
+POST /director    body: DirectorRequest  ->  200 FloorDirective (same error codes)
 GET  /health      { ok, llm, model, cached }
 ```
+
+`/director` is the LLM Director (`docs/DIRECTOR.md`): it receives the
+`PlayerProfile` for the coming floor and returns a `FloorDirective` (floor
+title, verdict, mutators, enemy weights, NPC casting, quest, composed boss).
+It uses `DIRECTOR_SYSTEM_PROMPT` and `validateDirective` from
+`../src/director/`, so an out-of-catalog id or an over-budget boss is clamped
+server-side; the client validates again and falls back to the seeded mock
+director when the server is down, so the game is always playable.
 
 Types and the validator (`validateScript`) are imported straight from
 `../src/dialogue/types.ts`, and the system prompt from
@@ -30,7 +39,7 @@ npm run dev                 # http://localhost:8787
 Point the game at it (repo root):
 
 ```bash
-echo "VITE_DIALOGUE_API=http://localhost:8787" > .env.local
+printf 'VITE_DIALOGUE_API=http://localhost:8787\nVITE_DIRECTOR_API=http://localhost:8787/director\n' > .env.local
 npm run dev
 ```
 

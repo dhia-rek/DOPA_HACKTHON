@@ -93,17 +93,22 @@ player enters floor *N*'s boss room (`directorRequest(run, run.floor + 1)`), kee
 apply on `floor_started`. Cache by `request.seed` server-side. Server validates with the
 same `validateDirective()` and returns 502 on failure → client falls back to the mock.
 
-## 6. Wiring plan (who does what)
+## 6. Wiring (as implemented)
 
-| Step | Stream | Where |
-|---|---|---|
-| Prefetch + apply directive, `palette_shift` + `floorTitle`/`verdict` between floors, `?director=1` overlay showing `reason` | B | `RunScene`, `HudScene` |
-| Composable boss abilities (`charge`, `summon_minions`, `orbit_shields`, `call_shades`, `enrage_below` first) + `Enemy.compose(blueprint)` | B | `systems/behaviours.ts`, `entities/Enemy.ts` |
-| Mutators `haunted`, `flooded`, `arena`; enemy weights in spawning | B | `RunScene`, `gen/floorGen.ts` |
-| Orb pickup per god, shrine room → `promise()` | B (+A for content) | `entities/Pickup.ts`, `RunScene` |
-| Quest tracker over the event bus, HUD line | B | `systems/quests.ts` (new), `HudScene` |
-| `server/director` endpoint: `DIRECTOR_SYSTEM_PROMPT` + `validateDirective`, cache by seed | C | `server/` |
-| Boons/curses catalog, epithet achievements, more mutators/abilities content, prompt tuning, Chronicler compression | A | `src/data/*`, `src/director/prompt.ts` |
+```
+MenuScene ──► FloorIntroScene ──► RunScene (rooms…) ──► boss room ──► trapdoor ──► FloorIntroScene ──► …
+                 │                    │                     │
+                 │                    │                     └─ director.prefetch(run, floor+1)   (systems/director.ts)
+                 │                    └─ run.ensureFloor() → generateFloor() → applyDirective()  (director/apply.ts)
+                 └─ await director.forFloor(run, floor) → run.directive; settleProphecies; questTracker.offer
+```
+
+* **FloorIntroScene** shows `floorTitle`, `verdict`, epithet, omens (mutators + god), modifier, quest hook and the boss title/grudge. `?director=1` prints `reason`, abilities, weakness, spent.
+* **director/apply.ts** (pure): boss archetype, `enemyWeights` re-roll, `arena`/`pilgrim_road` enemy counts, `haunted` shades, NPC casting into empty rooms.
+* **RunScene**: `palette_shift` (walls tinted by patron god), `flooded` (0.85 speed + tint), `darkness` (mask around the player), `plague` (poison burst on kills); boss intro speaker uses the blueprint title/persona/grudge; earned weakness multiplies matching shots ×1.6 (`stagger_after_charge` doubles damage during the longer stagger); `steal_hearts` heals the boss on contact; shrine offerings call `story.favour(god)` and make a prophecy (boss weakness or boon; Hermes may lie once).
+* **systems/bossAbilities.ts**: `boss_directed` behaviour composes `BossBlueprint.abilities` + phases in round-robin (charge, ground_slam, projectile_ring, summon_minions, teleport_behind, call_shades, mirror_build) with passives (orbit_shields, poison_trail, enrage_below, split_on_hp).
+* **systems/quests.ts**: tracks `slay`, `spare_all`, `no_damage_rooms`, `reach_boss_under`, `betray`, `sacrifice`, `deliver` over the event bus; rewards `heart` / `coins:N` / item; result recorded as a deed the next Director call sees.
+* **server/**: `POST /director` (Gemini, `DIRECTOR_SYSTEM_PROMPT`, `validateDirective`, cache by seed+profile hash). Client: `VITE_DIRECTOR_API`; without it (or on any failure) the seeded `MockDirectorProvider` runs, so every run still differs offline.
 
 ## 7. Next ideas (ranked for the hackathon)
 
