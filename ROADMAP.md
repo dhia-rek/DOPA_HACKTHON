@@ -93,7 +93,23 @@ POST {VITE_DIALOGUE_API}            body: DialogueRequest   (src/dialogue/types.
 * More NPCs (`priestess`, `child`, `wounded_soldier`) with personas; per-stage pools.
 * Boss personas + which `flags` each boss should react to.
 * Achievements for the moral axis (`saint`, `butcher`, `oathbreaker`).
-* Tune karma values / `takeBossMods()` curve.
+* Tune karma values / `takeBossMods()` curve. **Done** — all knobs live in
+  `KARMA` (`src/core/story.ts`); `karmaBossFactor(karma)` is the pure curve
+  (smoothstep from the ±10 neutral band to the caps at ±100), multiplied with
+  dialogue `bossMods` and clamped to [0.5, 2] in `takeBossMods()`:
+
+  | karma | boss hp | boss damage | boss speed | note |
+  |---|---|---|---|---|
+  | −100 | ×1.30 | ×1.15 | ×1 | cruel cap |
+  | −60 | ×1.17 | ×1.09 | ×1 | |
+  | −25 | ×1.02 | ×1.01 | ×1 | `cruel` threshold |
+  | −10 … +10 | ×1 | ×1 | ×1 | neutral band, no change |
+  | +25 | ×0.99 | ×1 | ×0.996 | `heroic` threshold |
+  | +60 | ×0.94 | ×1 | ×0.97 | |
+  | +100 | ×0.90 | ×1 | ×0.95 | heroic cap |
+
+  Deltas: NPC killed −15 (`KARMA.npcKilled`), NPC spared +5 (`KARMA.npcSpared`);
+  dialogue options stay in −30..30 (see `SYSTEM_PROMPT`).
 
 ---
 
