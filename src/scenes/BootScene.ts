@@ -4,6 +4,7 @@ import { save } from '../core/save';
 import { CHARACTERS } from '../data/characters';
 import { ENEMIES, EnemyDef } from '../data/enemies';
 import { ITEMS } from '../data/items';
+import { CHARACTER_SPRITES, ENEMY_SPRITES, SpriteDef } from '../data/sprites';
 
 /**
  * Generates placeholder textures at runtime so the game needs no art assets.
@@ -30,8 +31,16 @@ export class BootScene extends Phaser.Scene {
     this.makeCoin();
     this.makePedestal();
     this.makeTrapdoor();
-    for (const c of CHARACTERS) this.makePlayer(`player_${c.id}`, c.color, c.shadeColor);
-    for (const e of ENEMIES) this.makeEnemy(e);
+    for (const c of CHARACTERS) {
+      const sprite = CHARACTER_SPRITES[c.id];
+      if (sprite) this.makeSprite(`player_${c.id}`, sprite, PLAYER.radius * 2 + 8);
+      else this.makePlayer(`player_${c.id}`, c.color, c.shadeColor);
+    }
+    for (const e of ENEMIES) {
+      const sprite = ENEMY_SPRITES[e.id];
+      if (sprite) this.makeSprite(`enemy_${e.id}`, sprite, e.radius * 2 + 8);
+      else this.makeEnemy(e);
+    }
     for (const i of ITEMS) this.makeItemIcon(`item_${i.id}`, i.color);
 
     this.scene.start('menu');
@@ -184,6 +193,37 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(COLORS.playerEye);
     g.fillCircle(cx - 7, cx - 4, 3);
     g.fillCircle(cx + 7, cx - 4, 3);
+    g.generateTexture(key, size, size);
+    g.destroy();
+  }
+
+  /** Draws a pixel-art sprite scaled to fill a `size`×`size` texture, with a dark outline and ground shadow. */
+  private makeSprite(key: string, sprite: SpriteDef, size: number): void {
+    const n = sprite.rows.length;
+    const px = size / n;
+    const g = this.gfx();
+    const at = (v: number): number => Math.round(v * px);
+    const rect = (x: number, y: number): void => {
+      g.fillRect(at(x), at(y), at(x + 1) - at(x), at(y + 1) - at(y));
+    };
+    const solid = (x: number, y: number): boolean => sprite.rows[y]?.[x] !== undefined && sprite.rows[y][x] !== '.';
+
+    g.fillStyle(0x000000, 0.3).fillEllipse(size / 2, size - px * 1.5, size * 0.7, px * 2.5);
+    g.fillStyle(0x120e16);
+    for (let y = 0; y < n; y++) {
+      for (let x = 0; x < n; x++) {
+        if (solid(x, y)) continue;
+        if (solid(x - 1, y) || solid(x + 1, y) || solid(x, y - 1) || solid(x, y + 1)) rect(x, y);
+      }
+    }
+    for (let y = 0; y < n; y++) {
+      for (let x = 0; x < n; x++) {
+        const color = sprite.palette[sprite.rows[y][x]];
+        if (color === undefined) continue;
+        g.fillStyle(color);
+        rect(x, y);
+      }
+    }
     g.generateTexture(key, size, size);
     g.destroy();
   }
