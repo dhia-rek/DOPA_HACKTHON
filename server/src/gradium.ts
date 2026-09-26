@@ -1,0 +1,75 @@
+import type { VoiceMood, VoiceName, VoiceRequest } from '../../src/voice/types';
+import { CONFIG } from './config';
+
+export const gradiumConfigured = CONFIG.gradiumApiKey !== '';
+
+/** Gradium flagship voice ids standing in for each game voice (low, grave voices for the bosses). */
+const DEFAULT_VOICES: Record<VoiceName, string> = {
+  Fenrir: 'POBHtemksfWQbng0', // Garrett: low-pitched, quiet menace
+  Charon: 'r2sIQdqqoqgRJuXw', // Marcus: resonant, unshakeable
+  Orus: 'I7GYfpcKbafFrYUv', // Declan: calm, steady
+  Kore: 'gqn4ytOULe-TQfjl', // Saoirse: warm, expressive
+  Aoede: '4rdlkbxRv4m3UQTW', // Tilly: bright
+  Leda: 'YVzbrdWnnu9FgRn5', // Sunnie: young, high
+  Puck: 'KUpE0JVhjiIzp1Fk', // Damon: excitable
+  Zephyr: '4SZHfMpw-p46Ywgs', // Harper: confident
+};
+
+/** The team's custom Gradium voices, by speaker id; they win over the per-voice map. */
+const DEFAULT_SPEAKER_VOICES: Record<string, string> = {
+  minotaur: '5MmCdRhVPfoo27AO', // "Minotaur Boss"
+  menoetius: '5MmCdRhVPfoo27AO',
+  talos: '5MmCdRhVPfoo27AO',
+  hydra: '3LCB6zcRDqzOq6TY', // "Monster Hydra"
+  campe: '3LCB6zcRDqzOq6TY',
+  alcyoneus: 'tKWvk4gllFxxmwnv', // "Minotaur Monster"
+  porphyrion: 'tKWvk4gllFxxmwnv',
+};
+
+function parsePairs(raw: string): [string, string][] {
+  return raw
+    .split(',')
+    .map((pair) => pair.split('=').map((s) => s.trim()))
+    .filter((kv): kv is [string, string] => kv.length === 2 && kv[0] !== '' && kv[1] !== '');
+}
+
+/** `GRADIUM_VOICES="Fenrir=<id>,Charon=<id>"` overrides individual voices (e.g. custom or designed voices). */
+function voiceMap(): Record<VoiceName, string> {
+  const map = { ...DEFAULT_VOICES };
+  for (const [name, id] of parsePairs(CONFIG.gradiumVoices)) if (name in map) map[name as VoiceName] = id;
+  return map;
+}
+
+const VOICES = voiceMap();
+/** `GRADIUM_SPEAKER_VOICES="minotaur=<id>,hydra=<id>"` adds or replaces speaker voices. */
+const SPEAKER_VOICES: Record<string, string> = { ...DEFAULT_SPEAKER_VOICES, ...Object.fromEntries(parsePairs(CONFIG.gradiumSpeakerVoices)) };
+
+/** padding_bonus: negative = faster, positive = slower. temp: expressiveness. */
+const MOOD_SETTINGS: Record<VoiceMood, { padding_bonus: number; temp: number }> = {
+  calm: { padding_bonus: 0, temp: 0.6 },
+  angry: { padding_bonus: -0.5, temp: 0.9 },
+  fearful: { padding_bonus: -1, temp: 0.9 },
+  mournful: { padding_bonus: 1.5, temp: 0.6 },
+  mocking: { padding_bonus: 0.3, temp: 1 },
+  reverent: { padding_bonus: 1, temp: 0.5 },
+};
+
+/** Speak a line with Gradium TTS (REST, one shot). Returns a WAV file or throws. */
+export async function synthesizeGradium(req: VoiceRequest): Promise<Buffer> {
+  if (!gradiumConfigured) throw new Error('GRADIUM_API_KEY is not set');
+  const res = await fetch(`${CONFIG.gradiumBaseUrl}/post/speech/tts`, {
+    method: 'POST',
+    headers: { 'x-api-key': CONFIG.gradiumApiKey, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      text: req.text,
+      voice_id: (req.speakerId && SPEAKER_VOICES[req.speakerId]) || VOICES[req.voice],
+      model_name: CONFIG.gradiumModel,
+      output_format: 'wav',
+      only_audio: true,
+      json_config: MOOD_SETTINGS[req.mood],
+    }),
+    signal: AbortSignal.timeout(CONFIG.llmTimeoutMs),
+  });
+  if (!res.ok) throw new Error(`Gradium HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  return Buffer.from(await res.arrayBuffer());
+}

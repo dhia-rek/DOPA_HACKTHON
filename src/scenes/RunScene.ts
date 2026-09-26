@@ -3,7 +3,9 @@ import { ART_SCALE } from '../art/manifest';
 import { COLORS, Dir, DIR_VECTORS, GAME_HEIGHT, GAME_WIDTH, GRID_COLS, GRID_ROWS, OPPOSITE, ROOM_COLS, ROOM_ROWS, TILE } from '../config';
 import { DEBUG, DEBUG_HELP, debugState } from '../core/debug';
 import { events } from '../core/events';
+import { TOUCH } from '../core/input';
 import type { RunState } from '../core/run';
+import { music, type MusicKind } from '../core/music';
 import { settings } from '../core/settings';
 import { KARMA } from '../core/story';
 import { earnedWeaknesses } from '../core/profile';
@@ -28,6 +30,7 @@ import { voiceFor } from '../voice/types';
 import { OMEN_TINTS, tintWith } from '../omens/types';
 import { BEHAVIOURS, threaten } from '../systems/behaviours';
 import { weaknessDamageMul } from '../systems/bossAbilities';
+import { judgementLines, verdictOf } from '../systems/bossJudgement';
 import { director } from '../systems/director';
 import { getGod, type GodId } from '../data/gods';
 import { dust, hitSpark } from '../systems/fx';
@@ -96,8 +99,6 @@ export class RunScene extends Phaser.Scene {
   private enemyShots!: ProjectilePool;
   private pedestal: Phaser.Physics.Arcade.Image | null = null;
   private trapdoor: Phaser.Physics.Arcade.Image | null = null;
-  private bossBar: Phaser.GameObjects.Graphics | null = null;
-  private bossLabel: Phaser.GameObjects.Text | null = null;
   private altar: Phaser.Physics.Arcade.Image | null = null;
   private transitioning = false;
   private dead = false;
@@ -111,6 +112,8 @@ export class RunScene extends Phaser.Scene {
   private darknessLight: Phaser.GameObjects.Graphics | null = null;
   /** `plague` mutator: enemies burst into poison on death. */
   private plague = false;
+  /** Judged boss hp bar + title; cleared when the boss dies. */
+  private bossBar: { boss: Enemy; fill: Phaser.GameObjects.Rectangle; width: number; parts: Phaser.GameObjects.GameObject[] } | null = null;
 
   constructor() {
     super('run');
@@ -124,7 +127,6 @@ export class RunScene extends Phaser.Scene {
     this.pedestal = null;
     this.trapdoor = null;
     this.bossBar = null;
-    this.bossLabel = null;
     this.altar = null;
     this.holdClear = false;
     this.speedMul = 1;
@@ -159,9 +161,9 @@ export class RunScene extends Phaser.Scene {
     this.spawnRoomContents();
     if (!this.room.cleared && this.hostiles().length === 0) this.room.cleared = true;
     this.refreshDoors();
-    if (this.room.type === 'boss' && !this.room.cleared) this.bossBar = this.add.graphics().setDepth(30);
 
     events.emit('room_entered', { roomType: this.room.type, floor: this.run.floor });
+    this.playRoomMusic();
     events.emit('hud_update', {});
     events.on('quest_settled', this.onQuestSettled, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => events.off('quest_settled', this.onQuestSettled, this));
@@ -171,16 +173,23 @@ export class RunScene extends Phaser.Scene {
 
     if (!this.scene.isActive('hud')) this.scene.launch('hud');
     this.scene.bringToTop('hud');
+    if (TOUCH) {
+      if (!this.scene.isActive('touch')) this.scene.launch('touch');
+      this.scene.bringToTop('touch');
+    }
 
     const chapter = this.run.takeChapter();
     if (chapter) this.toast(chapter.title, chapter.body, 4200);
 
-    if (this.room.type === 'boss') director.prefetch(this.run, this.run.floor + 1);
-    if (this.room.type === 'boss' && !this.room.cleared && !this.room.dialogueDone) {
+    // The next floor is judged once the boss intro choice is on record (see applyChoice); this covers re-entries.
+    if (this.room.type === 'boss' && this.room.dialogueDone) director.prefetch(this.run, this.run.floor + 1);
+    if (this.room.type === 'boss' && !this.room.cleared) {
       const boss = this.hostiles().find((e) => e.def.isBoss);
-      if (boss) {
+      if (boss && !this.room.dialogueDone) {
         this.room.dialogueDone = true;
         this.time.delayedCall(250, () => this.bossSplash(boss));
+      } else if (boss) {
+        this.showJudgement(boss);
       }
     }
 
@@ -199,9 +208,12 @@ export class RunScene extends Phaser.Scene {
 
   /** At the start of each floor a god or shade offers one AI-written trial (src/trials). */
   private async offerTrial(): Promise<void> {
-    if (this.dead || this.transitioning || this.dialogueOpen) return;
+    if (this.dead) return;
+    if (this.transitioning || this.dialogueOpen) {
+      this.time.delayedCall(500, () => void this.offerTrial());
+      return;
+    }
     this.dialogueOpen = true;
-    const room = this.room;
     this.scene.pause();
     let offer: TrialOffer;
     try {
@@ -217,7 +229,7 @@ export class RunScene extends Phaser.Scene {
       this.scene.resume();
       return;
     }
-    if (this.room !== room || this.dead) return;
+    if (this.dead) return;
     const script: DialogueScript = {
       id: offer.id,
       kind: 'shrine',
@@ -266,6 +278,50 @@ export class RunScene extends Phaser.Scene {
     };
     this.scene.launch('boss_vs', data);
     this.scene.bringToTop('boss_vs');
+  }
+
+  /**
+   * The boss's verdict made visible for the fight: title, stance (by the hero's
+   * alignment), the grudge it holds, its own kit vs what it added against this
+   * hero, and a hp bar in the verdict's colour that stays until it dies.
+   */
+  private showJudgement(boss: Enemy): void {
+    if (this.bossBar) return;
+    const bp = boss.blueprint;
+    const v = verdictOf(this.run.story.alignment);
+    if (bp) boss.setAura(v.color);
+    const cx = GAME_WIDTH / 2;
+    const top = 50;
+    const barW = 420;
+
+    const bg = this.add.rectangle(cx, top + 8, barW + 4, 12, 0x0b0a0f, 0.85).setDepth(200);
+    const fill = this.add.rectangle(cx - barW / 2, top + 8, barW, 8, v.color).setOrigin(0, 0.5).setDepth(201);
+    const title = this.add.text(cx, top - 4, bp?.title ?? boss.def.name.toUpperCase(), { fontFamily: mono, fontSize: '15px', color: v.css }).setOrigin(0.5, 1).setDepth(201);
+    this.bossBar = { boss, fill, width: barW, parts: [bg, fill, title] };
+
+    if (!bp) return;
+    const lines = [v.stance, bp.grudge ? `“${bp.grudge}”` : '', ...judgementLines(boss, this.run.character.name)].filter(Boolean);
+    const card = this.add
+      .text(cx, top + 22, lines.join('\n'), {
+        fontFamily: mono,
+        fontSize: '13px',
+        color: COLORS.text,
+        align: 'center',
+        backgroundColor: '#0b0a0fcc',
+        padding: { x: 12, y: 8 },
+        wordWrap: { width: 560 },
+      })
+      .setOrigin(0.5, 0)
+      .setDepth(201)
+      .setAlpha(0);
+    this.tweens.add({ targets: card, alpha: 1, duration: 300 });
+    this.tweens.add({ targets: card, alpha: 0, delay: 5200, duration: 600, onComplete: () => card.destroy() });
+  }
+
+  private clearJudgement(): void {
+    if (!this.bossBar) return;
+    for (const p of this.bossBar.parts) p.destroy();
+    this.bossBar = null;
   }
 
   /** Boss dialogue speaker: the Director's title, persona and grudge on top of the authored persona. */
@@ -322,6 +378,11 @@ export class RunScene extends Phaser.Scene {
     this.playerShots.step();
     this.enemyShots.step();
 
+    if (this.bossBar) {
+      const b = this.bossBar.boss;
+      if (b.active) this.bossBar.fill.width = this.bossBar.width * Math.max(0, b.hpRatio);
+      else this.clearJudgement();
+    }
     const alive = this.enemies.getChildren().filter((e) => e.active) as Enemy[];
     for (const enemy of alive) {
       if (enemy.dying) continue;
@@ -345,44 +406,16 @@ export class RunScene extends Phaser.Scene {
         delta,
         difficulty: this.run.difficulty,
         spawn: (id, x, y) => this.spawnEnemy(id, x, y),
-        summonPool: this.run.stage.enemyPool,
+        summonPool: this.run.currentFront.enemyPool,
         announce: (title, text) => this.toast(title, text),
+        hurtPlayer: (amount, source, fromX, fromY) => this.hurtPlayer(amount, source, fromX, fromY),
       });
     }
 
-    if (this.bossBar) this.drawBossBar(alive.find((e) => e.def.isBoss) ?? null);
     if (!this.room.cleared && !this.holdClear && !alive.some((e) => !e.def.innocent && !e.dying) && this.roomHadEnemies()) this.clearRoom();
   }
 
   // -------------------------------------------------------------------- boss
-
-  private drawBossBar(boss: Enemy | null): void {
-    const g = this.bossBar;
-    if (!g) return;
-    g.clear();
-    if (!boss || boss.isSpawning) {
-      this.bossLabel?.setVisible(false);
-      return;
-    }
-    const w = 360;
-    const h = 12;
-    const x = GAME_WIDTH / 2 - w / 2;
-    const y = 54;
-    const ratio = Math.max(0, boss.hpRatio);
-    g.fillStyle(0x0b0a0f, 0.85).fillRoundedRect(x - 3, y - 3, w + 6, h + 6, 5);
-    g.fillStyle(0x3a1418).fillRoundedRect(x, y, w, h, 4);
-    if (ratio > 0) {
-      g.fillStyle(ratio < 0.5 ? 0xff5a3c : 0xd23838).fillRoundedRect(x, y, Math.max(8, w * ratio), h, 4);
-      g.fillStyle(0xffffff, 0.18).fillRect(x + 3, y + 2, Math.max(2, w * ratio - 6), 4);
-    }
-    if (!this.bossLabel) {
-      this.bossLabel = this.add
-        .text(GAME_WIDTH / 2, y + h + 5, boss.def.name.toUpperCase(), { fontFamily: mono, fontSize: '14px', color: '#f3e6c8', stroke: '#0b0a0f', strokeThickness: 4 })
-        .setOrigin(0.5, 0)
-        .setDepth(30);
-    }
-    this.bossLabel.setVisible(true);
-  }
 
   // --------------------------------------------------------------- blessings
 
@@ -511,8 +544,12 @@ export class RunScene extends Phaser.Scene {
     }
 
     const enemy = speaker.enemy;
-    if (script.kind === 'boss_intro' && enemy?.active) {
-      enemy.applyMods(this.run.story.takeBossMods(factionOf(enemy.def.lore)));
+    if (script.kind === 'boss_intro') {
+      if (enemy?.active) {
+        enemy.applyMods(this.run.story.takeBossMods(factionOf(enemy.def.lore)));
+        this.showJudgement(enemy);
+      }
+      director.prefetch(this.run, this.run.floor + 1);
     } else if (script.kind === 'npc' && enemy?.active) {
       this.spareNpc(enemy, option?.effects.npcOutcome === 'wronged');
     } else if (script.kind === 'shrine') {
@@ -693,6 +730,7 @@ export class RunScene extends Phaser.Scene {
       enemy.blueprint = bp;
       enemy.applyMods(bp.mods);
       if (bp.weakness === 'known_secret') enemy.applyMods({ hpMul: 0.85, damageMul: 1, speedMul: 1 });
+      enemy.setAura(verdictOf(this.run.story.alignment).color);
     }
     return enemy;
   }
@@ -745,10 +783,26 @@ export class RunScene extends Phaser.Scene {
       }
       enemy.attack(400);
       const before = this.run.hp;
+      const trampling = enemy.def.isBoss && enemy.memory.state === 2;
       this.hurtPlayer(enemy.contactDamage, enemy.def.id, enemy.x, enemy.y);
+      if (this.run.hp < before && trampling) {
+        settings.shake(this.cameras.main, 220, 0.016);
+        this.burst(this.player.x, this.player.y, 0xfff0d0, 14);
+      }
       if (this.run.hp < before && enemy.blueprint?.abilities.includes('steal_hearts')) {
         enemy.hp = Math.min(enemy.maxHp, enemy.hp + 6);
-        this.burst(enemy.x, enemy.y, COLORS.heart, 6);
+        const heart = this.add.circle(this.player.x, this.player.y, 7, COLORS.heart).setDepth(30);
+        this.tweens.add({
+          targets: heart,
+          x: enemy.x,
+          y: enemy.y,
+          duration: 380,
+          ease: 'Quad.In',
+          onComplete: () => {
+            heart.destroy();
+            if (enemy.active) this.burst(enemy.x, enemy.y, COLORS.heart, 8);
+          },
+        });
       }
     });
     this.physics.add.overlap(this.player, this.pickups, (_p, pk) => this.collect(pk as Pickup));
@@ -884,12 +938,24 @@ export class RunScene extends Phaser.Scene {
     this.toast(item.name, item.description);
   }
 
+  private playRoomMusic(): void {
+    const type = this.room.type;
+    const kind: MusicKind =
+      type === 'shrine' ? 'shrine'
+        : type === 'treasure' ? 'treasure'
+          : this.room.cleared ? 'explore'
+            : type === 'boss' ? 'boss'
+              : 'combat';
+    music.play(this.run.stage.id, kind);
+  }
+
   private clearRoom(): void {
     this.room.cleared = true;
     this.room.enemies = [];
     this.enemyShots.killAll();
     this.refreshDoors();
     events.emit('room_cleared', { roomType: this.room.type, floor: this.run.floor });
+    this.playRoomMusic();
     if (this.room.type === 'normal' && trials.wantsCoins) this.dropPickup(GAME_WIDTH / 2 + TILE, GAME_HEIGHT / 2, 'coin');
 
     if (this.room.type === 'boss') {
@@ -944,6 +1010,7 @@ export class RunScene extends Phaser.Scene {
     this.cameras.main.fadeOut(300, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.scene.stop('hud');
+      this.scene.stop('touch');
       this.scene.start('floor_intro');
     });
   }
@@ -958,6 +1025,7 @@ export class RunScene extends Phaser.Scene {
     this.tweens.add({ targets: this.player, angle: 90, alpha: 0.3, duration: 600 });
     this.time.delayedCall(900, () => {
       this.scene.stop('hud');
+      this.scene.stop('touch');
       this.scene.start('gameover');
     });
   }
@@ -966,8 +1034,8 @@ export class RunScene extends Phaser.Scene {
 
   private bindDebugKeys(): void {
     this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT - 10, DEBUG_HELP, { fontFamily: mono, fontSize: '11px', color: '#f88', backgroundColor: '#000a' })
-      .setOrigin(0.5, 1)
+      .text(GAME_WIDTH / 2, 48, DEBUG_HELP, { fontFamily: mono, fontSize: '11px', color: '#f88', backgroundColor: '#000a' })
+      .setOrigin(0.5, 0)
       .setDepth(500);
     const kb = this.input.keyboard!;
     const on = (key: string, fn: () => void): void => {

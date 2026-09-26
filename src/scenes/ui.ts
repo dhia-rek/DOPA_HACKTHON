@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
+import { TOUCH } from '../core/input';
 
 /** Trajan-style Roman capitals for everything UI; `display` is the ornate variant for titles. */
 export const mono = "'Cinzel', 'Georgia', serif";
@@ -31,8 +32,8 @@ export function hintText(scene: Phaser.Scene, lines: string[]): Phaser.GameObjec
 
 /** Clickable "ESC · BACK" label; also binds ESC on the keyboard. */
 export function backButton(scene: Phaser.Scene, onBack: () => void): Phaser.GameObjects.Text {
-  const back = scene.add.text(40, GAME_HEIGHT - 72, 'ESC  ·  BACK', { fontFamily: mono, fontSize: '14px', color: COLORS.text })
-    .setOrigin(0, 0).setInteractive({ useHandCursor: true });
+  const back = scene.add.text(40, GAME_HEIGHT - 72, `${TOUCH ? 'TAP' : 'ESC'}  ·  BACK`, { fontFamily: mono, fontSize: '14px', color: COLORS.text })
+    .setOrigin(0, 0).setPadding(8, 8, 16, 8).setInteractive({ useHandCursor: true });
   back.on('pointerover', () => back.setColor(COLORS.uiIvory));
   back.on('pointerout', () => back.setColor(COLORS.text));
   back.on('pointerdown', onBack);

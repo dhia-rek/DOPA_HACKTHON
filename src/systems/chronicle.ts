@@ -2,7 +2,7 @@ import type { StoryState, WarSnapshot } from '../core/story';
 import { getEnemy } from '../data/enemies';
 import { LORE, loreContext, WAR_FACTIONS } from '../data/lore';
 import type { StageDef } from '../data/stages';
-import { FACTION_NAME, frontDef, FrontDef, frontOf } from '../data/war';
+import { FACTION_NAME, frontDef, FrontDef, frontOf, Tide } from '../data/war';
 
 /**
  * Turns the war (StoryState.tide) into what a floor looks like and what the
@@ -22,8 +22,9 @@ export interface ResolvedFront {
   reason: string;
 }
 
-export function resolveFront(stage: StageDef, story: StoryState): ResolvedFront {
-  const faction = frontOf(story.tide, stage.holder);
+/** `tide` defaults to the story's; pass a predicted tide to resolve a floor the player has not reached yet. */
+export function resolveFront(stage: StageDef, story: StoryState, tide: Tide = story.tide): ResolvedFront {
+  const faction = frontOf(tide, stage.holder);
   const def = frontDef(stage.id, faction);
   const enemyPool = def.enemies ? [...stage.enemyPool, ...def.enemies, ...def.enemies] : stage.enemyPool;
   const npcPool = [...(stage.npcPool ?? [])];
