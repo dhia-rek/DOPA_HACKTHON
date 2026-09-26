@@ -20,6 +20,7 @@ import { achievements } from '../systems/achievements';
 import { trials } from '../systems/trials';
 import { trialProvider } from '../trials/provider';
 import { describeObjective, TrialOffer } from '../trials/types';
+import { voiceFor } from '../voice/types';
 import { BEHAVIOURS, threaten } from '../systems/behaviours';
 import { weaknessDamageMul } from '../systems/bossAbilities';
 import { director } from '../systems/director';
@@ -206,6 +207,7 @@ export class RunScene extends Phaser.Scene {
     };
     const data: DialogueSceneData = {
       script,
+      voice: voiceFor(script.speakerId, 'trial', this.run.storySnapshot()),
       onDone: (option) => {
         this.dialogueOpen = false;
         this.scene.resume();
@@ -363,6 +365,7 @@ export class RunScene extends Phaser.Scene {
     if (this.room !== room || this.dead) return;
     const data: DialogueSceneData = {
       script,
+      voice: voiceFor(speaker.id, kind, this.run.storySnapshot()),
       onDone: (option) => {
         this.dialogueOpen = false;
         this.holdClear = false;
