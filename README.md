@@ -30,7 +30,9 @@ room, `N` next floor, `T` random item, `H` heal, `[` / `]` karma −25 / +25.
 | -------------- | ----------------------------- |
 | Move           | `W A S D`                     |
 | Shoot          | Arrow keys (or `I J K L`)     |
-| Menu           | `←/→` pick character, `Enter`/`Space` start, `R` new seed |
+| Menu           | `↑/↓` Descend / Challenges / Options, `Enter`/`Space` select, `Esc` back |
+| Hero select    | `←/→` pick character, `Enter`/`Space` start, `R` new seed |
+| Options        | `←/→` change value; settings persist in `localStorage` (`nekyia.settings`) |
 | Game over      | `Enter`/`Space` back to menu   |
 
 Bindings live in `src/core/input.ts`.
