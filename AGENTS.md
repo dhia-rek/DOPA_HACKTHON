@@ -9,40 +9,50 @@ fits together + "how to add X" recipes: `ARCHITECTURE.md`.
 
 | Person  | Branch                | Stream                 | Owns                                                             |
 |---------|-----------------------|------------------------|------------------------------------------------------------------|
-| Dhia    | `dhia/story`          | A. Story & content     | `src/core/story.ts`, `src/dialogue/types.ts`, `src/data/*`, `ROADMAP.md`, `SYSTEM_PROMPT` wording |
+| Dhia    | `dhia/story`          | A. Story & content     | `src/core/story.ts`, `src/core/profile.ts`, `src/dialogue/types.ts`, `src/director/types.ts`, `src/data/*`, `ROADMAP.md`, prompt wording (`src/dialogue/prompt.ts`, `src/director/prompt.ts`) |
 | Julien  | `julien/gameplay-ui`  | B. Gameplay & UI       | `src/scenes/*`, `src/entities/*`, `src/systems/behaviours.ts`, art/design |
-| Parthiv | `parthiv/llm-service` | C. LLM service         | `server/*` (new), `src/dialogue/provider.ts`, `.env.example`, deploy docs |
+| Parthiv | `parthiv/llm-service` | C. LLM service         | `server/*` (new), `src/dialogue/provider.ts`, `src/director/provider.ts`, `.env.example`, deploy docs |
 
 If you are an AI agent and the user tells you who they are, work only inside
 that stream's files. Touching another stream's files needs a note in the PR
-and a ping to its owner. `src/dialogue/types.ts` is the shared contract:
-changes to it need review from all three.
+and a ping to its owner. `src/dialogue/types.ts` and `src/director/types.ts`
+are the shared contracts: changes to them need review from all three.
+Phase 3 (the LLM Director that reshapes each floor) is designed in `docs/DIRECTOR.md`.
 
-## Task boards (tick items here as they land on `main`)
+## Task boards (tick items here as they land on `develop`/`main`)
 
 ### Stream A — Dhia
-- [ ] New NPCs with personas: `priestess`, `child`, `wounded_soldier` (`src/data/enemies.ts`, `innocent: true`), add to stage `npcPool`s
-- [ ] Boss personas + list of `flags` each boss reacts to (Minotaur, Hydra, next bosses)
-- [ ] Moral achievements: `saint`, `butcher`, `oathbreaker` (`src/data/achievements.ts`)
-- [ ] Tune karma values and the `takeBossMods()` curve in `src/core/story.ts`
-- [ ] Kratos hook: starts at karma −40, gods refuse his shrine offerings
-- [ ] Boss outro dialogue kind (`boss_outro`) content in the mock provider
+- [x] New NPCs with personas: `priestess`, `child`, `wounded_soldier` (`src/data/enemies.ts`, `innocent: true`), add to stage `npcPool`s
+- [x] Boss personas + list of `flags` each boss reacts to (Minotaur, Hydra, next bosses)
+- [x] Moral achievements: `saint`, `butcher`, `oathbreaker` (`src/data/achievements.ts`)
+- [x] Tune karma values and the `takeBossMods()` curve in `src/core/story.ts`
+- [x] Kratos hook: starts at karma −40, gods refuse his shrine offerings
+- [x] Boss outro dialogue kind (`boss_outro`) content in the mock provider
+- [ ] Director: boons/curses catalog (`src/data/boons.ts`) and epithet achievements (`the Merciful`, `the Butcher`, `Oathbreaker`…)
+- [x] Director: shrine content that makes prophecies (`story.promise`), orb flags (`orb_fire`, `orb_holy`) → `earnedWeaknesses`
+- [ ] Director: tune `budgetFor()` / trait thresholds in `src/core/profile.ts`, prompt wording in `src/director/prompt.ts`
 
 ### Stream B — Julien
-- [ ] `DialogueScene` look & feel: speaker portrait box, typewriter text, selection sound
-- [ ] Karma / alignment indicator in `HudScene` (listen to `story_changed` event)
-- [ ] NPC visuals: distinct look, "!" bubble when talkable, flee animation
-- [ ] Shrine room type + altar sprite → opens a `kind: 'shrine'` dialogue
-- [ ] Boss outro: trigger `boss_outro` dialogue when a boss dies (`RunScene.killEnemy`)
+- [x] `DialogueScene` look & feel: speaker portrait box, typewriter text, selection sound
+- [x] Karma / alignment indicator in `HudScene` (listen to `story_changed` event)
+- [x] NPC visuals: distinct look, "!" bubble when talkable, flee animation
+- [x] Shrine room type + altar sprite → opens a `kind: 'shrine'` dialogue
+- [x] Boss outro: trigger `boss_outro` dialogue when a boss dies (`RunScene.killEnemy`)
 - [ ] General art/feel pass (room palettes, hit feedback, menu)
+- [x] Director: prefetch `directorRequest(run, floor+1)` at boss-room entry, apply on `floor_started`; `floorTitle` + `verdict` between floors; `?director=1` overlay showing `reason`
+- [x] Director: composable boss abilities (`charge`, `summon_minions`, `orbit_shields`, `call_shades`, `enrage_below`) + `Enemy.compose(BossBlueprint)` in `behaviours.ts`
+- [x] Director: mutators `palette_shift`, `haunted`, `flooded`, `arena`; `enemyWeights` in spawning
+- [x] Director: shrine offerings → `story.favour(god)`; quest tracker (`systems/quests.ts`) + HUD line (orb pickups still open)
 
 ### Stream C — Parthiv
-- [ ] `server/`: HTTP service `POST DialogueRequest -> DialogueScript` (any stack; key stays server-side)
-- [ ] Server-side validation mirroring `validateScript()`; return 502 on bad LLM output
-- [ ] Local dev recipe in `server/README.md` + `.env.example` for the server
-- [ ] `HttpDialogueProvider`: retries, cache by `request.seed`, prefetch boss intro on floor start
+- [x] `server/`: HTTP service `POST DialogueRequest -> DialogueScript` (any stack; key stays server-side)
+- [x] Server-side validation mirroring `validateScript()`; return 502 on bad LLM output
+- [x] Local dev recipe in `server/README.md` + `.env.example` for the server
+- [x] `HttpDialogueProvider`: retries, cache by `request.seed`, prefetch boss intro on floor start
 - [ ] Deploy (Vercel/Cloudflare/Render…) and document the `VITE_DIALOGUE_API` URL
 - [ ] Later: LLM room generator behind the same pattern (13×7 grid contract in `src/gen/roomGen.ts`)
+- [x] Director: `POST /director` (`DirectorRequest -> FloorDirective`) using `DIRECTOR_SYSTEM_PROMPT` + `validateDirective`, cache by `request.seed`, 502 on invalid → client falls back to mock
+- [x] Director: document `VITE_DIRECTOR_API` next to `VITE_DIALOGUE_API`
 
 ## Rules for every change
 
@@ -53,7 +63,7 @@ changes to it need review from all three.
 3. `npm run typecheck && npm run build` must pass before the PR.
 4. Content goes in `src/data/*.ts`; systems stay generic (see ARCHITECTURE.md).
 5. Never put an LLM API key in the client. The browser only reads
-   `VITE_DIALOGUE_API`; without it the offline mock provider is used.
+   `VITE_DIALOGUE_API` / `VITE_DIRECTOR_API`; without them the offline mock providers are used.
 6. Use `?seed=XXXX` in the URL to reproduce a run; report bugs with seed + floor.
 
 ## Quick start

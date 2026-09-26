@@ -1,0 +1,24 @@
+{
+  "name": "nekyia-dialogue-server",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Gemini dialogue + Director service for Nekyia: POST DialogueRequest -> DialogueScript, POST /director DirectorRequest -> FloorDirective",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@google/genai": "2.23.0",
+    "cors": "2.8.6",
+    "express": "5.2.1",
+    "tsx": "4.23.13"
+  },
+  "devDependencies": {
+    "@types/cors": "2.8.19",
+    "@types/express": "5.0.6",
+    "@types/node": "24.13.6",
+    "typescript": "5.9.3"
+  }
+}

@@ -44,16 +44,42 @@ bosses say, how hard they hit, and how the story ends.
   never blocks. All types live in `src/dialogue/types.ts`.
 * **Same seed = same story** with the mock provider (it is seeded by
   `run.seed + floor + room`). With the LLM the story is new every run.
+* **The war** (see `STORY.md`) — every deed also moves a *tide* per faction
+  (`olympian | titan | giant`, −100…100). Whoever leads the tide *holds* the
+  next floor: `FRONTS[stage][faction]` swaps the boss pool, adds enemies,
+  recolours the room and shows a chapter card (`systems/chronicle.ts`).
+  Dialogue can push the tide with `effects.favor` (−20…20 per faction).
+* **Shades** — killing an innocent creates a *named* shade (`Shade` in
+  `data/war.ts`, e.g. "Timon the villager…"). Shades are listed in the
+  snapshot, haunt boss intros, can spawn as a talkable `restless_shade` NPC, and are
+  read out with the verdict on the game-over screen.
+* **Lore links** — `data/lore.ts` is a small genealogy of real myth
+  (parents / `undoneBy`). The snapshot's `lore` lines tell the LLM who the
+  speaker is, who the hero is, and their true link ("Alcyoneus is undone by
+  Heracles") so the text can build on it.
 
 ### Ideas queued (pick one when your stream is free)
 1. **Boss outro** (`kind: 'boss_outro'`) — a dying line that references the intro choice.
 2. **Oracle / shrine rooms** (`kind: 'shrine'`) — new `RoomType 'shrine'`, an altar sprite, sacrifice choices.
-3. **Named NPCs with memory** — an NPC id that recurs across floors ("the shepherd you robbed on floor 1 now guards the Hydra").
-4. **Story-driven boss pick** — `stage.bossPool` weighted by flags (`defied_minotaur` → Minotaur returns enraged).
-5. **Endings** — at loop end, an LLM epilogue summarising the run's deeds; different achievement per alignment ("Saint", "Butcher").
+3. **Named NPCs with memory** — shades do this for the dead; do it for the living too ("the shepherd you robbed on floor 1 now guards the Hydra").
+4. **Story-driven boss pick** — done per faction (`FRONTS`); next: weight inside a pool by flags (`defied_minotaur` → Minotaur returns enraged).
+5. **Endings** — `judge()` gives a verdict; next: an LLM epilogue (`kind: 'epilogue'`) summarising the run's deeds; achievement per verdict.
 6. **Karma in the HUD** — small laurel/blood icon; toast on alignment change.
 7. **LLM room generator** — reuse the 13×7 grid contract in `roomGen.ts` (already planned in ARCHITECTURE.md).
 8. **Kratos hook** — Kratos starts at karma −40 and gods refuse his shrine offerings.
+
+---
+
+## 1b. Phase 3: the Director (designed, contract on `main`)
+
+Once per floor an LLM reads a `PlayerProfile` (deeds, dialogue voice, build,
+skill/style telemetry, orbs = divine attention, shrine prophecies, quests) and
+returns a validated `FloorDirective`: stage mutators, enemy weights, a quest,
+NPC casting and a composed boss (archetype + ability modules + grudge +
+weakness the player earned), all within a difficulty budget. The LLM only
+picks catalog ids and writes text. Design, wiring plan and per-stream tasks:
+**[docs/DIRECTOR.md](docs/DIRECTOR.md)**. Code: `src/director/*`,
+`src/core/profile.ts`, `src/data/{gods,mutators,abilities,quests}.ts`.
 
 ---
 
@@ -80,7 +106,7 @@ POST {VITE_DIALOGUE_API}            body: DialogueRequest   (src/dialogue/types.
   on failure — the client then falls back to the mock automatically.
 * Never ship the API key to the browser. Client reads only `VITE_DIALOGUE_API`.
 * Nice-to-have: cache by `request.seed` (replays), prefetch the boss intro
-  when the floor starts, 8 s timeout (client already aborts at 8 s).
+  when the floor starts, 15 s client timeout (server LLM timeout 12 s; Gemini minimum is 10 s).
 
 ### Stream B — first tasks (Julien)
 * Make `DialogueScene` pretty: portrait box for the speaker (`def.shape/color`
@@ -93,7 +119,40 @@ POST {VITE_DIALOGUE_API}            body: DialogueRequest   (src/dialogue/types.
 * More NPCs (`priestess`, `child`, `wounded_soldier`) with personas; per-stage pools.
 * Boss personas + which `flags` each boss should react to.
 * Achievements for the moral axis (`saint`, `butcher`, `oathbreaker`).
-* Tune karma values / `takeBossMods()` curve.
+* Tune karma values / `takeBossMods()` curve. **Done** — all knobs live in
+  `KARMA` (`src/core/story.ts`); `karmaBossFactor(karma)` is the pure curve
+  (smoothstep from the ±10 neutral band to the caps at ±100), multiplied with
+  dialogue `bossMods` and clamped to [0.5, 2] in `takeBossMods()`:
+
+  | karma | boss hp | boss damage | boss speed | note |
+  |---|---|---|---|---|
+  | −100 | ×1.30 | ×1.30 | ×1 | cruel cap |
+  | −60 | ×1.17 | ×1.17 | ×1 | |
+  | −25 | ×1.02 | ×1.02 | ×1 | `cruel` threshold |
+  | −10 … +10 | ×1 | ×1 | ×1 | neutral band, no change |
+  | +25 | ×0.99 | ×1 | ×0.996 | `heroic` threshold |
+  | +60 | ×0.94 | ×1 | ×0.97 | |
+  | +100 | ×0.90 | ×1 | ×0.95 | heroic cap |
+
+  Contact damage is rounded to whole half-hearts by `Enemy.applyMods`, so a
+  2-dmg boss (Minotaur, Hydra) hits for 3 once karma ≤ ≈−77; boss projectiles
+  are a fixed 1 (`behaviours.ts:shootAt`) and ignore `damageMul` for now.
+
+  Deltas: NPC killed −15 (`KARMA.npcKilled`), NPC spared +5 (`KARMA.npcSpared`);
+  dialogue options stay in −30..30 (see `SYSTEM_PROMPT`).
+
+#### Boss flags
+`EnemyDef.reactsTo` lists the `StorySnapshot.flags` a boss's dialogue should
+react to. Set by: `blood_on_hands` (`RunScene.killNpc`), `defied_<bossId>` and
+`knows_boss_weakness` (mock/LLM option effects); the rest are for future
+dialogue options. Cerberus and Medusa are planned (behaviours TBD, Julien).
+
+| Boss (id) | Reacts to | Intended reaction |
+|---|---|---|
+| Minotaur (`minotaur`) | `blood_on_hands`, `defied_minotaur`, `swore_oath_to_minotaur`, `broke_oath_to_minotaur`, `knows_boss_weakness`, `spared_many` | Cruel → "we are both beasts", angrier (dmg↑); oath kept → honourable duel (speed↓); oath broken → enraged, no bargain option; weakness known → charges shorter |
+| Hydra (`hydra`) | `blood_on_hands`, `defied_hydra`, `spared_many`, `knows_boss_weakness`, `bargained_with_hydra`, `slew_minotaur` | Cruel → flatters as kin, offers a pact; merciful → mocks softness (hp↑); `slew_minotaur` → fears you, heads bicker; bargain → fewer shots, coins taken |
+| Cerberus (`cerberus`, planned) | `blood_on_hands`, `defied_cerberus`, `fed_cerberus`, `stole_from_hades`, `spared_many` | Three heads = three moods; fed → one head sleeps (hp↓); thief → all heads awake, faster; merciful → lets you pass one gate for free |
+| Medusa (`medusa`, planned) | `blood_on_hands`, `defied_medusa`, `looked_away`, `knows_boss_weakness`, `slew_hydra`, `swore_oath_to_minotaur` | Cruel → recognises Poseidon's cruelty in you, pities you; averted gaze → petrify slower; weakness → mirror shield hint; oath-keeper → offers a truce |
 
 ---
 

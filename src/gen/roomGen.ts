@@ -4,7 +4,7 @@ import { Rng } from '../core/rng';
 /**
  * Procedural room layouts in the same 13x7 ASCII format as data/rooms.ts.
  * Every generated room is guaranteed to have a walkable path between all four
- * door tiles, and keeps the door approach tiles clear.
+ * door tiles and every enemy slot, and keeps the door approach tiles clear.
  */
 export interface RoomGenOptions {
   /** 0..1 how much of the interior becomes obstacles. */
@@ -13,10 +13,37 @@ export interface RoomGenOptions {
   enemySlots: number;
   /** Mirror layout horizontally/vertically for that hand-crafted look. */
   symmetry?: 'none' | 'horizontal' | 'both';
+  /** Share of obstacles that are pits instead of rocks. Default 0.25. */
+  pitChance?: number;
 }
 
 const MID_C = Math.floor(ROOM_COLS / 2);
 const MID_R = Math.floor(ROOM_ROWS / 2);
+
+/**
+ * Shrine room: an altar ('A') on a raised dais flanked by pillars. Same ASCII
+ * format as data/rooms.ts; 'A' is only meaningful in shrine rooms.
+ */
+export const SHRINE_TEMPLATES: string[][] = [
+  [
+    '.............',
+    '...#.....#...',
+    '.............',
+    '......A......',
+    '.............',
+    '...#.....#...',
+    '.............',
+  ],
+  [
+    '.............',
+    '.#.........#.',
+    '....PP.PP....',
+    '....P.A.P....',
+    '....PP.PP....',
+    '.#.........#.',
+    '.............',
+  ],
+];
 
 /** Interior tiles right in front of each door; never blocked. */
 const DOOR_APPROACHES: [number, number][] = [
@@ -64,7 +91,7 @@ function tryGenerate(rng: Rng, opts: RoomGenOptions): string[] | null {
     const c = rng.int(0, ROOM_COLS - 1);
     const r = rng.int(0, ROOM_ROWS - 1);
     if (g[r][c] !== '.' || isProtected(c, r)) continue;
-    const ch = rng.chance(0.25) ? 'P' : '#';
+    const ch = rng.chance(opts.pitChance ?? 0.25) ? 'P' : '#';
     const shape = rng.pick(['single', 'single', 'hline', 'vline', 'block']);
     const len = rng.int(2, 3);
     if (shape === 'single') {
@@ -82,14 +109,15 @@ function tryGenerate(rng: Rng, opts: RoomGenOptions): string[] | null {
     }
   }
 
-  if (!doorsConnected(g)) return null;
+  const reachable = flood(g);
+  if (!DOOR_APPROACHES.every(([c, r]) => reachable.has(`${c},${r}`))) return null;
 
-  // Enemy slots on free tiles away from the doors.
+  // Enemy slots on free tiles away from the doors that the player can walk to.
   const free: [number, number][] = [];
   for (let r = 0; r < ROOM_ROWS; r++) {
     for (let c = 0; c < ROOM_COLS; c++) {
       const nearDoor = DOOR_APPROACHES.some(([pc, pr]) => Math.abs(pc - c) + Math.abs(pr - r) <= 1);
-      if (g[r][c] === '.' && !nearDoor) free.push([c, r]);
+      if (g[r][c] === '.' && !nearDoor && reachable.has(`${c},${r}`)) free.push([c, r]);
     }
   }
   if (free.length < opts.enemySlots) return null;
@@ -102,8 +130,31 @@ function tryGenerate(rng: Rng, opts: RoomGenOptions): string[] | null {
   return g.map((row) => row.join(''));
 }
 
+/**
+ * Check an externally authored (e.g. LLM) normal room: 13x7 of . # P E, door
+ * approaches clear, every door and every enemy slot reachable, 1-6 slots.
+ */
+export function isValidRoom(rows: unknown): rows is string[] {
+  if (!Array.isArray(rows) || rows.length !== ROOM_ROWS) return false;
+  if (!rows.every((r) => typeof r === 'string' && r.length === ROOM_COLS && /^[.#PE]+$/.test(r))) return false;
+  const g = (rows as string[]).map((r) => [...r]);
+  if (DOOR_APPROACHES.some(([c, r]) => g[r][c] !== '.')) return false;
+  const slots: [number, number][] = [];
+  g.forEach((row, r) => row.forEach((ch, c) => ch === 'E' && slots.push([c, r])));
+  if (slots.length < 1 || slots.length > 6) return false;
+  const open = g.map((row) => row.map((ch) => (ch === 'E' ? '.' : ch)));
+  const seen = flood(open);
+  return doorsConnected(open) && slots.every(([c, r]) => seen.has(`${c},${r}`));
+}
+
 /** Flood fill from the top door approach; all four approaches must be reached. */
 function doorsConnected(g: string[][]): boolean {
+  const seen = flood(g);
+  return DOOR_APPROACHES.every(([c, r]) => seen.has(`${c},${r}`));
+}
+
+/** Floor tiles reachable on foot from the top door approach. */
+function flood(g: string[][]): Set<string> {
   const seen = new Set<string>();
   const stack: [number, number][] = [[MID_C, 0]];
   while (stack.length) {
@@ -115,5 +166,5 @@ function doorsConnected(g: string[][]): boolean {
     seen.add(k);
     stack.push([c + 1, r], [c - 1, r], [c, r + 1], [c, r - 1]);
   }
-  return DOOR_APPROACHES.every(([c, r]) => seen.has(`${c},${r}`));
+  return seen;
 }

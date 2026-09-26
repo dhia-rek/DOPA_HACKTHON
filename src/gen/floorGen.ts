@@ -2,7 +2,11 @@ import { Dir } from '../config';
 import { Rng } from '../core/rng';
 import { ROOM_TEMPLATES, RoomType } from '../data/rooms';
 import { StageDef } from '../data/stages';
-import { generateRoom } from './roomGen';
+import type { FloorOmen } from '../omens/types';
+import { generateRoom, SHRINE_TEMPLATES } from './roomGen';
+
+/** Room kinds the generator can place: the data-defined ones plus the shrine (altar dialogue, no enemies). */
+export type FloorRoomType = RoomType | 'shrine';
 
 export interface FloorGenOptions {
   stage: StageDef;
@@ -11,12 +15,22 @@ export interface FloorGenOptions {
   pickItem: () => string;
   /** Share of normal rooms that use the procedural generator instead of templates. */
   proceduralShare?: number;
+  /** Overrides from whoever holds the floor in the war (systems/chronicle.ts); default to the stage's pools. */
+  bossPool?: string[];
+  enemyPool?: string[];
+  npcPool?: string[];
+  /** Chance (0..1) that a floor with a spare dead end gets a shrine room. Default 0.75. */
+  shrineChance?: number;
+  /** AI/mock omen that reshapes the floor (src/omens). */
+  omen?: FloorOmen;
+  /** Boss to skip when the stage pool offers another (e.g. the one slain on the previous floor). */
+  avoidBossId?: string;
 }
 
 export interface RoomNode {
   gx: number;
   gy: number;
-  type: RoomType;
+  type: FloorRoomType;
   template: string[];
   /** Enemy ids to spawn, one per 'E' slot (empty once cleared). */
   enemies: string[];
@@ -64,11 +78,15 @@ export function doorsOf(map: FloorMap, room: RoomNode): Dir[] {
  * treasure room. Fully deterministic for a given Rng.
  */
 export function generateFloor(rng: Rng, opts: FloorGenOptions): FloorMap {
-  const { stage, loop, pickItem } = opts;
+  const { stage, loop, pickItem, omen } = opts;
+  const enemyCount = (): number => Math.max(1, rng.int(stage.enemiesPerRoom[0], stage.enemiesPerRoom[1]) + Math.floor(loop / 2) + (omen?.enemyDelta ?? 0));
   const proceduralShare = opts.proceduralShare ?? 0.6;
+  const bossPool = opts.bossPool ?? stage.bossPool;
+  const enemyPool = [...(opts.enemyPool ?? stage.enemyPool), ...(omen?.enemyBias ?? [])];
+  const npcPool = opts.npcPool ?? stage.npcPool ?? [];
   const width = 9;
   const height = 7;
-  const target = Math.min(width * height, rng.int(stage.roomCount[0], stage.roomCount[1]) + loop * 2);
+  const target = Math.min(width * height, Math.max(4, rng.int(stage.roomCount[0], stage.roomCount[1]) + loop * 2 + (omen?.extraRooms ?? 0)));
 
   const cells = new Map<string, { gx: number; gy: number }>();
   const startCell = { gx: Math.floor(width / 2), gy: Math.floor(height / 2) };
@@ -97,21 +115,37 @@ export function generateFloor(rng: Rng, opts: FloorGenOptions): FloorMap {
     .sort((a, b) => (dist.get(key(b.gx, b.gy)) ?? 0) - (dist.get(key(a.gx, a.gy)) ?? 0));
 
   const bossCell = deadEnds[0] ?? [...cells.values()].sort((a, b) => (dist.get(key(b.gx, b.gy)) ?? 0) - (dist.get(key(a.gx, a.gy)) ?? 0))[0];
-  const treasureCell = deadEnds.find((c) => c !== bossCell);
+  const treasureCell =
+    deadEnds.find((c) => c !== bossCell) ??
+    [...cells.values()]
+      .filter((c) => c !== startCell && c !== bossCell)
+      .sort((a, b) => (dist.get(key(b.gx, b.gy)) ?? 0) - (dist.get(key(a.gx, a.gy)) ?? 0))[0];
+  const spareEnds = deadEnds.filter((c) => c !== bossCell && c !== treasureCell);
+  const shrineCell = spareEnds.length && rng.chance(opts.shrineChance ?? omen?.shrineChance ?? 0.75) ? rng.pick(spareEnds) : undefined;
+
+  const signatureCell = omen?.signatureRoom
+    ? [...cells.values()]
+        .filter((c) => c !== startCell && c !== bossCell && c !== treasureCell && c !== shrineCell)
+        .sort((a, b) => (dist.get(key(b.gx, b.gy)) ?? 0) - (dist.get(key(a.gx, a.gy)) ?? 0))[0]
+    : undefined;
 
   const rooms = new Map<string, RoomNode>();
   for (const c of cells.values()) {
     const k = key(c.gx, c.gy);
-    let type: RoomType = 'normal';
+    let type: FloorRoomType = 'normal';
     if (c === startCell) type = 'start';
     else if (c === bossCell) type = 'boss';
     else if (c === treasureCell) type = 'treasure';
+    else if (c === shrineCell) type = 'shrine';
 
-    let template = rng.pick(ROOM_TEMPLATES[type]);
-    if (type === 'normal' && rng.chance(proceduralShare)) {
+    let template = rng.pick(type === 'shrine' ? SHRINE_TEMPLATES : ROOM_TEMPLATES[type]);
+    if (c === signatureCell && omen?.signatureRoom) {
+      template = omen.signatureRoom;
+    } else if (type === 'normal' && rng.chance(proceduralShare)) {
       template = generateRoom(rng, {
-        density: rng.float(0.06, 0.16),
-        enemySlots: rng.int(stage.enemiesPerRoom[0], stage.enemiesPerRoom[1]) + Math.floor(loop / 2),
+        density: omen ? rng.float(omen.density * 0.7, omen.density * 1.3) : rng.float(0.06, 0.16),
+        enemySlots: enemyCount(),
+        pitChance: omen?.pitChance,
       });
     }
     const node: RoomNode = {
@@ -122,18 +156,19 @@ export function generateFloor(rng: Rng, opts: FloorGenOptions): FloorMap {
       enemies: [],
       npcs: [],
       dialogueDone: false,
-      cleared: type === 'start' || type === 'treasure',
+      cleared: type === 'start' || type === 'treasure' || type === 'shrine',
       visited: type === 'start',
       itemTaken: false,
     };
 
     if (type === 'normal') {
       const slots = countChar(template, 'E');
-      const wanted = Math.min(slots, rng.int(stage.enemiesPerRoom[0], stage.enemiesPerRoom[1]) + Math.floor(loop / 2));
-      for (let i = 0; i < wanted; i++) node.enemies.push(rng.pick(stage.enemyPool));
-      if (stage.npcPool?.length && rng.chance(stage.npcChance ?? 0)) node.npcs.push(rng.pick(stage.npcPool));
+      const wanted = Math.min(slots, enemyCount());
+      for (let i = 0; i < wanted; i++) node.enemies.push(rng.pick(enemyPool));
+      if (npcPool.length && rng.chance(omen?.npcChance ?? stage.npcChance ?? 0)) node.npcs.push(rng.pick(npcPool));
     } else if (type === 'boss') {
-      node.bossId = rng.pick(stage.bossPool);
+      const pool = bossPool.filter((id) => id !== opts.avoidBossId);
+      node.bossId = rng.pick(pool.length ? pool : bossPool);
     } else if (type === 'treasure') {
       node.itemId = pickItem();
     }

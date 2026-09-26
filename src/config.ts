@@ -57,7 +57,15 @@ export const COLORS = {
   pedestal: 0x8a8090,
   trapdoor: 0x0b0a0f,
   text: '#c9a45c',
-  textDim: '#8a7a5c',
+  textDim: '#b2a486',
+  uiPanel: 0x151a20,
+  uiBorder: 0x75674e,
+  uiIvory: '#ebe0c5',
+  karmaCursed: 0xd96667,
+  karmaFallen: 0xc78768,
+  karmaNeutral: 0xd0b878,
+  karmaJust: 0x86b6a8,
+  karmaBlessed: 0xa9d8c4,
 };
 
 export type Dir = 'up' | 'down' | 'left' | 'right';

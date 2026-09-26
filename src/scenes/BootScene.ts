@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS, PLAYER, PROJECTILE, TILE } from '../config';
 import { save } from '../core/save';
+import { settings } from '../core/settings';
 import { CHARACTERS } from '../data/characters';
 import { ENEMIES, EnemyDef } from '../data/enemies';
 import { ITEMS } from '../data/items';
@@ -17,6 +18,7 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     save.load();
+    settings.load();
     // Stop the page from scrolling on game keys (game-wide, all scenes).
     this.input.keyboard!.addCapture(['UP', 'DOWN', 'LEFT', 'RIGHT', 'SPACE']);
 
@@ -30,6 +32,8 @@ export class BootScene extends Phaser.Scene {
     this.makeCoin();
     this.makePedestal();
     this.makeTrapdoor();
+    this.makeAltar();
+    this.makeTalkBubble();
     for (const c of CHARACTERS) this.makePlayer(`player_${c.id}`, c.color, c.shadeColor);
     for (const e of ENEMIES) this.makeEnemy(e);
     for (const i of ITEMS) this.makeItemIcon(`item_${i.id}`, i.color);
@@ -175,6 +179,37 @@ export class BootScene extends Phaser.Scene {
     g.destroy();
   }
 
+  /** Stone altar with a brazier flame on top; the shrine room's interactable. */
+  private makeAltar(): void {
+    const g = this.gfx();
+    const cx = TILE / 2;
+    g.fillStyle(0x3a3240).fillRect(8, 46, TILE - 16, 12);
+    g.fillStyle(0x6a6070).fillRect(14, 40, TILE - 28, 8);
+    g.fillStyle(0x8a8090).fillRect(18, 28, TILE - 36, 14);
+    g.fillStyle(0xa8a0b0).fillRect(12, 24, TILE - 24, 6);
+    g.fillStyle(COLORS.doorFrame).fillRect(20, 30, TILE - 40, 2);
+    g.fillStyle(0xff7a2a, 0.9).fillCircle(cx, 17, 8);
+    g.fillStyle(0xffc860).fillCircle(cx, 15, 5);
+    g.fillStyle(0xfff4c0).fillCircle(cx - 1, 13, 2);
+    g.generateTexture('altar', TILE, TILE);
+    g.destroy();
+  }
+
+  /** White speech bubble with a "!" — shown above NPCs the player can talk to. */
+  private makeTalkBubble(): void {
+    const w = 26;
+    const h = 30;
+    const g = this.gfx();
+    g.fillStyle(0x1a1620).fillRoundedRect(0, 0, w, h - 6, 7);
+    g.fillStyle(0xfff8e8).fillRoundedRect(2, 2, w - 4, h - 10, 6);
+    g.fillStyle(0xfff8e8).fillTriangle(w / 2 - 5, h - 9, w / 2 + 5, h - 9, w / 2, h);
+    g.fillStyle(COLORS.doorFrame);
+    g.fillRect(w / 2 - 2, 6, 4, 10);
+    g.fillCircle(w / 2, 20, 2.4);
+    g.generateTexture('bubble_talk', w, h);
+    g.destroy();
+  }
+
   private makePlayer(key: string, color: number, shade: number): void {
     const size = PLAYER.radius * 2 + 8;
     const cx = size / 2;
@@ -194,6 +229,12 @@ export class BootScene extends Phaser.Scene {
     const c = size / 2;
     const shade = Phaser.Display.Color.IntegerToColor(def.color).darken(35).color;
     const g = this.gfx();
+    if (def.innocent) {
+      this.drawInnocent(g, def, c, r);
+      g.generateTexture(`enemy_${def.id}`, size, size);
+      g.destroy();
+      return;
+    }
     const draw = (col: number, dy: number): void => {
       g.fillStyle(col);
       switch (def.shape) {
@@ -226,6 +267,26 @@ export class BootScene extends Phaser.Scene {
     g.fillCircle(c + r * 0.35, c - r * 0.15, Math.max(2, r * 0.14));
     g.generateTexture(`enemy_${def.id}`, size, size);
     g.destroy();
+  }
+
+  /** Innocents: soft pastel body, pale halo, round friendly eyes and a small mouth — no hard shade, no menace. */
+  private drawInnocent(g: Phaser.GameObjects.Graphics, def: EnemyDef, c: number, r: number): void {
+    const soft = Phaser.Display.Color.IntegerToColor(def.color).lighten(18).color;
+    const shade = Phaser.Display.Color.IntegerToColor(def.color).darken(12).color;
+    g.fillStyle(0xfff4c0, 0.25).fillCircle(c, c, r + 4);
+    g.fillStyle(shade).fillCircle(c, c + 3, r);
+    g.fillStyle(soft).fillCircle(c, c, r);
+    g.fillStyle(0xffffff, 0.35).fillCircle(c - r * 0.3, c - r * 0.35, r * 0.3);
+    g.fillStyle(0x2a2430);
+    g.fillCircle(c - r * 0.32, c - r * 0.1, Math.max(2, r * 0.16));
+    g.fillCircle(c + r * 0.32, c - r * 0.1, Math.max(2, r * 0.16));
+    g.fillStyle(0xffffff);
+    g.fillCircle(c - r * 0.28, c - r * 0.16, Math.max(1, r * 0.06));
+    g.fillCircle(c + r * 0.36, c - r * 0.16, Math.max(1, r * 0.06));
+    g.lineStyle(2, 0x2a2430, 0.8);
+    g.beginPath();
+    g.arc(c, c + r * 0.25, r * 0.28, Phaser.Math.DegToRad(20), Phaser.Math.DegToRad(160), false);
+    g.strokePath();
   }
 
   private makeItemIcon(key: string, color: number): void {
