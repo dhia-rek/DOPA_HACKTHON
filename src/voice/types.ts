@@ -33,6 +33,11 @@ const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.m
 const SPEAKER_VOICES: Record<string, { voice: VoiceName; pitch: number; rate: number }> = {
   minotaur: { voice: 'Fenrir', pitch: 0.3, rate: 0.8 },
   hydra: { voice: 'Charon', pitch: 0.4, rate: 0.85 },
+  menoetius: { voice: 'Orus', pitch: 0.4, rate: 0.9 },
+  campe: { voice: 'Kore', pitch: 0.5, rate: 0.85 },
+  alcyoneus: { voice: 'Fenrir', pitch: 0.2, rate: 0.75 },
+  porphyrion: { voice: 'Charon', pitch: 0.2, rate: 0.8 },
+  talos: { voice: 'Orus', pitch: 0.1, rate: 0.7 },
   villager: { voice: 'Orus', pitch: 1, rate: 1 },
   priestess: { voice: 'Aoede', pitch: 1.2, rate: 0.95 },
   child: { voice: 'Leda', pitch: 1.7, rate: 1.1 },
