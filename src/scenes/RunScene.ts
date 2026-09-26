@@ -19,7 +19,6 @@ import { trials } from '../systems/trials';
 import { trialProvider } from '../trials/provider';
 import { describeObjective, TrialOffer } from '../trials/types';
 import { voiceFor } from '../voice/types';
-import { omenDirector } from '../omens/provider';
 import { OMEN_TINTS, tintWith } from '../omens/types';
 import { BEHAVIOURS, threaten } from '../systems/behaviours';
 
@@ -684,10 +683,11 @@ export class RunScene extends Phaser.Scene {
     this.enemyShots.killAll();
     this.refreshDoors();
     events.emit('room_cleared', { roomType: this.room.type, floor: this.run.floor });
+    if (this.room.type === 'normal' && trials.wantsCoins) this.dropPickup(GAME_WIDTH / 2 + TILE, GAME_HEIGHT / 2, 'coin');
 
     if (this.room.type === 'boss') {
       events.emit('floor_cleared', { floor: this.run.floor });
-      omenDirector.prefetch(this.run.omenRequest(this.run.floor + 1));
+      this.run.omens.prefetch(this.run.omenRequest(this.run.floor + 1));
       if (this.run.isVictoryFloor && !this.run.won) {
         this.run.won = true;
         events.emit('run_won', { seed: this.run.seed, characterId: this.run.character.id, timeMs: this.run.elapsedMs });

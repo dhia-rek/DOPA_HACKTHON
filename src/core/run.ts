@@ -3,7 +3,7 @@ import { getItem, ItemDef } from '../data/items';
 import { STAGES, StageDef } from '../data/stages';
 import type { RunSnapshot } from '../data/achievements';
 import { FloorMap, generateFloor, RoomNode } from '../gen/floorGen';
-import { omenDirector } from '../omens/provider';
+import { OmenDirector } from '../omens/provider';
 import type { FloorOmen, OmenRequest } from '../omens/types';
 import { pickItemFromPool } from '../systems/loot';
 import { debugState } from './debug';
@@ -47,6 +47,7 @@ export class RunState {
   damageTakenThisFloor = 0;
   /** The current floor's omen (theme, banner, generation knobs). */
   omen: FloorOmen | null = null;
+  readonly omens = new OmenDirector();
   killsThisRun = 0;
 
   constructor(seed: string, characterId: string) {
@@ -155,7 +156,7 @@ export class RunState {
   ensureFloor(): FloorMap {
     if (this.floorMap) return this.floorMap;
     const picked: string[] = this.items.map((i) => i.id);
-    this.omen = omenDirector.get(this.omenRequest(this.floor));
+    this.omen = this.omens.get(this.omenRequest(this.floor));
     this.floorMap = generateFloor(this.floorRng.fork(`floor-${this.floor}`), {
       stage: this.stage,
       loop: this.loop,
@@ -174,7 +175,7 @@ export class RunState {
 
   omenRequest(floor: number): OmenRequest {
     const stage = STAGES[(floor - 1) % STAGES.length];
-    return { story: this.storySnapshot(), seed: `${this.seed}:${floor}:omen`, floor, stageName: stage.name, enemyPool: stage.enemyPool };
+    return { story: { ...this.storySnapshot(), floor, stageName: stage.name }, seed: `${this.seed}:${floor}:omen`, floor, stageName: stage.name, enemyPool: stage.enemyPool };
   }
 
   nextFloor(): void {

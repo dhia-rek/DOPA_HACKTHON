@@ -24,6 +24,7 @@ export class HudScene extends Phaser.Scene {
   private info!: Phaser.GameObjects.Text;
   private stageText!: Phaser.GameObjects.Text;
   private trialText!: Phaser.GameObjects.Text;
+  private omenBanner: Phaser.GameObjects.Text[] = [];
   private items!: Phaser.GameObjects.Container;
   private minimap!: Phaser.GameObjects.Graphics;
   private karmaLabel!: Phaser.GameObjects.Text;
@@ -163,6 +164,7 @@ export class HudScene extends Phaser.Scene {
   }
 
   private onOmen(p: GameEvents['omen_revealed']): void {
+    this.omenBanner.forEach((t) => t.destroy());
     const title = this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 90, p.name.toUpperCase(), { fontFamily: 'serif', fontSize: '34px', color: '#f0e6c8', stroke: '#000', strokeThickness: 5 })
       .setOrigin(0.5)
@@ -171,7 +173,8 @@ export class HudScene extends Phaser.Scene {
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 50, p.line, { fontFamily: 'monospace', fontSize: '15px', color: '#e8d9b0', align: 'center', stroke: '#000', strokeThickness: 4, wordWrap: { width: 720 } })
       .setOrigin(0.5, 0)
       .setDepth(900);
-    this.tweens.add({ targets: [title, line], alpha: 0, delay: 3800, duration: 700, onComplete: () => [title, line].forEach((t) => t.destroy()) });
+    this.omenBanner = [title, line];
+    this.tweens.add({ targets: this.omenBanner, alpha: 0, delay: 3800, duration: 700, onComplete: () => [title, line].forEach((t) => t.destroy()) });
   }
 
   private onTrialResolved(p: GameEvents['trial_resolved']): void {

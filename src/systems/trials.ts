@@ -61,6 +61,11 @@ class TrialSystem {
     return `${t.offer.title} — ${describeObjective(t.offer.objective)}${progress ? `  (${progress})` : ''}`;
   }
 
+  /** Charon's fare: cleared rooms drop a coin while a coin trial runs. */
+  get wantsCoins(): boolean {
+    return this.active?.offer.objective.type === 'collect_coins';
+  }
+
   /** Called by the HUD every frame-ish; fails an expired haste trial. */
   tick(): void {
     if (this.secondsLeft === 0) this.resolve(false);
@@ -94,6 +99,9 @@ class TrialSystem {
         break;
       case 'floor_cleared':
         this.resolve(o.type === 'spare_all');
+        break;
+      case 'floor_started':
+        if ((payload as GameEvents['floor_started']).floor !== t.floor) this.resolve(o.type === 'spare_all');
         break;
     }
   }

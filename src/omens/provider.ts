@@ -57,9 +57,9 @@ export function mockOmen(req: OmenRequest): FloorOmen {
 /**
  * Floors are generated synchronously, so the AI omen for floor N+1 is
  * prefetched while the player finishes floor N; if it has not arrived (or no
- * server is configured) the mock is used.
+ * server is configured) the mock is used. One director per run.
  */
-class OmenDirector {
+export class OmenDirector {
   private readonly ready = new Map<string, FloorOmen>();
   private readonly url = aiEndpoint('/omen');
 
@@ -78,5 +78,3 @@ class OmenDirector {
     return this.ready.get(req.seed) ?? mockOmen(req);
   }
 }
-
-export const omenDirector = new OmenDirector();
