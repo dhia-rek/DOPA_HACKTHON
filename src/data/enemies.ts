@@ -33,6 +33,12 @@ export interface EnemyDef {
   innocent?: boolean;
   /** One-line personality used by dialogue generation (bosses and NPCs). */
   persona?: string;
+  /**
+   * Story flags (`StorySnapshot.flags`, e.g. `blood_on_hands`, `defied_<bossId>`)
+   * this speaker's dialogue should react to. Purely a hint for prompts and
+   * behaviours; the full list lives in ROADMAP.md ("Boss flags").
+   */
+  reactsTo?: string[];
 }
 
 export const ENEMIES: EnemyDef[] = [
@@ -125,7 +131,10 @@ export const ENEMIES: EnemyDef[] = [
     radius: 34,
     chargeSpeed: 520,
     isBoss: true,
-    persona: 'Proud, wounded, hates being called a monster; respects honour, despises cowards.',
+    persona:
+      'Asterion, a proud exile with a low, grinding voice; still bleeding from the day Athens caged him and called him a monster. ' +
+      'Respects an honest duel and a kept oath, despises cowards and oathbreakers: he taunts a cruel player as a fellow beast, and offers a heroic one a clean fight.',
+    reactsTo: ['blood_on_hands', 'defied_minotaur', 'swore_oath_to_minotaur', 'broke_oath_to_minotaur', 'knows_boss_weakness', 'spared_many'],
   },
   {
     id: 'hydra',
@@ -140,7 +149,10 @@ export const ENEMIES: EnemyDef[] = [
     fireInterval: 900,
     shotSpeed: 300,
     isBoss: true,
-    persona: 'Many-voiced, ancient, speaks in riddles; each head interrupts the others.',
+    persona:
+      'Ancient and many-voiced, each head finishing or contradicting the last in hissing riddles; still aches where Heracles burned her severed necks. ' +
+      'Respects patience and cunning, despises fire and rash heroes: she flatters a cruel player as kin and mocks a heroic one as another Heracles doomed to fail.',
+    reactsTo: ['blood_on_hands', 'defied_hydra', 'spared_many', 'knows_boss_weakness', 'bargained_with_hydra', 'slew_minotaur'],
   },
   {
     id: 'villager',
