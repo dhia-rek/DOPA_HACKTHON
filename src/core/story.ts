@@ -128,7 +128,9 @@ export class StoryState {
     events.emit('story_changed', { karma: this.karma });
   }
 
+  /** Re-adding a flag moves it to the end, so `snapshot().flags` order is "most recently set last". */
   addFlag(flag: string, floor = this.currentFloor): void {
+    this.flags.delete(flag);
     this.flags.add(flag);
     this.flagFloors.set(flag, floor);
   }
