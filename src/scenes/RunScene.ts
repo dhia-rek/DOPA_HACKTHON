@@ -146,7 +146,7 @@ export class RunScene extends Phaser.Scene {
     if (this.room === map.start && trials.offeredFloor !== this.run.floor) {
       trials.offeredFloor = this.run.floor;
       const omen = this.run.omen;
-      if (omen) events.emit('omen_revealed', { name: omen.name, line: omen.line, theme: omen.theme });
+      if (omen) this.time.delayedCall(100, () => events.emit('omen_revealed', { name: omen.name, line: omen.line, theme: omen.theme }));
       this.time.delayedCall(omen ? 1600 : 450, () => void this.offerTrial());
     }
   }
