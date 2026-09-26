@@ -19,6 +19,8 @@ import { trials } from '../systems/trials';
 import { trialProvider } from '../trials/provider';
 import { describeObjective, TrialOffer } from '../trials/types';
 import { voiceFor } from '../voice/types';
+import { omenDirector } from '../omens/provider';
+import { OMEN_TINTS, tintWith } from '../omens/types';
 import { BEHAVIOURS, threaten } from '../systems/behaviours';
 
 /** Distance (px) at which an innocent NPC shows its "!" talk bubble. */
@@ -143,8 +145,15 @@ export class RunScene extends Phaser.Scene {
 
     if (this.room === map.start && trials.offeredFloor !== this.run.floor) {
       trials.offeredFloor = this.run.floor;
-      this.time.delayedCall(450, () => void this.offerTrial());
+      const omen = this.run.omen;
+      if (omen) events.emit('omen_revealed', { name: omen.name, line: omen.line, theme: omen.theme });
+      this.time.delayedCall(omen ? 1600 : 450, () => void this.offerTrial());
     }
+  }
+
+  /** Stage palette colour shaded by the floor omen's theme. */
+  private tint(color: number): number {
+    return tintWith(color, OMEN_TINTS[this.run.omen?.theme ?? 'none']);
   }
 
   /** At the start of each floor a god or shade offers one AI-written trial (src/trials). */
@@ -391,14 +400,14 @@ export class RunScene extends Phaser.Scene {
           if (doorDir === 'down') door.setAngle(180);
           this.doorSprites[doorDir] = door;
         } else {
-          (this.walls.create(x, y, 'wall') as Phaser.Physics.Arcade.Image).setTint(this.run.stage.palette.wall);
+          (this.walls.create(x, y, 'wall') as Phaser.Physics.Arcade.Image).setTint(this.tint(this.run.stage.palette.wall));
         }
       }
     }
   }
 
   private buildInterior(): void {
-    const tint = this.run.stage.palette.floor;
+    const tint = this.tint(this.run.stage.palette.floor);
     for (let r = 0; r < ROOM_ROWS; r++) {
       for (let c = 0; c < ROOM_COLS; c++) {
         const { x, y } = this.tileCenter(c + 1, r + 1);
@@ -663,6 +672,7 @@ export class RunScene extends Phaser.Scene {
 
     if (this.room.type === 'boss') {
       events.emit('floor_cleared', { floor: this.run.floor });
+      omenDirector.prefetch(this.run.omenRequest(this.run.floor + 1));
       if (this.run.isVictoryFloor && !this.run.won) {
         this.run.won = true;
         events.emit('run_won', { seed: this.run.seed, characterId: this.run.character.id, timeMs: this.run.elapsedMs });
