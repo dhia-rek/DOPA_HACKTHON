@@ -33,11 +33,13 @@ export class FloorIntroScene extends Phaser.Scene {
       if (run.currentFront.bossPool.includes(directive.boss.archetype)) return directive;
       return director.refetch(run, run.floor);
     });
-    void judged.then((directive) => {
+    void judged.then(async (directive) => {
       if (!this.scene.isActive('floor_intro')) return;
       run.directive = directive;
       run.story.settleProphecies(run.floor, directive);
       questTracker.offer(run, directive);
+      await run.omens.load(run.omenRequest(run.floor));
+      if (!this.scene.isActive('floor_intro')) return;
       waiting.destroy();
       this.show(run, directive);
     });
