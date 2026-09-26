@@ -1,10 +1,12 @@
 import Phaser from 'phaser';
+import { ART_SCALE } from '../art/manifest';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import { events, GameEvents } from '../core/events';
 import type { RunState } from '../core/run';
 import type { RoomNode } from '../gen/floorGen';
 import { questTracker } from '../systems/quests';
 import { trials } from '../systems/trials';
+import { display, mono } from './ui';
 
 const CELL = 14;
 const GAP = 3;
@@ -46,10 +48,10 @@ export class HudScene extends Phaser.Scene {
 
   create(): void {
     this.hearts = this.add.group();
-    this.info = this.add.text(12, 42, '', { fontFamily: 'monospace', fontSize: '16px', color: COLORS.text });
-    this.stageText = this.add.text(12, GAME_HEIGHT - 28, '', { fontFamily: 'monospace', fontSize: '14px', color: COLORS.textDim });
-    this.questText = this.add.text(8, GAME_HEIGHT - 50, '', { fontFamily: 'monospace', fontSize: '13px', color: '#8fd0ff', backgroundColor: '#0b0a0fbb', padding: { x: 6, y: 3 } });
-    this.trialText = this.add.text(12, GAME_HEIGHT - 72, '', { fontFamily: 'monospace', fontSize: '14px', color: '#ffe08a' });
+    this.info = this.add.text(12, 42, '', { fontFamily: mono, fontSize: '16px', color: COLORS.text, stroke: '#0b0a0f', strokeThickness: 4 });
+    this.stageText = this.add.text(12, GAME_HEIGHT - 28, '', { fontFamily: mono, fontSize: '14px', color: COLORS.textDim, stroke: '#0b0a0f', strokeThickness: 4 });
+    this.questText = this.add.text(8, GAME_HEIGHT - 50, '', { fontFamily: mono, fontSize: '13px', color: '#8fd0ff', backgroundColor: '#0b0a0fbb', padding: { x: 6, y: 3 } });
+    this.trialText = this.add.text(12, GAME_HEIGHT - 72, '', { fontFamily: mono, fontSize: '14px', color: '#ffe08a' });
     this.time.addEvent({ delay: 250, loop: true, callback: this.refreshTrial, callbackScope: this });
     this.items = this.add.container(12, 68);
     this.minimap = this.add.graphics();
@@ -58,7 +60,7 @@ export class HudScene extends Phaser.Scene {
     meter.lineStyle(1, COLORS.uiBorder, 0.7).strokeRoundedRect(KARMA_X - 9, KARMA_Y, KARMA_WIDTH + 18, 39, 4);
     meter.fillStyle(COLORS.karmaCursed, 0.65).fillRect(KARMA_X, KARMA_Y + 25, KARMA_WIDTH / 2, 5);
     meter.fillStyle(COLORS.karmaBlessed, 0.65).fillRect(KARMA_X + KARMA_WIDTH / 2, KARMA_Y + 25, KARMA_WIDTH / 2, 5);
-    this.karmaLabel = this.add.text(KARMA_X + KARMA_WIDTH / 2, KARMA_Y + 5, '', { fontFamily: 'monospace', fontSize: '13px' }).setOrigin(0.5, 0);
+    this.karmaLabel = this.add.text(KARMA_X + KARMA_WIDTH / 2, KARMA_Y + 5, '', { fontFamily: mono, fontSize: '13px' }).setOrigin(0.5, 0);
     this.karmaNeedle = this.add.rectangle(KARMA_X + KARMA_WIDTH / 2, KARMA_Y + 27, 3, 15, COLORS.karmaNeutral);
     this.karma = NaN;
 
@@ -116,7 +118,7 @@ export class HudScene extends Phaser.Scene {
     for (let i = 0; i < maxHearts; i++) {
       const filled = run.hp - i * 2;
       const key = filled >= 2 ? 'heart_full' : filled === 1 ? 'heart_half' : 'heart_empty';
-      this.hearts.add(this.add.image(12 + i * 28, 10, key).setOrigin(0, 0));
+      this.hearts.add(this.add.image(12 + i * 28, 10, key).setOrigin(0, 0).setScale(1 / ART_SCALE));
     }
 
     this.info.setText(`◈ ${run.coins}   dmg ${run.stats.damage.toFixed(1)}  spd ${Math.round(run.stats.speed)}  rof ${run.stats.fireRate.toFixed(1)}`);
@@ -127,7 +129,12 @@ export class HudScene extends Phaser.Scene {
 
     this.items.removeAll(true);
     run.items.forEach((item, i) => {
-      this.items.add(this.add.image(i * 30, 0, `item_${item.id}`).setOrigin(0, 0).setScale(0.8));
+      this.items.add(this.add.image(i * 30, 0, `item_${item.id}`).setOrigin(0, 0).setScale(0.8 / ART_SCALE));
+    });
+    run.blessings.forEach((god, i) => {
+      const icon = this.add.image(run.items.length * 30 + 6 + i * 30, 0, `god_${god.id}`).setOrigin(0, 0);
+      icon.setScale(24 / Math.max(icon.width, icon.height));
+      this.items.add(icon);
     });
 
     this.drawMinimap();
@@ -173,11 +180,11 @@ export class HudScene extends Phaser.Scene {
   private onOmen(p: GameEvents['omen_revealed']): void {
     this.omenBanner.forEach((t) => t.destroy());
     const title = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 90, p.name.toUpperCase(), { fontFamily: 'serif', fontSize: '34px', color: '#f0e6c8', stroke: '#000', strokeThickness: 5 })
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 90, p.name.toUpperCase(), { fontFamily: display, fontSize: '34px', color: '#f0e6c8', stroke: '#000', strokeThickness: 5 })
       .setOrigin(0.5)
       .setDepth(900);
     const line = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 50, p.line, { fontFamily: 'monospace', fontSize: '15px', color: '#e8d9b0', align: 'center', stroke: '#000', strokeThickness: 4, wordWrap: { width: 720 } })
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 50, p.line, { fontFamily: mono, fontSize: '15px', color: '#e8d9b0', align: 'center', stroke: '#000', strokeThickness: 4, wordWrap: { width: 720 } })
       .setOrigin(0.5, 0)
       .setDepth(900);
     this.omenBanner = [title, line];
@@ -196,7 +203,7 @@ export class HudScene extends Phaser.Scene {
   private showToast(label: string, color: string): void {
     const t = this.add
       .text(GAME_WIDTH - 12, 140 + this.toastY, label, {
-        fontFamily: 'monospace',
+        fontFamily: mono,
         fontSize: '16px',
         color,
         backgroundColor: '#0b0a0fdd',

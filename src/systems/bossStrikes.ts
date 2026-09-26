@@ -13,7 +13,7 @@ import { settings } from '../core/settings';
 export const MELEE_REACH = 72;
 
 export function inReach(ctx: BehaviourContext, d: Phaser.Math.Vector2): boolean {
-  return d.length() <= ctx.enemy.def.radius + MELEE_REACH;
+  return d.length() <= ctx.enemy.body.halfWidth + MELEE_REACH;
 }
 
 /** Shards flying out of a point; visual only. */
@@ -31,7 +31,7 @@ export function impact(ctx: BehaviourContext, x: number, y: number, color: numbe
 export function swipe(ctx: BehaviourContext, dir: Phaser.Math.Vector2): void {
   const { enemy, player } = ctx;
   const scene = player.scene;
-  const reach = enemy.def.radius + MELEE_REACH + 16;
+  const reach = enemy.body.halfWidth + MELEE_REACH + 16;
   const facing = Math.atan2(dir.y, dir.x);
   const half = 0.9;
 
@@ -53,7 +53,7 @@ export function swipe(ctx: BehaviourContext, dir: Phaser.Math.Vector2): void {
 export function shockwave(ctx: BehaviourContext, radius = 190): void {
   const { enemy, player } = ctx;
   const scene = player.scene;
-  const ring = scene.add.circle(enemy.x, enemy.y, enemy.def.radius * 0.6).setStrokeStyle(10, 0xf0d8a0, 0.95).setDepth(19);
+  const ring = scene.add.circle(enemy.x, enemy.y, enemy.body.halfWidth * 0.6).setStrokeStyle(10, 0xf0d8a0, 0.95).setDepth(19);
   scene.tweens.add({ targets: ring, radius, alpha: 0, duration: 400, ease: 'Cubic.Out', onComplete: () => ring.destroy() });
   impact(ctx, enemy.x, enemy.y, 0xc0b090, 12);
   settings.shake(scene.cameras.main, 200, 0.014);

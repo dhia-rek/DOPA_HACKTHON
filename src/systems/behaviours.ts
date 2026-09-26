@@ -107,13 +107,13 @@ const flee: Behaviour = ({ enemy, player, rng, now }) => {
     const dir = away.normalize().rotate(m.zig ?? 0);
     seek(enemy, dir, enemy.speed * 1.6, now);
     enemy.setAngle(Math.sin(now / 35) * 14);
-    enemy.setScale(1 + Math.sin(now / 60) * 0.08, 1 - Math.sin(now / 60) * 0.08);
+    enemy.stretch.set(1 + Math.sin(now / 60) * 0.08, 1 - Math.sin(now / 60) * 0.08);
     return;
   }
   if (m.wasPanicking) {
     m.wasPanicking = 0;
     enemy.setAngle(0);
-    enemy.setScale(1);
+    enemy.stretch.set(1, 1);
   }
 
   if (away.length() < 200) {
@@ -132,7 +132,9 @@ const flee: Behaviour = ({ enemy, player, rng, now }) => {
 
 /** Walks straight at the player. */
 const chaser: Behaviour = ({ enemy, player, now }) => {
-  seek(enemy, toPlayer(enemy, player), enemy.speed, now);
+  const d = toPlayer(enemy, player);
+  seek(enemy, d, enemy.speed, now);
+  if (d.length() < enemy.def.radius + 40) enemy.attack(300);
 };
 
 /** Picks a random direction every so often, occasionally drifting toward the player. */
@@ -146,6 +148,7 @@ const wanderer: Behaviour = ({ enemy, player, rng, now }) => {
     m.vy = Math.sin(angle) * enemy.speed;
   }
   enemy.moveTowards(m.vx ?? 0, m.vy ?? 0);
+  if (toPlayer(enemy, player).length() < enemy.def.radius + 40) enemy.attack(300);
 };
 
 /** Keeps mid distance and fires aimed shots. */
@@ -162,6 +165,7 @@ const shooter: Behaviour = (ctx) => {
   if (now >= (m.nextFire ?? now + 600)) {
     m.nextFire = now + (enemy.def.fireInterval ?? 1500);
     const aim = d.normalize();
+    enemy.attack(450);
     shootAt(ctx, aim.x, aim.y);
   } else if (m.nextFire === undefined) {
     m.nextFire = now + 600;
@@ -183,20 +187,25 @@ const charger: Behaviour = ({ enemy, player, now }) => {
       const horizontal = Math.abs(d.y) < 36;
       m.cx = horizontal ? Math.sign(d.x) : 0;
       m.cy = horizontal ? 0 : Math.sign(d.y);
+      enemy.chargeFx('windup');
     }
   } else if (state === 1) {
     enemy.moveTowards(0, 0);
-    enemy.setScale(0.9, 1.1);
+    enemy.stretch.set(0.9, 1.1);
+    enemy.attack(120);
     if (now >= m.until) {
       m.state = 2;
       m.until = now + 1500;
-      enemy.setScale(1);
+      enemy.stretch.set(1, 1);
     }
   } else if (state === 2) {
     const s = enemy.def.chargeSpeed ?? 400;
     enemy.moveTowards(m.cx * s, m.cy * s);
+    enemy.attack(120);
+    enemy.chargeFx('charge');
     const hitWall = !enemy.body.blocked.none || !enemy.body.touching.none;
     if (hitWall || now >= m.until) {
+      if (hitWall) enemy.chargeFx('slam');
       m.state = 3;
       m.until = now + 600;
     }
@@ -223,6 +232,7 @@ const orbiter: Behaviour = (ctx) => {
   if (now >= m.nextFire) {
     m.nextFire = now + (enemy.def.fireInterval ?? 2000);
     const aim = d.normalize();
+    enemy.attack(450);
     shootAt(ctx, aim.x, aim.y);
   }
 };
@@ -247,42 +257,51 @@ const bossMinotaur: Behaviour = (ctx) => {
     } else if (now >= (m.cooldownUntil ?? 0)) {
       m.state = 1;
       m.until = now + (enraged ? 300 : 500);
+      enemy.chargeFx('windup');
       const dir = d.clone().normalize();
       m.cx = dir.x;
       m.cy = dir.y;
     }
   } else if (state === 4) {
     enemy.moveTowards(0, 0);
-    enemy.pose('windup');
+    enemy.bossPose('windup');
     enemy.setTint(0xffc0a0);
     if (now >= m.until) {
       swipe(ctx, new Phaser.Math.Vector2(m.cx, m.cy));
       m.state = 0;
     }
   } else if (state === 1) {
+    // Wind-up: crouch, raise the axe, face the target.
     enemy.moveTowards(0, 0);
-    enemy.pose('windup');
+    enemy.bossPose('windup');
     enemy.setTint(0xff8060);
+    enemy.attack(120);
+    enemy.faceX = m.cx;
     if (now >= m.until) {
       m.state = 2;
       m.until = now + 1200;
-      enemy.clearTint();
     }
   } else if (state === 2) {
     const s = (enemy.def.chargeSpeed ?? 500) * (enraged ? 1.25 : 1);
     enemy.moveTowards(m.cx * s, m.cy * s);
-    enemy.pose('charge');
+    enemy.bossPose('charge');
+    enemy.attack(120);
+    enemy.chargeFx('charge');
     if (!enemy.body.blocked.none || now >= m.until) {
+      enemy.chargeFx('slam');
       m.state = 3;
       m.until = now + (enraged ? 500 : 900);
+      enemy.stretch.set(1.2, 0.8);
       settings.shake(ctx.player.scene.cameras.main, 150, 0.01);
       if (enraged) ring(ctx, 8, ctx.rng.float(0, Math.PI), 220);
     }
   } else {
+    // Recovery: slumped, then springs back to idle.
     enemy.moveTowards(0, 0);
-    enemy.pose('stagger');
+    enemy.bossPose('stagger');
     if (now >= m.until) {
       m.state = 0;
+      enemy.stretch.set(1, 1);
       m.cooldownUntil = now + (enraged ? 600 : 1200);
     }
   }
@@ -294,12 +313,15 @@ const bossHydra: Behaviour = (ctx) => {
   const m = enemy.memory;
   const d = toPlayer(enemy, player);
   seek(enemy, d, enemy.speed, now);
+  enemy.stretch.lerp(new Phaser.Math.Vector2(1, 1), 0.1);
 
   if (m.nextFire === undefined) m.nextFire = now + 1000;
   if (now >= m.nextFire) {
     const heads = enemy.hpRatio > 0.66 ? 6 : enemy.hpRatio > 0.33 ? 9 : 12;
     m.nextFire = now + (enemy.def.fireInterval ?? 900) * (enemy.hpRatio > 0.33 ? 1 : 0.8);
     m.phase = (m.phase ?? 0) + 1;
+    enemy.attack(520);
+    enemy.stretch.set(1.1, 0.9);
     if (m.phase % 3 === 0) {
       const aim = d.normalize();
       for (const off of [-0.25, 0, 0.25]) {
@@ -328,10 +350,11 @@ const bossGiant: Behaviour = (ctx) => {
     if (now >= (m.cooldownUntil ?? 0)) {
       m.state = 1;
       m.until = now + 600;
+      enemy.chargeFx('windup');
     }
   } else if (state === 1) {
     enemy.moveTowards(0, 0);
-    enemy.pose('windup');
+    enemy.bossPose('windup');
     enemy.setTint(0xc0a080);
     if (now >= m.until) {
       enemy.clearTint();
@@ -345,8 +368,11 @@ const bossGiant: Behaviour = (ctx) => {
   } else if (state === 2) {
     const s = (enemy.def.chargeSpeed ?? 450) * (wounded ? 1.2 : 1);
     enemy.moveTowards(m.cx * s, m.cy * s);
-    enemy.pose('charge');
+    enemy.bossPose('charge');
+    enemy.attack(120);
+    enemy.chargeFx('charge');
     if (!enemy.body.blocked.none || now >= m.until) {
+      if (!enemy.body.blocked.none) enemy.chargeFx('slam');
       m.state = 0;
       m.cooldownUntil = now + (wounded ? 900 : 1500);
     }

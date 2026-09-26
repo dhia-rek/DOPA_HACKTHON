@@ -12,7 +12,7 @@ import { impact, inReach, shockwave, swipe } from './bossStrikes';
  * The boss roams like a chaser and, every cooldown, performs the next active
  * ability in round-robin order (the archetype's signature kit + the Director's
  * extras + those unlocked by phases). Poses (windup, charge, stagger, blink)
- * are declared via `enemy.pose()`; Enemy animates them.
+ * are declared via `enemy.bossPose()`; Enemy animates them.
  * At arm's reach every boss swipes (claw/horn wedge) instead of waiting for
  * its next ability. Passive abilities (shields, poison trail, enrage, split,
  * heart theft) run alongside. Every ability has a tell; the weakness the player earned makes
@@ -119,7 +119,7 @@ export const bossDirected: Behaviour = (ctx) => {
 
   if (state === State.Windup) {
     enemy.moveTowards(0, 0);
-    enemy.pose('windup');
+    enemy.bossPose('windup');
     enemy.setTint(WINDUP_TINT[m.pending] ?? 0xd0c0a0);
     if (now >= m.until) {
       if (m.pending === 1) {
@@ -152,7 +152,7 @@ export const bossDirected: Behaviour = (ctx) => {
   if (state === State.Charging) {
     const s = (enemy.def.chargeSpeed ?? 480) * (enraged ? 1.2 : 1);
     enemy.moveTowards(m.cx * s, m.cy * s);
-    enemy.pose('charge');
+    enemy.bossPose('charge');
     if (!enemy.body.blocked.none || now >= m.until) {
       m.state = State.Stagger;
       m.until = now + (bp.weakness === 'stagger_after_charge' ? 1500 : 700);
@@ -164,14 +164,14 @@ export const bossDirected: Behaviour = (ctx) => {
 
   if (state === State.Stagger) {
     enemy.moveTowards(0, 0);
-    enemy.pose('stagger');
+    enemy.bossPose('stagger');
     if (now >= m.until) m.state = State.Roam;
     return;
   }
 
   if (state === State.Blink) {
     enemy.moveTowards(0, 0);
-    enemy.pose('blink');
+    enemy.bossPose('blink');
     if (now >= m.until) {
       const dir = player.body.velocity.lengthSq() > 100 ? player.body.velocity.clone().normalize() : d.clone().normalize();
       const p = clampToRoom(player.x - dir.x * 110, player.y - dir.y * 110);
