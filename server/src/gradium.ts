@@ -15,17 +15,33 @@ const DEFAULT_VOICES: Record<VoiceName, string> = {
   Zephyr: '4SZHfMpw-p46Ywgs', // Harper: confident
 };
 
+/** The team's custom Gradium voices, by speaker id; they win over the per-voice map. */
+const DEFAULT_SPEAKER_VOICES: Record<string, string> = {
+  minotaur: '5MmCdRhVPfoo27AO', // "Minotaur Boss"
+  hydra: '3LCB6zcRDqzOq6TY', // "Monster Hydra"
+  menoetius: 'tKWvk4gllFxxmwnv', // "Minotaur Monster": dark echoing bass for the giants
+  alcyoneus: 'tKWvk4gllFxxmwnv',
+  porphyrion: 'tKWvk4gllFxxmwnv',
+  talos: 'tKWvk4gllFxxmwnv',
+};
+
+function parsePairs(raw: string): [string, string][] {
+  return raw
+    .split(',')
+    .map((pair) => pair.split('=').map((s) => s.trim()))
+    .filter((kv): kv is [string, string] => kv.length === 2 && kv[0] !== '' && kv[1] !== '');
+}
+
 /** `GRADIUM_VOICES="Fenrir=<id>,Charon=<id>"` overrides individual voices (e.g. custom or designed voices). */
 function voiceMap(): Record<VoiceName, string> {
   const map = { ...DEFAULT_VOICES };
-  for (const pair of CONFIG.gradiumVoices.split(',')) {
-    const [name, id] = pair.split('=').map((s) => s.trim());
-    if (name && id && name in map) map[name as VoiceName] = id;
-  }
+  for (const [name, id] of parsePairs(CONFIG.gradiumVoices)) if (name in map) map[name as VoiceName] = id;
   return map;
 }
 
 const VOICES = voiceMap();
+/** `GRADIUM_SPEAKER_VOICES="minotaur=<id>,hydra=<id>"` adds or replaces speaker voices. */
+const SPEAKER_VOICES: Record<string, string> = { ...DEFAULT_SPEAKER_VOICES, ...Object.fromEntries(parsePairs(CONFIG.gradiumSpeakerVoices)) };
 
 /** padding_bonus: negative = faster, positive = slower. temp: expressiveness. */
 const MOOD_SETTINGS: Record<VoiceMood, { padding_bonus: number; temp: number }> = {
@@ -45,7 +61,7 @@ export async function synthesizeGradium(req: VoiceRequest): Promise<Buffer> {
     headers: { 'x-api-key': CONFIG.gradiumApiKey, 'content-type': 'application/json' },
     body: JSON.stringify({
       text: req.text,
-      voice_id: VOICES[req.voice],
+      voice_id: (req.speakerId && SPEAKER_VOICES[req.speakerId]) || VOICES[req.voice],
       model_name: CONFIG.gradiumModel,
       output_format: 'wav',
       only_audio: true,

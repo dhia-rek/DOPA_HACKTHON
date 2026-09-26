@@ -258,7 +258,7 @@ app.post('/voice', async (req, res) => {
     res.status(503).json({ error: 'TTS not configured (GRADIUM_API_KEY and GEMINI_API_KEY missing)' });
     return;
   }
-  const key = `${request.voice}:${request.mood}:${request.text}`;
+  const key = `${request.speakerId ?? ''}:${request.voice}:${request.mood}:${request.text}`;
   const cached = voiceCache.get(key);
   if (cached) {
     res.setHeader('x-cache', 'hit');

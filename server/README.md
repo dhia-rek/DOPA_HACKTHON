@@ -44,7 +44,7 @@ Spoken dialogue (bosses, NPCs, shrines) goes through `POST /voice`. Put a
 TTS; otherwise Gemini TTS is used, and with neither the game falls back to the
 browser's speechSynthesis. `src/voice/types.ts` picks the voice + mood per
 speaker; `server/src/gradium.ts` maps each voice to a Gradium voice id
-(override with `GRADIUM_VOICES=Fenrir=<id>,...`) and each mood to speed/temperature.
+(override with `GRADIUM_VOICES=Fenrir=<id>,...`); bosses use the team's custom voices by speaker id (`GRADIUM_SPEAKER_VOICES=minotaur=<id>,...`) and each mood to speed/temperature.
 
 Point the game at it (repo root):
 

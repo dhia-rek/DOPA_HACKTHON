@@ -21,6 +21,8 @@ export const CONFIG = {
   gradiumModel: process.env.GRADIUM_MODEL ?? 'default',
   /** Optional per-voice overrides: "Fenrir=<voice_id>,Charon=<voice_id>". */
   gradiumVoices: process.env.GRADIUM_VOICES ?? '',
+  /** Optional per-speaker voices: "minotaur=<voice_id>,hydra=<voice_id>". */
+  gradiumSpeakerVoices: process.env.GRADIUM_SPEAKER_VOICES ?? '',
   /** Override the Gemini endpoint (tests / proxies). */
   geminiBaseUrl: process.env.GEMINI_BASE_URL ?? '',
   /** Hard cap so the client's 15 s abort is never hit by a healthy server. */

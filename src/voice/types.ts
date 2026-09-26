@@ -13,6 +13,8 @@ export const VOICE_NAMES = ['Charon', 'Fenrir', 'Orus', 'Kore', 'Aoede', 'Leda',
 export type VoiceName = (typeof VOICE_NAMES)[number];
 
 export interface VoiceProfile {
+  /** Who speaks: lets the server use a speaker's own custom voice. */
+  speakerId?: string;
   voice: VoiceName;
   mood: VoiceMood;
   /** speechSynthesis fallback: 0.1..2 and 0.5..1.6. */
@@ -22,6 +24,7 @@ export interface VoiceProfile {
 
 export interface VoiceRequest {
   text: string;
+  speakerId?: string;
   voice: VoiceName;
   mood: VoiceMood;
   language?: string;
@@ -66,7 +69,7 @@ export function voiceFor(speakerId: string, kind: SpeechKind, story: StorySnapsh
     reverent: [0, -0.1],
   };
   const [dp, dr] = moodShift[mood];
-  return { voice: base.voice, mood, pitch: clamp(base.pitch + dp, 0.1, 2), rate: clamp(base.rate + dr, 0.5, 1.6) };
+  return { speakerId, voice: base.voice, mood, pitch: clamp(base.pitch + dp, 0.1, 2), rate: clamp(base.rate + dr, 0.5, 1.6) };
 }
 
 /** Server-side check of an incoming request. */
@@ -78,5 +81,6 @@ export function validateVoiceRequest(raw: unknown): VoiceRequest | null {
   const moods: VoiceMood[] = ['calm', 'angry', 'fearful', 'mournful', 'mocking', 'reverent'];
   if (typeof r.mood !== 'string' || !moods.includes(r.mood as VoiceMood)) return null;
   if (r.language !== undefined && typeof r.language !== 'string') return null;
-  return { text: r.text.trim(), voice: r.voice as VoiceName, mood: r.mood as VoiceMood, language: r.language as string | undefined };
+  if (r.speakerId !== undefined && (typeof r.speakerId !== 'string' || r.speakerId.length > 64)) return null;
+  return { text: r.text.trim(), speakerId: r.speakerId as string | undefined, voice: r.voice as VoiceName, mood: r.mood as VoiceMood, language: r.language as string | undefined };
 }
