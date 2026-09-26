@@ -1,3 +1,5 @@
+import type { AbilityId } from './abilities';
+
 /**
  * Enemy behaviours are implemented in systems/behaviours.ts.
  * New behaviours = a new function there; new enemies = a new entry here.
@@ -30,6 +32,11 @@ export interface EnemyDef {
   /** Body radius in px. */
   radius: number;
   isBoss?: boolean;
+  /**
+   * Boss signature kit: abilities it always has, free of the Director's budget.
+   * The Director adds 1-3 more on top (`BossBlueprint.abilities`) to answer the hero.
+   */
+  abilities?: AbilityId[];
   /** Shooter tuning. */
   fireInterval?: number;
   shotSpeed?: number;
@@ -141,9 +148,10 @@ export const ENEMIES: EnemyDef[] = [
     behaviour: 'boss_minotaur',
     shape: 'square',
     color: 0x7a3a2a,
-    radius: 34,
+    radius: 48,
     chargeSpeed: 520,
     isBoss: true,
+    abilities: ['charge', 'enrage_below'],
     persona:
       'Asterion, a proud exile with a low, grinding voice; still bleeding from the day Athens caged him and called him a monster. ' +
       'Respects an honest duel and a kept oath, despises cowards and oathbreakers: he taunts a cruel player as a fellow beast, and offers a heroic one a clean fight. Kept by Minos for the Olympian order he despises.',
@@ -159,10 +167,11 @@ export const ENEMIES: EnemyDef[] = [
     behaviour: 'boss_hydra',
     shape: 'circle',
     color: 0x3a7a4a,
-    radius: 38,
+    radius: 52,
     fireInterval: 900,
     shotSpeed: 300,
     isBoss: true,
+    abilities: ['projectile_ring', 'poison_trail'],
     persona:
       'Ancient and many-voiced, each head finishing or contradicting the last in hissing riddles; still aches where Heracles burned her severed necks. ' +
       'Respects patience and cunning, despises fire and rash heroes: she flatters a cruel player as kin and mocks a heroic one as another Heracles doomed to fail. Hera\'s creature, Typhon\'s daughter, grows a head for every innocent buried.',
@@ -178,10 +187,11 @@ export const ENEMIES: EnemyDef[] = [
     behaviour: 'boss_titan',
     shape: 'diamond',
     color: 0xe0b040,
-    radius: 34,
+    radius: 46,
     fireInterval: 1300,
     shotSpeed: 320,
     isBoss: true,
+    abilities: ['volley', 'teleport_behind'],
     persona: 'Titan, brother of Atlas and Prometheus, hurled into Erebus by the thunderbolt for his insolence and back for more. Sneers at Zeus, flatters anyone who resents him, promises the Golden Age.',
     lore: 'menoetius',
   },
@@ -194,10 +204,11 @@ export const ENEMIES: EnemyDef[] = [
     behaviour: 'boss_titan',
     shape: 'triangle',
     color: 0x9a5ad0,
-    radius: 38,
+    radius: 50,
     fireInterval: 1000,
     shotSpeed: 280,
     isBoss: true,
+    abilities: ['volley', 'summon_minions'],
     persona: "She-dragon jailer of Tartarus, slain by Zeus and restored by Gaia; speaks of prisoners, keys and debts. Considers the hero a runaway from a cell she hasn't built yet.",
     lore: 'campe',
   },
@@ -210,9 +221,10 @@ export const ENEMIES: EnemyDef[] = [
     behaviour: 'boss_giant',
     shape: 'square',
     color: 0x8a5a3a,
-    radius: 40,
+    radius: 54,
     chargeSpeed: 460,
     isBoss: true,
+    abilities: ['ground_slam', 'charge'],
     persona: 'Giant, deathless on his own soil; slow, patient, certain. Calls the earth "mother" and every innocent death "a gift". Remembers Heracles dragging him across the border of Pallene.',
     lore: 'alcyoneus',
   },
@@ -225,9 +237,10 @@ export const ENEMIES: EnemyDef[] = [
     behaviour: 'boss_giant',
     shape: 'square',
     color: 0xc03a3a,
-    radius: 44,
+    radius: 58,
     chargeSpeed: 520,
     isBoss: true,
+    abilities: ['ground_slam', 'charge'],
     persona: 'King of the Giants, who threw Delos at the gods and laid hands on Hera. Contemptuous of mortals, curious whether this one is the mortal the oracle warned of. Speaks like a king addressing a rebel.',
     lore: 'porphyrion',
   },
@@ -240,9 +253,10 @@ export const ENEMIES: EnemyDef[] = [
     behaviour: 'boss_giant',
     shape: 'diamond',
     color: 0xd8a040,
-    radius: 38,
+    radius: 50,
     chargeSpeed: 400,
     isBoss: true,
+    abilities: ['charge', 'orbit_shields'],
     persona: "Bronze automaton of Hephaestus set to guard what the Olympians value; speaks in short verdicts, weighs the hero's deeds like a scale, has one vein of ichor at the ankle and knows it.",
     lore: 'automaton',
   },
