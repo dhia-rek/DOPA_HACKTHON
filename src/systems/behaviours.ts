@@ -313,7 +313,7 @@ const bossGiant: Behaviour = (ctx) => {
     enemy.setTint(0xc0a080);
     if (now >= m.until) {
       enemy.clearTint();
-      player.scene.cameras.main.shake(200, 0.012);
+      settings.shake(player.scene.cameras.main, 200, 0.012);
       ring(ctx, wounded ? 12 : 8, rng.float(0, Math.PI), 200);
       const dir = d.clone().normalize();
       m.cx = dir.x;
