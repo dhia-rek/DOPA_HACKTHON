@@ -1,6 +1,8 @@
 import { Rng } from '../core/rng';
 import { bossOutroLines } from '../data/bossOutro';
-import { ENEMIES } from '../data/enemies';
+import { ENEMIES, getEnemy } from '../data/enemies';
+import type { WarFaction } from '../data/lore';
+import { factionOf } from '../data/war';
 import { DialogueRequest, DialogueScript, validateScript } from './types';
 
 /**
@@ -87,6 +89,12 @@ const NPC_LINES: Record<string, string[]> = {
   wounded_soldier: ['Water… or a quick end, {you}. Either is a kindness.', 'I held this line until my shield broke. I know what waits ahead.'],
 };
 
+/** Second line for non-villager NPCs on a floor the Olympians have lost. */
+const FRONT_ASIDE: Record<Exclude<WarFaction, 'olympian'>, string> = {
+  titan: 'The Titans hold these halls now. They make us burn the altars of Zeus.',
+  giant: "The ground here is hungry. Gaia's children are close.",
+};
+
 const nameOf = (id: string): string => ENEMIES.find((e) => e.id === id)?.name ?? id;
 
 /**
@@ -98,6 +106,11 @@ export class MockDialogueProvider implements DialogueProvider {
     const rng = new Rng(`${req.seed}:${req.kind}:${req.speakerId}`);
     const s = req.story;
     const you = s.characterName;
+    const front = s.war.front;
+    const speakerFaction = factionOf(speakerLore(req.speakerId));
+    const kin = s.lore.find((l) => l.startsWith('Link:'))?.slice(6);
+    const lastShade = s.shades[s.shades.length - 1];
+    const shadeName = lastShade?.split(' ')[0];
 
     const brokeOath = s.flags.includes(`broke_oath_to_${req.speakerId}`);
     const returning = req.kind === 'boss_intro' && s.bossesKilled.includes(req.speakerId);
@@ -106,10 +119,11 @@ export class MockDialogueProvider implements DialogueProvider {
       ? rng.pick([`You swore an oath to me, ${you}, then spilled innocent blood. Oathbreaker.`, `Your word is worth less than the dust of this place, oathbreaker.`])
       : returning
         ? rng.pick([`You again, ${you}? Hades would not keep me. I have walked back out of the dark for you.`, `I remember your blade, ${you}. Death was only a door, and I came back through it.`])
-      : s.npcsKilled > 0
+      : shadeName
         ? rng.pick([
-            `I smell the blood of the ${s.npcsKilled} innocent${s.npcsKilled > 1 ? 's' : ''} you cut down.`,
-            `The shades of those you murdered whisper your name, ${you}.`,
+            `${shadeName} walks behind you, ${you}. Did you think the dead stay where they fall?`,
+            `I smell ${s.shades.length > 1 ? `${s.shades.length} innocents` : shadeName} on your hands. Gaia drank that blood, and she is grateful.`,
+            `${shadeName} asked me for justice. I said the hero would come to me soon enough.`,
           ])
         : fallen.length > 0 && s.flags.includes(`slew_${fallen[fallen.length - 1]}`)
           ? `So you are the one who killed the ${nameOf(fallen[fallen.length - 1])}. I will not fall so easily.`
@@ -119,48 +133,100 @@ export class MockDialogueProvider implements DialogueProvider {
           ? rng.pick([`They say you spared the weak. Weakness recognises weakness.`, `Mercy, from ${you}? The gods must be laughing.`])
           : rng.pick([`So the ${s.stageName} sends me ${you}.`, `Another hero comes to die in the ${s.stageName}.`]);
 
+    const kinLine = kin ? `The poets sing that ${kin.trim().replace(/\.$/, '')}. Let us see if they lie.` : rng.pick([`Speak, before I end you.`, `Choose your last words carefully.`, `What do you want, mortal?`]);
+
+    const swear =
+      speakerFaction === 'titan'
+        ? {
+            id: 'swear_titan',
+            text: rng.pick(['"Cronus ruled a golden age. Let it return."', 'Swear yourself to the Titans.']),
+            reply: 'Then the old blood remembers you. Zeus will not.',
+            effects: { karma: -5, boss: { damageMul: 0.8 }, favor: { titan: 15, olympian: -10 }, flags: ['sworn_titan'] },
+          }
+        : speakerFaction === 'giant'
+          ? {
+              id: 'feed_earth',
+              text: rng.pick(['Cut your palm and let the earth drink.', '"Gaia is owed. Take my blood, not theirs."']),
+              reply: 'The Mother tastes you… and lets you pass lighter.',
+              effects: { karma: -5, hp: -2, boss: { hpMul: 0.75 }, favor: { giant: 15, olympian: -10 }, flags: ['fed_gaia'] },
+            }
+          : {
+              id: 'swear_zeus',
+              text: rng.pick(['"By Zeus who threw down your fathers, stand aside."', 'Invoke the Thunderer.']),
+              reply: 'You call on the sky. The sky is far, and I am here.',
+              effects: { karma: 5, boss: { speedMul: 0.9 }, favor: { olympian: 15, titan: -5, giant: -5 }, flags: ['sworn_zeus'] },
+            };
+
     const raw =
       req.kind === 'boss_intro'
         ? {
-            lines: [memory, rng.pick([`Speak, before I end you.`, `Choose your last words carefully.`, `What do you want, mortal?`])],
-            options: rng.shuffle([
-              {
-                id: 'defy',
-                text: rng.pick(['"I will wear your horns as a trophy."', '"Enough talk. Fight."']),
-                reply: 'Then die proud.',
-                effects: { karma: 0, boss: { damageMul: 1.25 }, flags: ['defied_' + req.speakerId] },
-              },
-              {
-                id: 'kneel',
-                text: rng.pick(['Kneel and beg for passage.', '"Spare me, great one."']),
-                reply: 'Pathetic. I will be gentle, so you feel every blow.',
-                effects: { karma: -10, boss: { damageMul: 0.75, hpMul: 1.3 }, flags: ['knelt_' + req.speakerId] },
-              },
-              {
-                id: 'honour',
-                text: rng.pick(['"Let us fight with honour, no tricks."', '"You were wronged. I fight you with respect."']),
-                reply: 'Honour… a word I had forgotten. Very well.',
-                effects: { karma: 10, boss: { speedMul: 0.85 }, flags: ['honoured_' + req.speakerId, 'swore_oath_to_' + req.speakerId] },
-              },
-              {
-                id: 'bargain',
-                text: rng.pick(['Offer your coins for a weaker foe.', '"Take my gold, take it easy on me."']),
-                reply: 'Gold buys little in the dark, but I will take it.',
-                effects: { karma: -5, coins: -10, boss: { hpMul: 0.8 }, flags: ['bargained_' + req.speakerId] },
-              },
-            ]).slice(0, 3),
+            lines: [memory, kinLine],
+            options: [
+              swear,
+              ...rng
+                .shuffle([
+                  {
+                    id: 'defy',
+                    text: rng.pick(['"I will wear your hide as a trophy."', '"Enough talk. Fight."']),
+                    reply: 'Then die proud.',
+                    effects: { karma: 0, boss: { damageMul: 1.25 }, flags: ['defied_' + req.speakerId] },
+                  },
+                  {
+                    id: 'kneel',
+                    text: rng.pick(['Kneel and beg for passage.', '"Spare me, great one."']),
+                    reply: 'Pathetic. I will be gentle, so you feel every blow.',
+                    effects: { karma: -10, boss: { damageMul: 0.75, hpMul: 1.3 }, favor: speakerFaction ? { [speakerFaction]: 6 } : undefined, flags: ['knelt_' + req.speakerId] },
+                  },
+                  {
+                    id: 'honour',
+                    text: rng.pick(['"Let us fight with honour, no tricks."', '"You were wronged. I fight you with respect."']),
+                    reply: 'Honour… a word I had forgotten. Very well.',
+                    effects: { karma: 10, boss: { speedMul: 0.85 }, flags: ['honoured_' + req.speakerId, 'swore_oath_to_' + req.speakerId] },
+                  },
+                  {
+                    id: 'bargain',
+                    text: rng.pick(['Offer your coins for a weaker foe.', '"Take my gold, take it easy on me."']),
+                    reply: 'Gold buys little in the dark, but I will take it.',
+                    effects: { karma: -5, coins: -10, boss: { hpMul: 0.8 }, flags: ['bargained_' + req.speakerId] },
+                  },
+                ])
+                .slice(0, 2),
+            ],
           }
         : req.kind === 'boss_outro'
           ? { lines: bossOutroLines(req, rng), options: [] }
-          : req.kind === 'npc'
+          : req.kind === 'npc' && req.speakerId === 'restless_shade'
           ? {
-              lines: [rng.pick(NPC_LINES[req.speakerId] ?? NPC_LINES.villager).replace(/\{you\}/g, you)],
+              lines: [
+                shadeName
+                  ? `I am ${shadeName}. You remember me, ${you}? You did not stop to look.`
+                  : `I died in these halls before you came. The living never look.`,
+                rng.pick([`The earth keeps count of every one of us.`, `Down here they say the Giants are winning. They say you helped.`]),
+              ],
               options: [
-                { id: 'spare', text: 'Let them go.', reply: 'May the gods remember this.', effects: { karma: 10 } },
-                { id: 'rob', text: 'Take their coins and leave.', reply: 'Take it… just go.', effects: { karma: -5, coins: 5 } },
-                { id: 'threaten', text: 'Demand the secret.', reply: 'The beast below fears fire… and pride.', effects: { karma: -2, flags: ['knows_boss_weakness'] } },
+                { id: 'atone', text: 'Kneel and give the shade a coin for the ferryman.', reply: 'Charon will take it. I will not forget who paid.', effects: { karma: 12, coins: -3, favor: { olympian: 6, giant: -6 }, flags: ['paid_ferryman'], npcOutcome: 'spared' } },
+                { id: 'ignore', text: 'Walk past. The dead are dead.', reply: 'Yes. Walk. We will all be waiting below.', effects: { karma: -6, favor: { giant: 6 }, npcOutcome: 'wronged' } },
+                { id: 'ask', text: '"Who holds this place now?"', reply: `${s.war.frontReason}`, effects: { karma: 0, flags: ['knows_front'], npcOutcome: 'spared' } },
               ],
             }
+          : req.kind === 'npc'
+            ? {
+                lines: [
+                  req.speakerId === 'villager' || !NPC_LINES[req.speakerId]
+                    ? front === 'olympian'
+                      ? rng.pick(NPC_LINES.villager).replace(/\{you\}/g, you)
+                      : front === 'titan'
+                        ? rng.pick([`They took the temple and made us burn Zeus's altars. Please, I only did as I was told.`, `The Titans promise a golden age. My son believed them. Have you seen him?`])
+                        : rng.pick([`The ground opened and swallowed my street, ${you}. Gaia is angry. Is it true it is your fault?`, `Don't let them feed me to the earth…`])
+                    : rng.pick(NPC_LINES[req.speakerId]).replace(/\{you\}/g, you),
+                  ...(req.speakerId !== 'villager' && front !== 'olympian' ? [FRONT_ASIDE[front]] : []),
+                ],
+                options: [
+                  { id: 'spare', text: 'Let them go.', reply: 'May the gods remember this.', effects: { karma: 10, favor: { olympian: 4 }, npcOutcome: 'spared' } },
+                  { id: 'rob', text: 'Take their coins and leave.', reply: 'Take it… just go.', effects: { karma: -5, coins: 5, favor: { giant: 3 }, npcOutcome: 'wronged' } },
+                  { id: 'threaten', text: 'Demand the secret.', reply: bossHint(front), effects: { karma: -2, flags: ['knows_boss_weakness'], npcOutcome: 'wronged' } },
+                ],
+              }
           : req.kind === 'shrine'
             ? s.flags.includes('godslayer')
               ? {
@@ -193,6 +259,25 @@ export class MockDialogueProvider implements DialogueProvider {
     const script = validateScript(raw, req);
     if (!script) throw new Error('mock produced invalid script');
     return script;
+  }
+}
+
+function speakerLore(enemyId: string): string | undefined {
+  try {
+    return getEnemy(enemyId).lore;
+  } catch {
+    return undefined;
+  }
+}
+
+function bossHint(front: WarFaction): string {
+  switch (front) {
+    case 'titan':
+      return 'The Titan below keeps its distance and blinks away when cornered. Stay close, strike when it lands.';
+    case 'giant':
+      return 'The Giant stomps before it charges. When the earth trembles, run to its side, not away.';
+    default:
+      return 'The beast below fears fire… and pride.';
   }
 }
 

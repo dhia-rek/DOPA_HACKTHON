@@ -6,6 +6,7 @@ import { KARMA } from '../core/story';
 import { earnedWeaknesses } from '../core/profile';
 import { EnemyDef, getEnemy } from '../data/enemies';
 import { getItem } from '../data/items';
+import { factionOf, makeShade } from '../data/war';
 import { dialogueProvider } from '../dialogue/provider';
 import type { DialogueKind, DialogueOption, DialogueScript } from '../dialogue/types';
 import type { DialogueSceneData } from './DialogueScene';
@@ -146,6 +147,9 @@ export class RunScene extends Phaser.Scene {
     if (!this.scene.isActive('hud')) this.scene.launch('hud');
     this.scene.bringToTop('hud');
 
+    const chapter = this.run.takeChapter();
+    if (chapter) this.toast(chapter.title, chapter.body, 4200);
+
     if (this.room.type === 'boss') director.prefetch(this.run, this.run.floor + 1);
     if (this.room.type === 'boss' && !this.room.cleared && !this.room.dialogueDone) {
       const boss = this.hostiles().find((e) => e.def.isBoss);
@@ -282,7 +286,7 @@ export class RunScene extends Phaser.Scene {
         speakerId: speaker.id,
         speakerName: speaker.name,
         persona: speaker.persona,
-        story: this.run.storySnapshot(),
+        story: this.run.storySnapshot(speaker.id),
         seed: `${this.run.seed}:${this.run.floor}:${this.room.gx},${this.room.gy}:${kind}`,
       });
     } catch (err) {
@@ -342,15 +346,16 @@ export class RunScene extends Phaser.Scene {
         }
       }
       if (fx.boss) this.run.story.applyBossMods(fx.boss);
+      if (fx.favor) this.run.story.pushTide(fx.favor);
       if (script.kind === 'shrine') this.offerTo(option.id, fx.karma ?? 0);
       events.emit('dialogue_choice', { dialogueId: script.id, kind: script.kind, optionId: option.id, karmaDelta: fx.karma ?? 0 });
     }
 
     const enemy = speaker.enemy;
     if (script.kind === 'boss_intro' && enemy?.active) {
-      enemy.applyMods(this.run.story.takeBossMods());
+      enemy.applyMods(this.run.story.takeBossMods(factionOf(enemy.def.lore)));
     } else if (script.kind === 'npc' && enemy?.active) {
-      this.spareNpc(enemy, (option?.effects.karma ?? 0) < 0);
+      this.spareNpc(enemy, option?.effects.npcOutcome === 'wronged');
     } else if (script.kind === 'shrine') {
       this.extinguishAltar();
     }
@@ -426,14 +431,14 @@ export class RunScene extends Phaser.Scene {
           if (doorDir === 'down') door.setAngle(180);
           this.doorSprites[doorDir] = door;
         } else {
-          (this.walls.create(x, y, 'wall') as Phaser.Physics.Arcade.Image).setTint(this.run.stage.palette.wall);
+          (this.walls.create(x, y, 'wall') as Phaser.Physics.Arcade.Image).setTint(this.run.palette.wall);
         }
       }
     }
   }
 
   private buildInterior(): void {
-    const tint = this.run.stage.palette.floor;
+    const tint = this.run.palette.floor;
     for (let r = 0; r < ROOM_ROWS; r++) {
       for (let c = 0; c < ROOM_COLS; c++) {
         const { x, y } = this.tileCenter(c + 1, r + 1);
@@ -646,7 +651,7 @@ export class RunScene extends Phaser.Scene {
     }
     if (isBoss) {
       this.cameras.main.shake(300, 0.012);
-      this.run.story.record({ kind: 'boss_killed', subject: enemy.def.id, floor: this.run.floor, karmaDelta: 0, summary: `Slew ${enemy.def.name} on floor ${this.run.floor}` });
+      this.run.story.record({ kind: 'boss_killed', subject: enemy.def.id, lore: enemy.def.lore, floor: this.run.floor, karmaDelta: 0, summary: `Slew ${enemy.def.name} on floor ${this.run.floor}` });
       this.run.story.addFlag(`slew_${enemy.def.id}`);
       events.emit('boss_killed', { enemyId: enemy.def.id, floor: this.run.floor });
       this.bossOutro({ ...speakerOf(enemy), enemy: undefined });
@@ -677,13 +682,15 @@ export class RunScene extends Phaser.Scene {
     this.room.npcs = this.room.npcs.filter((id) => id !== def.id);
     this.scareAllInnocents();
     this.burst(npc.x, npc.y, def.color, 10);
-    this.run.story.record({ kind: 'npc_killed', subject: def.id, floor: this.run.floor, karmaDelta: KARMA.npcKilled, summary: `Killed the innocent ${def.name} on floor ${this.run.floor}` });
+    const shade = makeShade(this.run.storyRng, def.id, def.name, this.run.floor, this.run.stage.name, this.run.story.shades.length);
+    this.run.story.record({ kind: 'npc_killed', subject: def.id, lore: def.lore, floor: this.run.floor, karmaDelta: KARMA.npcKilled, summary: `Killed ${shade.name}, an innocent ${def.name}, on floor ${this.run.floor}` });
     this.run.story.addFlag('blood_on_hands');
+    this.run.story.addShade(shade);
     for (const flag of [...this.run.story.flags]) {
       if (flag.startsWith('swore_oath_to_')) this.run.story.addFlag(flag.replace('swore_oath_to_', 'broke_oath_to_'));
     }
     events.emit('npc_killed', { npcId: def.id, floor: this.run.floor });
-    this.toast('Innocent blood', 'The gods have seen this.');
+    this.toast(`Shade collected: ${shade.name}`, `${shade.epitaph} The gods have seen this.`);
     npc.destroy();
   }
 
@@ -820,7 +827,7 @@ export class RunScene extends Phaser.Scene {
     }
   }
 
-  private toast(title: string, body: string): void {
+  private toast(title: string, body: string, holdMs = 2200): void {
     const t = this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT - 120, `${title}\n${body}`, {
         fontFamily: 'monospace',
@@ -833,7 +840,7 @@ export class RunScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(200);
-    this.tweens.add({ targets: t, alpha: 0, delay: 2200, duration: 500, onComplete: () => t.destroy() });
+    this.tweens.add({ targets: t, alpha: 0, delay: holdMs, duration: 500, onComplete: () => t.destroy() });
   }
 
   private doorAt(col: number, row: number): Dir | null {

@@ -3,6 +3,7 @@ import { getItem, ItemDef } from '../data/items';
 import { STAGES, StageDef } from '../data/stages';
 import type { RunSnapshot } from '../data/achievements';
 import { FloorMap, generateFloor, RoomNode } from '../gen/floorGen';
+import { chapterFor, loreFor, resolveFront, ResolvedFront, warSnapshot } from '../systems/chronicle';
 import { pickItemFromPool } from '../systems/loot';
 import { events } from './events';
 import { Rng } from './rng';
@@ -40,6 +41,10 @@ export class RunState {
   floor = 1;
   floorMap: FloorMap | null = null;
   room: RoomNode | null = null;
+  /** Who holds the current floor in the war; set with the floor map. */
+  front: ResolvedFront | null = null;
+  /** Set once the floor's chapter card has been shown. */
+  chapterShown = false;
   /** The Director's verdict for the current floor; set by FloorIntroScene before `ensureFloor()`. */
   directive: FloorDirective | null = null;
 
@@ -84,14 +89,35 @@ export class RunState {
 
   won = false;
 
-  storySnapshot(): StorySnapshot {
+  /** The floor's front, resolving it from the war if the map has not been generated yet. */
+  get currentFront(): ResolvedFront {
+    return this.front ?? (this.front = resolveFront(this.stage, this.story));
+  }
+
+  /** Room colours: the stage's, recoloured by whoever holds the floor. */
+  get palette(): StageDef['palette'] {
+    return this.currentFront.palette;
+  }
+
+  /** @param speakerId enemy/npc id of who is talking, so the snapshot carries the right lore. */
+  storySnapshot(speakerId?: string): StorySnapshot {
+    const front = this.currentFront;
     return this.story.snapshot({
       characterId: this.character.id,
       characterName: this.character.name,
       floor: this.floor,
-      stageName: this.stage.name,
+      stageName: front.stageName,
       items: this.items.map((i) => i.name),
+      war: warSnapshot(front, this.story),
+      lore: loreFor(speakerId, this.character.lore, front),
     });
+  }
+
+  /** Chapter card for the current floor (title + body), once per floor. */
+  takeChapter(): { title: string; body: string } | null {
+    if (this.chapterShown) return null;
+    this.chapterShown = true;
+    return chapterFor(this.currentFront, this.story, this.character.name);
   }
 
   get elapsedMs(): number {
@@ -149,9 +175,13 @@ export class RunState {
   ensureFloor(): FloorMap {
     if (this.floorMap) return this.floorMap;
     const picked: string[] = this.items.map((i) => i.id);
+    const front = (this.front = resolveFront(this.stage, this.story));
     this.floorMap = generateFloor(this.floorRng.fork(`floor-${this.floor}`), {
       stage: this.stage,
       loop: this.loop,
+      bossPool: front.bossPool,
+      enemyPool: front.enemyPool,
+      npcPool: front.npcPool,
       avoidBossId: this.story.deeds.filter((d) => d.kind === 'boss_killed' && d.floor === this.floor - 1).pop()?.subject,
       pickItem: () => {
         const id = pickItemFromPool(this.itemRng, 'treasure', picked);
@@ -170,6 +200,8 @@ export class RunState {
     this.damageTakenThisFloor = 0;
     this.floorMap = null;
     this.room = null;
+    this.front = null;
+    this.chapterShown = false;
     this.directive = null;
   }
 

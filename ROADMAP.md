@@ -44,13 +44,26 @@ bosses say, how hard they hit, and how the story ends.
   never blocks. All types live in `src/dialogue/types.ts`.
 * **Same seed = same story** with the mock provider (it is seeded by
   `run.seed + floor + room`). With the LLM the story is new every run.
+* **The war** (see `STORY.md`) — every deed also moves a *tide* per faction
+  (`olympian | titan | giant`, −100…100). Whoever leads the tide *holds* the
+  next floor: `FRONTS[stage][faction]` swaps the boss pool, adds enemies,
+  recolours the room and shows a chapter card (`systems/chronicle.ts`).
+  Dialogue can push the tide with `effects.favor` (−20…20 per faction).
+* **Shades** — killing an innocent creates a *named* shade (`Shade` in
+  `data/war.ts`, e.g. "Timon the villager…"). Shades are listed in the
+  snapshot, haunt boss intros, can spawn as a talkable `restless_shade` NPC, and are
+  read out with the verdict on the game-over screen.
+* **Lore links** — `data/lore.ts` is a small genealogy of real myth
+  (parents / `undoneBy`). The snapshot's `lore` lines tell the LLM who the
+  speaker is, who the hero is, and their true link ("Alcyoneus is undone by
+  Heracles") so the text can build on it.
 
 ### Ideas queued (pick one when your stream is free)
 1. **Boss outro** (`kind: 'boss_outro'`) — a dying line that references the intro choice.
 2. **Oracle / shrine rooms** (`kind: 'shrine'`) — new `RoomType 'shrine'`, an altar sprite, sacrifice choices.
-3. **Named NPCs with memory** — an NPC id that recurs across floors ("the shepherd you robbed on floor 1 now guards the Hydra").
-4. **Story-driven boss pick** — `stage.bossPool` weighted by flags (`defied_minotaur` → Minotaur returns enraged).
-5. **Endings** — at loop end, an LLM epilogue summarising the run's deeds; different achievement per alignment ("Saint", "Butcher").
+3. **Named NPCs with memory** — shades do this for the dead; do it for the living too ("the shepherd you robbed on floor 1 now guards the Hydra").
+4. **Story-driven boss pick** — done per faction (`FRONTS`); next: weight inside a pool by flags (`defied_minotaur` → Minotaur returns enraged).
+5. **Endings** — `judge()` gives a verdict; next: an LLM epilogue (`kind: 'epilogue'`) summarising the run's deeds; achievement per verdict.
 6. **Karma in the HUD** — small laurel/blood icon; toast on alignment change.
 7. **LLM room generator** — reuse the 13×7 grid contract in `roomGen.ts` (already planned in ARCHITECTURE.md).
 8. **Kratos hook** — Kratos starts at karma −40 and gods refuse his shrine offerings.

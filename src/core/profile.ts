@@ -5,6 +5,7 @@ import { MUTATOR_IDS } from '../data/mutators';
 import { QUEST_TEMPLATE_IDS } from '../data/quests';
 import { STAGES, StageDef } from '../data/stages';
 import type { DirectorRequest, PlayerProfile, Skill, Style, Traits, Voice } from '../director/types';
+import { loreFor, resolveFront, warSnapshot } from '../systems/chronicle';
 import { events } from './events';
 import type { RunState } from './run';
 import { save } from './save';
@@ -154,13 +155,16 @@ export function buildProfile(run: RunState, floor = run.floor): PlayerProfile {
   const hpPct = run.hp / run.stats.maxHp;
   const skill = skillOf(run, hpPct);
   const stage = stageForFloor(floor);
+  const front = floor === run.floor ? run.currentFront : resolveFront(stage, run.story);
   return {
     story: run.story.snapshot({
       characterId: run.character.id,
       characterName: run.character.name,
       floor,
-      stageName: stage.name,
+      stageName: front.stageName,
       items: run.items.map((i) => i.name),
+      war: warSnapshot(front, run.story),
+      lore: loreFor(undefined, run.character.lore, front),
     }),
     traits: traitsOf(run, skill),
     voice: voiceOf(run),
