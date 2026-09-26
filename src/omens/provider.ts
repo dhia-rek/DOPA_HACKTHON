@@ -57,7 +57,7 @@ export function mockOmen(req: OmenRequest): FloorOmen {
 /**
  * Floors are generated synchronously, so the AI omen is fetched ahead of time:
  * prefetched when the previous boss falls and awaited (briefly) by
- * FloorIntroScene. Omens are keyed by seed + story, so a deed done after the
+ * FloorIntroScene. Omens are keyed by seed + deeds, so a deed done after the
  * prefetch triggers a fresh request; anything not ready in time uses the mock.
  */
 export class OmenDirector {
@@ -94,6 +94,8 @@ export class OmenDirector {
   }
 }
 
+/** Seed + the player's deeds; excludes the front-dependent war/lore/stage fields so a prefetch made before descending still matches. */
 function omenKey(req: OmenRequest): string {
-  return `${req.seed}:${JSON.stringify(req.story)}`;
+  const s = req.story;
+  return `${req.seed}:${JSON.stringify([s.karma, s.flags, s.npcsKilled, s.npcsSpared, s.bossesKilled, s.recentDeeds, s.shades, s.items])}`;
 }

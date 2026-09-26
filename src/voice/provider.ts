@@ -47,6 +47,8 @@ export class HttpVoiceProvider implements VoiceProvider {
   private audio: HTMLAudioElement | null = null;
   private token = 0;
   private readonly cache = new Map<string, string>();
+  /** Evicted from the cache while playing; revoked on the next stop(). */
+  private evictedPlaying: string | null = null;
 
   constructor(
     private readonly url: string,
@@ -74,6 +76,8 @@ export class HttpVoiceProvider implements VoiceProvider {
     this.token++;
     this.audio?.pause();
     this.audio = null;
+    if (this.evictedPlaying) URL.revokeObjectURL(this.evictedPlaying);
+    this.evictedPlaying = null;
     this.fallback.stop();
   }
 
@@ -100,7 +104,8 @@ export class HttpVoiceProvider implements VoiceProvider {
       while (this.cache.size > VOICE_CACHE_MAX) {
         const [oldKey, oldSrc] = this.cache.entries().next().value!;
         this.cache.delete(oldKey);
-        if (this.audio?.src !== oldSrc) URL.revokeObjectURL(oldSrc);
+        if (this.audio?.src === oldSrc) this.evictedPlaying = oldSrc;
+        else URL.revokeObjectURL(oldSrc);
       }
       return src;
     } finally {

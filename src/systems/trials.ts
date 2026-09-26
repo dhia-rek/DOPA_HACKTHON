@@ -14,7 +14,8 @@ export interface ActiveTrial {
 /**
  * Tracks the one accepted trial per floor from game events and applies its
  * reward or penalty. Trials resolve at the latest when the player enters the floor's boss room,
- * so boss rewards/penalties land on that boss.
+ * so boss rewards/penalties land on that boss; `spare_all` lasts until the boss
+ * falls (it only carries a boss penalty, applied the moment an innocent dies).
  */
 class TrialSystem {
   private run: RunState | null = null;
@@ -84,7 +85,7 @@ class TrialSystem {
       }
       case 'room_entered':
         this.hitThisRoom = false;
-        if ((payload as GameEvents['room_entered']).roomType === 'boss') this.resolve(o.type === 'haste' || o.type === 'spare_all');
+        if ((payload as GameEvents['room_entered']).roomType === 'boss' && o.type !== 'spare_all') this.resolve(o.type === 'haste');
         break;
       case 'damage_taken':
         this.hitThisRoom = true;
