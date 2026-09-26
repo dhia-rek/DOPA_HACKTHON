@@ -4,6 +4,7 @@ import { events } from '../core/events';
 import { Rng } from '../core/rng';
 import { RunState } from '../core/run';
 import { save } from '../core/save';
+import { settings } from '../core/settings';
 import { blip } from '../core/sfx';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { CHARACTERS, CharacterDef } from '../data/characters';
@@ -110,7 +111,7 @@ export class MenuScene extends Phaser.Scene {
   private start(): void {
     const c = CHARACTERS[this.charIndex];
     if (this.locked(c)) {
-      this.cameras.main.shake(120, 0.004);
+      settings.shake(this.cameras.main, 120, 0.004);
       blip('deny');
       return;
     }
