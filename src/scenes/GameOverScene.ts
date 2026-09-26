@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
+import { ART_SCALE } from '../art/manifest';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import { OK_KEY } from '../core/input';
 import { music } from '../core/music';
 import type { RunState } from '../core/run';
 import { judge } from '../data/war';
+import { mono } from './ui';
 
 export class GameOverScene extends Phaser.Scene {
   constructor() {
@@ -13,7 +15,6 @@ export class GameOverScene extends Phaser.Scene {
   create(): void {
     music.play('menu', 'lament');
     const run = this.registry.get('run') as RunState;
-    const mono = 'monospace';
     const cx = GAME_WIDTH / 2;
     const mins = Math.floor(run.elapsedMs / 60000);
     const secs = Math.floor((run.elapsedMs % 60000) / 1000);
@@ -50,7 +51,7 @@ export class GameOverScene extends Phaser.Scene {
     this.add.text(cx, relicsY, `RELICS  ${run.items.length}`, { fontFamily: mono, fontSize: '13px', color: COLORS.text }).setOrigin(0.5);
     const shown = run.items.slice(0, 12);
     shown.forEach((item, i) => {
-      this.add.image(cx - (shown.length - 1) * 17 + i * 34, relicsY + 34, `item_${item.id}`);
+      this.add.image(cx - (shown.length - 1) * 17 + i * 34, relicsY + 34, `item_${item.id}`).setScale(1 / ART_SCALE);
     });
     if (run.items.length > shown.length) {
       this.add.text(cx, relicsY + 64, `+ ${run.items.length - shown.length} more`, { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(0.5);

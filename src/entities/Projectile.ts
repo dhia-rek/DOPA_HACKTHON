@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { PROJECTILE } from '../config';
 import type { ShotFlags } from '../core/stats';
+import type { ShotLook } from '../data/weapons';
 
 export type Owner = 'player' | 'enemy';
 
@@ -15,6 +16,8 @@ export interface ShotParams {
   range: number;
   owner: Owner;
   flags?: ShotFlags;
+  /** Weapon projectile texture (player shots only); defaults to the round tear. */
+  look?: ShotLook;
   /** Inherit a bit of the shooter's velocity, like Isaac's tears. */
   inheritVx?: number;
   inheritVy?: number;
@@ -31,12 +34,22 @@ export class Projectile extends Phaser.Physics.Arcade.Image {
   /** Enemies already hit by a piercing shot. */
   hitSet = new Set<Phaser.GameObjects.GameObject>();
   homingTarget: Phaser.Physics.Arcade.Sprite | null = null;
+  private look: ShotLook | null = null;
 
   fire(p: ShotParams): void {
     const radius = p.owner === 'player' ? PROJECTILE.playerRadius : PROJECTILE.enemyRadius;
-    this.setTexture(p.owner === 'player' ? (p.flags?.poison ? 'tear_poison' : 'tear_player') : 'tear_enemy');
+    this.look = p.owner === 'player' ? (p.look ?? null) : null;
+    if (this.look) {
+      this.setTexture(`shot_${this.look}`);
+      if (p.flags?.poison) this.setTint(0x7fe040);
+      else this.clearTint();
+    } else {
+      this.setTexture(p.owner === 'player' ? (p.flags?.poison ? 'tear_poison' : 'tear_player') : 'tear_enemy');
+      this.clearTint();
+    }
     this.enableBody(true, p.x, p.y, true, true);
-    this.body.setCircle(radius, 1, 1);
+    this.body.setCircle(radius, this.width / 2 - radius, this.height / 2 - radius);
+    this.setRotation(0);
     this.owner = p.owner;
     this.damage = p.damage;
     this.flags = p.flags ?? {};
@@ -53,6 +66,16 @@ export class Projectile extends Phaser.Physics.Arcade.Image {
     const vx = dir.x * p.speed + (p.inheritVx ?? 0) * 0.35;
     const vy = dir.y * p.speed + (p.inheritVy ?? 0) * 0.35;
     this.body.setVelocity(vx, vy);
+    this.orient();
+  }
+
+  /** Darts and arrows point along their flight, boulders and blades spin, notes wobble. */
+  private orient(): void {
+    if (!this.look) return;
+    if (this.look === 'blade') this.rotation += 0.35;
+    else if (this.look === 'boulder') this.rotation += 0.12;
+    else if (this.look === 'note') this.setRotation(Math.sin(this.scene.time.now / 90) * 0.3);
+    else this.setRotation(this.body.velocity.angle());
   }
 
   /** Called every frame by the pool; returns false when the shot expires. */
@@ -68,6 +91,7 @@ export class Projectile extends Phaser.Physics.Arcade.Image {
       this.body.setVelocity(cur.x, cur.y);
     }
 
+    this.orient();
     // Shrink slightly near the end of the range, like a tear falling.
     const t = travelled / this.range;
     if (t > 0.75) this.setScale(1 - (t - 0.75) * 1.2);
