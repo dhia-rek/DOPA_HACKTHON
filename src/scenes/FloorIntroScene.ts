@@ -28,11 +28,13 @@ export class FloorIntroScene extends Phaser.Scene {
     const waiting = this.add.text(cx, GAME_HEIGHT / 2, `The Fates weigh your deeds…`, { fontFamily: mono, fontSize: '18px', color: COLORS.textDim }).setOrigin(0.5);
     this.tweens.add({ targets: waiting, alpha: { from: 0.4, to: 1 }, duration: 700, yoyo: true, repeat: -1 });
 
-    void director.forFloor(run, run.floor).then((directive) => {
+    void director.forFloor(run, run.floor).then(async (directive) => {
       if (!this.scene.isActive('floor_intro')) return;
       run.directive = directive;
       run.story.settleProphecies(run.floor, directive);
       questTracker.offer(run, directive);
+      await run.omens.load(run.omenRequest(run.floor));
+      if (!this.scene.isActive('floor_intro')) return;
       waiting.destroy();
       this.show(run, directive);
     });

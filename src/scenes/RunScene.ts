@@ -192,9 +192,12 @@ export class RunScene extends Phaser.Scene {
 
   /** At the start of each floor a god or shade offers one AI-written trial (src/trials). */
   private async offerTrial(): Promise<void> {
-    if (this.dead || this.transitioning || this.dialogueOpen) return;
+    if (this.dead) return;
+    if (this.transitioning || this.dialogueOpen) {
+      this.time.delayedCall(500, () => void this.offerTrial());
+      return;
+    }
     this.dialogueOpen = true;
-    const room = this.room;
     this.scene.pause();
     let offer: TrialOffer;
     try {
@@ -210,7 +213,7 @@ export class RunScene extends Phaser.Scene {
       this.scene.resume();
       return;
     }
-    if (this.room !== room || this.dead) return this.releaseDialogue();
+    if (this.dead) return this.releaseDialogue();
     const script: DialogueScript = {
       id: offer.id,
       kind: 'shrine',
@@ -922,7 +925,7 @@ export class RunScene extends Phaser.Scene {
 
   private bindDebugKeys(): void {
     this.add
-      .text(GAME_WIDTH / 2, 66, DEBUG_HELP, { fontFamily: 'monospace', fontSize: '11px', color: '#f88', backgroundColor: '#000a' })
+      .text(GAME_WIDTH / 2, 48, DEBUG_HELP, { fontFamily: 'monospace', fontSize: '11px', color: '#f88', backgroundColor: '#000a' })
       .setOrigin(0.5, 0)
       .setDepth(500);
     const kb = this.input.keyboard!;
