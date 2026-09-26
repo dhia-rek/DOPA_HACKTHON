@@ -29,3 +29,20 @@ export async function generateRaw(req: DialogueRequest): Promise<unknown> {
   if (!text) throw new Error('empty completion');
   return JSON.parse(text);
 }
+
+/** Generic JSON generation for the other generators (trials, …). Returns parsed JSON (unvalidated) or throws. */
+export async function generateJson(systemPrompt: string, payload: unknown, language = 'en'): Promise<unknown> {
+  if (!client) throw new Error('GEMINI_API_KEY is not set');
+  const result = await client.models.generateContent({
+    model: CONFIG.model,
+    contents: JSON.stringify(payload),
+    config: {
+      systemInstruction: `${systemPrompt}\nWrite all text in language "${language}".`,
+      responseMimeType: 'application/json',
+      temperature: 0.9,
+    },
+  });
+  const text = result.text;
+  if (!text) throw new Error('empty completion');
+  return JSON.parse(text);
+}

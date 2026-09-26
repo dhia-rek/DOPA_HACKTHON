@@ -25,6 +25,9 @@ export interface GameEvents {
   /** The player picked an option in a dialogue. */
   dialogue_choice: { dialogueId: string; kind: string; optionId: string; karmaDelta: number };
   story_changed: { karma: number };
+  /** The active trial started, progressed or ended (HUD refresh). */
+  trial_changed: Record<string, never>;
+  trial_resolved: { success: boolean; title: string; giverName: string; summary: string };
   hud_update: Record<string, never>;
 }
 
