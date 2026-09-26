@@ -18,6 +18,8 @@ export interface CharacterDef {
   /** If set, the character is locked until this unlock id is in the save. */
   unlock?: string;
   unlockHint?: string;
+  /** Entry in data/lore.ts: the hero's divine parentage, given to dialogue generation. */
+  lore?: string;
 }
 
 export const CHARACTERS: CharacterDef[] = [
@@ -30,6 +32,7 @@ export const CHARACTERS: CharacterDef[] = [
     shadeColor: 0x8a6a2e,
     stats: { maxHp: 6, speed: 300, damage: 3.5, fireRate: 2.6, shotSpeed: 520, range: 520, luck: 0 },
     startingItems: [],
+    lore: 'achilles',
   },
   {
     id: 'atalanta',
@@ -40,6 +43,7 @@ export const CHARACTERS: CharacterDef[] = [
     shadeColor: 0x3f7a4a,
     stats: { maxHp: 4, speed: 360, damage: 2.2, fireRate: 4.2, shotSpeed: 600, range: 620, luck: 1 },
     startingItems: [],
+    lore: 'atalanta',
   },
   {
     id: 'heracles',
@@ -50,6 +54,7 @@ export const CHARACTERS: CharacterDef[] = [
     shadeColor: 0x7a3a2a,
     stats: { maxHp: 10, speed: 240, damage: 5.5, fireRate: 1.8, shotSpeed: 420, range: 360, luck: 0 },
     startingItems: [],
+    lore: 'heracles',
   },
   {
     id: 'orpheus',
@@ -61,6 +66,7 @@ export const CHARACTERS: CharacterDef[] = [
     stats: { maxHp: 4, speed: 300, damage: 2.8, fireRate: 2.4, shotSpeed: 480, range: 560, luck: 2 },
     startingItems: ['lyre_of_orpheus'],
     passive: 'regen',
+    lore: 'orpheus',
   },
   {
     id: 'kratos',
@@ -74,6 +80,7 @@ export const CHARACTERS: CharacterDef[] = [
     passive: 'rage',
     unlock: 'character:kratos',
     unlockHint: 'Complete the Ghost of Sparta challenges',
+    lore: 'kratos',
   },
 ];
 

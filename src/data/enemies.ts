@@ -2,7 +2,17 @@
  * Enemy behaviours are implemented in systems/behaviours.ts.
  * New behaviours = a new function there; new enemies = a new entry here.
  */
-export type BehaviourName = 'chaser' | 'wanderer' | 'flee' | 'shooter' | 'charger' | 'orbiter' | 'boss_minotaur' | 'boss_hydra';
+export type BehaviourName =
+  | 'chaser'
+  | 'wanderer'
+  | 'flee'
+  | 'shooter'
+  | 'charger'
+  | 'orbiter'
+  | 'boss_minotaur'
+  | 'boss_hydra'
+  | 'boss_giant'
+  | 'boss_titan';
 
 export type EnemyShape = 'circle' | 'square' | 'triangle' | 'diamond';
 
@@ -33,6 +43,8 @@ export interface EnemyDef {
   innocent?: boolean;
   /** One-line personality used by dialogue generation (bosses and NPCs). */
   persona?: string;
+  /** Entry in data/lore.ts: decides the faction whose war this enemy fights and what the LLM knows about it. */
+  lore?: string;
 }
 
 export const ENEMIES: EnemyDef[] = [
@@ -125,7 +137,8 @@ export const ENEMIES: EnemyDef[] = [
     radius: 34,
     chargeSpeed: 520,
     isBoss: true,
-    persona: 'Proud, wounded, hates being called a monster; respects honour, despises cowards.',
+    persona: 'Proud, wounded, hates being called a monster; respects honour, despises cowards. Kept by Minos for the Olympian order he despises.',
+    lore: 'minotaur',
   },
   {
     id: 'hydra',
@@ -140,7 +153,113 @@ export const ENEMIES: EnemyDef[] = [
     fireInterval: 900,
     shotSpeed: 300,
     isBoss: true,
-    persona: 'Many-voiced, ancient, speaks in riddles; each head interrupts the others.',
+    persona: "Many-voiced, ancient, speaks in riddles; each head interrupts the others. Hera's creature, Typhon's daughter, grows a head for every innocent buried.",
+    lore: 'hydra',
+  },
+  {
+    id: 'menoetius',
+    name: 'Menoetius',
+    hp: 110,
+    speed: 95,
+    damage: 2,
+    behaviour: 'boss_titan',
+    shape: 'diamond',
+    color: 0xe0b040,
+    radius: 34,
+    fireInterval: 1300,
+    shotSpeed: 320,
+    isBoss: true,
+    persona: 'Titan, brother of Atlas and Prometheus, hurled into Erebus by the thunderbolt for his insolence and back for more. Sneers at Zeus, flatters anyone who resents him, promises the Golden Age.',
+    lore: 'menoetius',
+  },
+  {
+    id: 'campe',
+    name: 'Campe',
+    hp: 140,
+    speed: 70,
+    damage: 2,
+    behaviour: 'boss_titan',
+    shape: 'triangle',
+    color: 0x9a5ad0,
+    radius: 38,
+    fireInterval: 1000,
+    shotSpeed: 280,
+    isBoss: true,
+    persona: "She-dragon jailer of Tartarus, slain by Zeus and restored by Gaia; speaks of prisoners, keys and debts. Considers the hero a runaway from a cell she hasn't built yet.",
+    lore: 'campe',
+  },
+  {
+    id: 'alcyoneus',
+    name: 'Alcyoneus',
+    hp: 150,
+    speed: 70,
+    damage: 3,
+    behaviour: 'boss_giant',
+    shape: 'square',
+    color: 0x8a5a3a,
+    radius: 40,
+    chargeSpeed: 460,
+    isBoss: true,
+    persona: 'Giant, deathless on his own soil; slow, patient, certain. Calls the earth "mother" and every innocent death "a gift". Remembers Heracles dragging him across the border of Pallene.',
+    lore: 'alcyoneus',
+  },
+  {
+    id: 'porphyrion',
+    name: 'Porphyrion',
+    hp: 220,
+    speed: 85,
+    damage: 3,
+    behaviour: 'boss_giant',
+    shape: 'square',
+    color: 0xc03a3a,
+    radius: 44,
+    chargeSpeed: 520,
+    isBoss: true,
+    persona: 'King of the Giants, who threw Delos at the gods and laid hands on Hera. Contemptuous of mortals, curious whether this one is the mortal the oracle warned of. Speaks like a king addressing a rebel.',
+    lore: 'porphyrion',
+  },
+  {
+    id: 'talos',
+    name: 'Talos',
+    hp: 120,
+    speed: 65,
+    damage: 2,
+    behaviour: 'boss_giant',
+    shape: 'diamond',
+    color: 0xd8a040,
+    radius: 38,
+    chargeSpeed: 400,
+    isBoss: true,
+    persona: "Bronze automaton of Hephaestus set to guard what the Olympians value; speaks in short verdicts, weighs the hero's deeds like a scale, has one vein of ichor at the ankle and knows it.",
+    lore: 'automaton',
+  },
+  {
+    id: 'earthborn',
+    name: 'Earthborn',
+    hp: 11,
+    speed: 120,
+    damage: 1,
+    behaviour: 'chaser',
+    shape: 'square',
+    color: 0x7a5a3a,
+    radius: 19,
+    dropChance: 0.1,
+    lore: 'earthborn',
+  },
+  {
+    id: 'cultist',
+    name: 'Golden Age Cultist',
+    hp: 8,
+    speed: 100,
+    damage: 1,
+    behaviour: 'shooter',
+    shape: 'circle',
+    color: 0xe8c860,
+    radius: 17,
+    fireInterval: 1900,
+    shotSpeed: 240,
+    dropChance: 0.1,
+    lore: 'cronus',
   },
   {
     id: 'villager',
@@ -154,6 +273,21 @@ export const ENEMIES: EnemyDef[] = [
     radius: 15,
     innocent: true,
     persona: 'Frightened peasant who knows local rumours; bargains for their life.',
+    lore: 'polis',
+  },
+  {
+    id: 'shade',
+    name: 'Restless Shade',
+    hp: 3,
+    speed: 90,
+    damage: 0,
+    behaviour: 'wanderer',
+    shape: 'circle',
+    color: 0x9ab0d8,
+    radius: 15,
+    innocent: true,
+    persona: "The ghost of an innocent the hero killed this run (the most recent one in story.shades). Speaks their own epitaph, asks why, wants to be remembered or avenged; can't be hurt worse than it was.",
+    lore: 'hades',
   },
 ];
 
