@@ -1,11 +1,15 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import type { DialogueOption, DialogueScript } from '../dialogue/types';
+import { voice, voiceSettings } from '../voice/provider';
+import type { VoiceProfile } from '../voice/types';
 
 export interface DialogueSceneData {
   script: DialogueScript;
   /** Called once with the chosen option (null for option-less flavour dialogues). */
   onDone: (option: DialogueOption | null) => void;
+  /** Speaks every line and reply with this voice (src/voice); silent if absent. */
+  voice?: VoiceProfile;
 }
 
 const mono = 'monospace';
@@ -31,6 +35,7 @@ export class DialogueScene extends Phaser.Scene {
   private body!: Phaser.GameObjects.Text;
   private optionTexts: Phaser.GameObjects.Text[] = [];
   private hint!: Phaser.GameObjects.Text;
+  private voiceTag!: Phaser.GameObjects.Text;
   private fullText = '';
   private shown = 0;
   private typer?: Phaser.Time.TimerEvent;
@@ -58,11 +63,17 @@ export class DialogueScene extends Phaser.Scene {
     }).setOrigin(0.5, 0);
 
     this.body = this.add.text(TEXT_X, top + 24, '', { fontFamily: mono, fontSize: '17px', color: '#eee', wordWrap: { width: GAME_WIDTH - TEXT_X - 64 }, lineSpacing: 4 });
+    this.voiceTag = this.add.text(GAME_WIDTH - 56, top + 10, this.voiceLabel(), { fontFamily: mono, fontSize: '11px', color: COLORS.textDim }).setOrigin(1, 0);
     this.hint = this.add.text(GAME_WIDTH - 56, top + BOX_H - 24, '', { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(1, 0);
 
     const kb = this.input.keyboard!;
     kb.on('keydown-ENTER', this.advance, this);
     kb.on('keydown-SPACE', this.advance, this);
+    kb.on('keydown-M', () => {
+      voiceSettings.enabled = !voiceSettings.enabled;
+      if (!voiceSettings.enabled) voice.stop();
+      this.voiceTag.setText(this.voiceLabel());
+    });
     kb.on('keydown-UP', () => this.moveSel(-1));
     kb.on('keydown-DOWN', () => this.moveSel(1));
     for (let i = 1; i <= 4; i++) {
@@ -112,7 +123,13 @@ export class DialogueScene extends Phaser.Scene {
 
   // ---- typewriter ---------------------------------------------------------
 
+  private voiceLabel(): string {
+    if (!this.data_.voice) return '';
+    return voiceSettings.enabled ? `♪ ${this.data_.voice.mood} · M mute` : '♪ muted · M';
+  }
+
   private typeOut(text: string): void {
+    if (this.data_.voice) voice.speak(text, this.data_.voice);
     this.typer?.remove(false);
     this.fullText = text;
     this.shown = 0;
@@ -227,6 +244,7 @@ export class DialogueScene extends Phaser.Scene {
 
   private finish(option: DialogueOption | null): void {
     this.typer?.remove(false);
+    voice.stop();
     const cb = this.data_.onDone;
     this.scene.stop();
     cb(option);

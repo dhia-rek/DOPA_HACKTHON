@@ -13,6 +13,8 @@ export const CONFIG = {
   port: int(process.env.PORT, 8787),
   geminiApiKey: process.env.GEMINI_API_KEY ?? '',
   model: process.env.GEMINI_MODEL ?? 'gemini-3.8-flash',
+  /** Gemini text-to-speech model for POST /voice. */
+  ttsModel: process.env.GEMINI_TTS_MODEL ?? 'gemini-2.5-flash-preview-tts',
   /** Override the Gemini endpoint (tests / proxies). */
   geminiBaseUrl: process.env.GEMINI_BASE_URL ?? '',
   /** Hard cap so the client's 15 s abort is never hit by a healthy server. */

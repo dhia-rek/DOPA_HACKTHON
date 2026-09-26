@@ -6,7 +6,8 @@ import { CONFIG } from './config';
 import { createHash } from 'node:crypto';
 import { TRIAL_SYSTEM_PROMPT } from '../../src/trials/prompt';
 import { type TrialOffer, type TrialRequest, validateTrial } from '../../src/trials/types';
-import { generateJson, generateRaw, llmConfigured } from './llm';
+import { validateVoiceRequest } from '../../src/voice/types';
+import { generateJson, generateRaw, llmConfigured, synthesizeSpeech } from './llm';
 
 const KINDS = new Set(['boss_intro', 'boss_outro', 'npc', 'shrine']);
 
@@ -135,6 +136,43 @@ app.post('/trial', async (req, res) => {
   } catch (err) {
     console.error('[trial]', err instanceof Error ? err.message : err);
     res.status(502).json({ error: 'LLM request failed' });
+  }
+});
+
+/** Same line + voice + mood always sounds the same; audio is cached in memory. */
+const voiceCache = new Map<string, Buffer>();
+const VOICE_CACHE_MAX = 200;
+
+app.post('/voice', async (req, res) => {
+  const request = validateVoiceRequest(req.body);
+  if (!request) {
+    res.status(400).json({ error: 'body must be a VoiceRequest' });
+    return;
+  }
+  if (!llmConfigured) {
+    res.status(503).json({ error: 'LLM not configured (GEMINI_API_KEY missing)' });
+    return;
+  }
+  const key = `${request.voice}:${request.mood}:${request.text}`;
+  const cached = voiceCache.get(key);
+  if (cached) {
+    res.setHeader('x-cache', 'hit');
+    res.type('audio/wav').send(cached);
+    return;
+  }
+  if (!allowLlmCall(req.ip ?? 'unknown')) {
+    res.status(429).json({ error: 'too many requests, slow down' });
+    return;
+  }
+  try {
+    const wav = await synthesizeSpeech(request);
+    if (voiceCache.size >= VOICE_CACHE_MAX) voiceCache.delete(voiceCache.keys().next().value!);
+    voiceCache.set(key, wav);
+    res.setHeader('x-cache', 'miss');
+    res.type('audio/wav').send(wav);
+  } catch (err) {
+    console.error('[voice]', err instanceof Error ? err.message : err);
+    res.status(502).json({ error: 'TTS request failed' });
   }
 });
 
