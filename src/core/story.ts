@@ -108,6 +108,11 @@ export class StoryState {
   /** Accumulated boss modifiers from dialogue outcomes; consumed per boss fight. */
   bossMods: BossMods = { hpMul: 1, damageMul: 1, speedMul: 1 };
 
+  constructor(initialKarma = 0, initialFlags: string[] = []) {
+    this.karma = Math.max(-100, Math.min(100, initialKarma));
+    for (const f of initialFlags) this.flags.add(f);
+  }
+
   record(deed: Deed): void {
     this.deeds.push(deed);
     if (deed.karmaDelta) this.adjustKarma(deed.karmaDelta);

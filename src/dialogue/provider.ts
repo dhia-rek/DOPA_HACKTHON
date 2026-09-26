@@ -20,7 +20,8 @@ Return ONLY JSON matching:
 {"lines": string[1-3], "options": [{"id": string, "text": string, "reply": string,
  "effects": {"karma": number, "flags": string[], "boss": {"hpMul": number, "damageMul": number, "speedMul": number}, "hp": number, "coins": number}}] (2-4 items)}
 Rules: stay in persona; react to the player's deeds (npcs killed/spared, karma, bosses slain); options must be meaningfully different (defiant / humble / cunning / merciful…);
-effects must be fair: karma -30..30, boss multipliers 0.5..2, hp -4..4. Never break character, never mention JSON.`;
+effects must be fair: karma -30..30, boss multipliers 0.5..2, hp -4..4. Never break character, never mention JSON.
+If the player's flags include "godslayer", the gods refuse every shrine offering: the shrine still takes what is offered (hp, coins) but grants no boon, no karma gain and no boss modifiers.`;
 
 export class HttpDialogueProvider implements DialogueProvider {
   constructor(
@@ -114,14 +115,29 @@ export class MockDialogueProvider implements DialogueProvider {
               ],
             }
           : req.kind === 'shrine'
-            ? {
-                lines: ['An altar hums with divine attention. What do you offer?'],
-                options: [
-                  { id: 'blood', text: 'Offer blood (lose 1 heart).', reply: 'Ares approves.', effects: { hp: -2, karma: -5, boss: { hpMul: 0.85 } } },
-                  { id: 'gold', text: 'Offer 5 coins.', reply: 'Hermes smiles.', effects: { coins: -5, karma: 5 } },
-                  { id: 'nothing', text: 'Offer nothing.', reply: 'The gods take note.', effects: { karma: 0 } },
-                ],
-              }
+            ? s.flags.includes('godslayer')
+              ? {
+                  lines: [
+                    rng.pick([
+                      `The altar goes cold as you approach. Olympus remembers what you did, ${you}.`,
+                      `The flame gutters and dies. No god will hear a godslayer's prayer.`,
+                    ]),
+                    'What do you offer to those who have already turned away?',
+                  ],
+                  options: [
+                    { id: 'blood', text: 'Offer blood (lose 1 heart).', reply: 'Your blood hisses on the stone. Nothing answers.', effects: { hp: -2, karma: -5 } },
+                    { id: 'gold', text: 'Offer 5 coins.', reply: 'The coins slide off the altar into the dark. Spurned.', effects: { coins: -5, karma: 0 } },
+                    { id: 'nothing', text: 'Turn your back on the altar.', reply: 'You need no gods. They need to fear you.', effects: { karma: 0, flags: ['spurned_gods'] } },
+                  ],
+                }
+              : {
+                  lines: ['An altar hums with divine attention. What do you offer?'],
+                  options: [
+                    { id: 'blood', text: 'Offer blood (lose 1 heart).', reply: 'Ares approves.', effects: { hp: -2, karma: -5, boss: { hpMul: 0.85 } } },
+                    { id: 'gold', text: 'Offer 5 coins.', reply: 'Hermes smiles.', effects: { coins: -5, karma: 5 } },
+                    { id: 'nothing', text: 'Offer nothing.', reply: 'The gods take note.', effects: { karma: 0 } },
+                  ],
+                }
             : {
                 lines: [rng.pick(['Remember me… when you face what waits below.', 'You only delay the inevitable, ' + you + '.'])],
                 options: [],
