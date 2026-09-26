@@ -1,6 +1,7 @@
 """Pre-record dialogue lines in each speaker's own voice (same edge-tts voice + effects as public/voices/<id>.mp3).
 
-Needs `pip install edge-tts` and ffmpeg. Reads lines.json from enumerate.ts, writes
+Needs `pip install edge-tts` and ffmpeg. Minotaur and Hydra use the team's custom Gradium voices, so they are
+rendered through the game server's POST /voice (run `npm start` in server/ with GRADIUM_API_KEY set). Reads lines.json from enumerate.ts, writes
 public/voices/lines/<speaker>/<hash>.mp3 plus public/voices/lines/index.json. Existing files are kept.
 """
 import asyncio
@@ -8,6 +9,7 @@ import json
 import pathlib
 import subprocess
 import tempfile
+import urllib.request
 
 import edge_tts
 
@@ -30,23 +32,40 @@ VOICES = {
                       "asplit[a][b];[b]asetrate=24000*0.88,aresample=24000,atempo=1.136,adelay=30,volume=0.6[c];[a][c]amix=inputs=2:normalize=0,aecho=0.8:0.8:130:0.35"),
 }
 
+GRADIUM = {"minotaur", "hydra"}
+SERVER = "http://localhost:8787/voice"
+# Gradium allows 2 concurrent sessions per key; keep one free for the running game.
+GRADIUM_SLOTS = asyncio.Semaphore(1)
+
+
+def gradium_tts(entry, path):
+    body = json.dumps({"text": entry["text"], "speakerId": entry["speakerId"], "voice": "Fenrir", "mood": "angry"}).encode()
+    req = urllib.request.Request(SERVER, body, {"content-type": "application/json"})
+    with urllib.request.urlopen(req, timeout=60) as res, open(path, "wb") as f:
+        f.write(res.read())
+
 
 async def render(entry, sem):
     dest = OUT / f"{entry['key']}.mp3"
     if dest.exists():
         return
-    voice, rate, pitch, fx = VOICES[entry["speakerId"]]
+    gradium = entry["speakerId"] in GRADIUM
+    voice, rate, pitch, fx = VOICES.get(entry["speakerId"], ("", "", "", "anull"))
     dest.parent.mkdir(parents=True, exist_ok=True)
     async with sem:
-        with tempfile.NamedTemporaryFile(suffix=".mp3") as raw:
-            for attempt in range(3):
+        with tempfile.NamedTemporaryFile(suffix=".wav" if gradium else ".mp3") as raw:
+            for attempt in range(5):
                 try:
-                    await edge_tts.Communicate(entry["text"], voice, rate=rate, pitch=pitch).save(raw.name)
+                    if gradium:
+                        async with GRADIUM_SLOTS:
+                            await asyncio.to_thread(gradium_tts, entry, raw.name)
+                    else:
+                        await edge_tts.Communicate(entry["text"], voice, rate=rate, pitch=pitch).save(raw.name)
                     break
                 except Exception:
-                    if attempt == 2:
+                    if attempt == 4:
                         raise
-                    await asyncio.sleep(2)
+                    await asyncio.sleep(2 * (attempt + 1))
             proc = await asyncio.create_subprocess_exec(
                 "ffmpeg", "-y", "-loglevel", "error", "-i", raw.name, "-af", f"{fx},loudnorm",
                 "-ac", "1", "-b:a", "64k", str(dest))
@@ -55,7 +74,7 @@ async def render(entry, sem):
 
 
 async def main():
-    entries = [e for e in json.loads((pathlib.Path(__file__).parent / "lines.json").read_text()) if e["speakerId"] in VOICES]
+    entries = [e for e in json.loads((pathlib.Path(__file__).parent / "lines.json").read_text()) if e["speakerId"] in VOICES or e["speakerId"] in GRADIUM]
     sem = asyncio.Semaphore(6)
     await asyncio.gather(*(render(e, sem) for e in entries))
     keys = sorted(e["key"] for e in entries if (OUT / f"{e['key']}.mp3").exists())

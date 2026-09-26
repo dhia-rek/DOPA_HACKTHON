@@ -12,6 +12,7 @@ import { describeObjective } from '../../src/trials/types';
 import { lineKey } from '../../src/voice/lineKey';
 
 const NPCS = ['villager', 'priestess', 'child', 'wounded_soldier'];
+const BOSSES = ['minotaur', 'hydra'];
 const FRONTS = ['olympian', 'titan', 'giant'] as const;
 const SEEDS = 400;
 const enemyPool = [...new Set(STAGES.flatMap((s) => s.enemyPool))];
@@ -57,6 +58,30 @@ for (const c of CHARACTERS) {
         const s = await dialogue.generate({ kind: 'shrine', speakerId: 'altar', speakerName: 'Altar', persona: '', story: story(c.name, front, { flags }), seed: `${seed}` });
         s.lines.forEach((l) => add('altar', l));
         s.options.forEach((o) => add('altar', o.reply));
+      }
+    }
+  }
+  for (const speakerId of BOSSES) {
+    const other = BOSSES.find((b) => b !== speakerId)!;
+    const states: Partial<StorySnapshot>[] = [
+      {},
+      { npcsSpared: 1 },
+      { flags: ['spared_many'], npcsSpared: 5 },
+      { flags: [`broke_oath_to_${speakerId}`] },
+      { bossesKilled: [speakerId] },
+      { bossesKilled: [other], flags: [`slew_${other}`] },
+      { alignment: 'cruel', karma: -60 },
+      { alignment: 'heroic', karma: 60 },
+    ];
+    for (const stage of STAGES) {
+      for (const st of states) {
+        for (let seed = 0; seed < 60; seed++) {
+          for (const kind of ['boss_intro', 'boss_outro'] as const) {
+            const s = await dialogue.generate({ kind, speakerId, speakerName: speakerId, persona: '', story: story(c.name, 'olympian', { stageName: stage.name, ...st }), seed: `${seed}` });
+            s.lines.forEach((l) => add(speakerId, l));
+            s.options.forEach((o) => add(speakerId, o.reply));
+          }
+        }
       }
     }
   }

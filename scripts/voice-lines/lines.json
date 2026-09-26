@@ -240,6 +240,406 @@
   "text": "The ground opened and swallowed my street, Achilles. Gaia is angry. Is it true it is your fault?"
  },
  {
+  "key": "minotaur/7b881036",
+  "speakerId": "minotaur",
+  "text": "Another hero comes to die in the Ruined Polis."
+ },
+ {
+  "key": "minotaur/8a48c5d7",
+  "speakerId": "minotaur",
+  "text": "Choose your last words carefully."
+ },
+ {
+  "key": "minotaur/7ea5494e",
+  "speakerId": "minotaur",
+  "text": "You call on the sky. The sky is far, and I am here."
+ },
+ {
+  "key": "minotaur/9066bb78",
+  "speakerId": "minotaur",
+  "text": "Pathetic. I will be gentle, so you feel every blow."
+ },
+ {
+  "key": "minotaur/53ede332",
+  "speakerId": "minotaur",
+  "text": "Gold buys little in the dark, but I will take it."
+ },
+ {
+  "key": "minotaur/86c62c30",
+  "speakerId": "minotaur",
+  "text": "The labyrinth… is quiet at last."
+ },
+ {
+  "key": "minotaur/58fa2549",
+  "speakerId": "minotaur",
+  "text": "Another hero for the maze to forget."
+ },
+ {
+  "key": "minotaur/a9128ae3",
+  "speakerId": "minotaur",
+  "text": "Below, the stone is wet. Nothing that drinks there stays dead."
+ },
+ {
+  "key": "minotaur/67f542cb",
+  "speakerId": "minotaur",
+  "text": "Honour… a word I had forgotten. Very well."
+ },
+ {
+  "key": "minotaur/d5b01de0",
+  "speakerId": "minotaur",
+  "text": "Then die proud."
+ },
+ {
+  "key": "minotaur/523c7b6c",
+  "speakerId": "minotaur",
+  "text": "Asterion. My name was Asterion. Say it, Achilles."
+ },
+ {
+  "key": "minotaur/e95ee388",
+  "speakerId": "minotaur",
+  "text": "So the Ruined Polis sends me Achilles."
+ },
+ {
+  "key": "minotaur/ed06f171",
+  "speakerId": "minotaur",
+  "text": "What do you want, mortal?"
+ },
+ {
+  "key": "minotaur/5b1c6805",
+  "speakerId": "minotaur",
+  "text": "Neither cruel nor kind… you simply came, and I simply died."
+ },
+ {
+  "key": "minotaur/5c0d6523",
+  "speakerId": "minotaur",
+  "text": "The Hydra sleeps below. Every head you cut will remember you."
+ },
+ {
+  "key": "minotaur/4d89152f",
+  "speakerId": "minotaur",
+  "text": "Speak, before I end you."
+ },
+ {
+  "key": "minotaur/c359a5af",
+  "speakerId": "minotaur",
+  "text": "You have not seen the rest of the maze. Nor has anyone who lived."
+ },
+ {
+  "key": "minotaur/e12c03ca",
+  "speakerId": "minotaur",
+  "text": "Not a monster. Tell them… I was not a monster."
+ },
+ {
+  "key": "minotaur/7f32bc0a",
+  "speakerId": "minotaur",
+  "text": "My horns… you said you would take them. Take them, then."
+ },
+ {
+  "key": "minotaur/95d7381a",
+  "speakerId": "minotaur",
+  "text": "Mercy, from Achilles? The gods must be laughing."
+ },
+ {
+  "key": "minotaur/1929eb7f",
+  "speakerId": "minotaur",
+  "text": "You spared the weak. Mercy… I never knew it. Perhaps you will teach it to the dark."
+ },
+ {
+  "key": "minotaur/a8b2ab86",
+  "speakerId": "minotaur",
+  "text": "You let the shepherds live. Somewhere, a bull-headed boy would have wept at that."
+ },
+ {
+  "key": "minotaur/963be4c1",
+  "speakerId": "minotaur",
+  "text": "They say you spared the weak. Weakness recognises weakness."
+ },
+ {
+  "key": "minotaur/6e503715",
+  "speakerId": "minotaur",
+  "text": "So many spared… you carry their gratitude like armour. Let us see if it holds."
+ },
+ {
+  "key": "minotaur/3cea13ed",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Achilles. It will not save you here."
+ },
+ {
+  "key": "minotaur/1a5c3095",
+  "speakerId": "minotaur",
+  "text": "Your word is worth less than the dust of this place, oathbreaker."
+ },
+ {
+  "key": "minotaur/9f4a6131",
+  "speakerId": "minotaur",
+  "text": "You swore an oath to me, Achilles, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "minotaur/36a3ffde",
+  "speakerId": "minotaur",
+  "text": "I remember your blade, Achilles. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "minotaur/97da636e",
+  "speakerId": "minotaur",
+  "text": "You again, Achilles? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "minotaur/a341d86f",
+  "speakerId": "minotaur",
+  "text": "So you are the one who killed the Hydra. I will not fall so easily."
+ },
+ {
+  "key": "minotaur/ed895fb4",
+  "speakerId": "minotaur",
+  "text": "I was made a monster. You chose to become one."
+ },
+ {
+  "key": "minotaur/d96f8623",
+  "speakerId": "minotaur",
+  "text": "You strike like something that hates the living. The dark below will recognise you."
+ },
+ {
+  "key": "minotaur/1e991754",
+  "speakerId": "minotaur",
+  "text": "A true hero. Theseus was never so kind."
+ },
+ {
+  "key": "minotaur/ec6fc34b",
+  "speakerId": "minotaur",
+  "text": "Go with my blessing, Achilles. Few have earned it."
+ },
+ {
+  "key": "minotaur/9d387548",
+  "speakerId": "minotaur",
+  "text": "Another hero comes to die in the Labyrinth of Knossos."
+ },
+ {
+  "key": "minotaur/0b56914e",
+  "speakerId": "minotaur",
+  "text": "So the Labyrinth of Knossos sends me Achilles."
+ },
+ {
+  "key": "minotaur/bff8f083",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Achilles. It will not save you here."
+ },
+ {
+  "key": "minotaur/429f10d9",
+  "speakerId": "minotaur",
+  "text": "Another hero comes to die in the Gates of Tartarus."
+ },
+ {
+  "key": "minotaur/d3656407",
+  "speakerId": "minotaur",
+  "text": "So the Gates of Tartarus sends me Achilles."
+ },
+ {
+  "key": "minotaur/b6f2c9e4",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Achilles. It will not save you here."
+ },
+ {
+  "key": "hydra/7b881036",
+  "speakerId": "hydra",
+  "text": "Another hero comes to die in the Ruined Polis."
+ },
+ {
+  "key": "hydra/4d89152f",
+  "speakerId": "hydra",
+  "text": "Speak, before I end you."
+ },
+ {
+  "key": "hydra/267d1dba",
+  "speakerId": "hydra",
+  "text": "The Mother tastes you… and lets you pass lighter."
+ },
+ {
+  "key": "hydra/53ede332",
+  "speakerId": "hydra",
+  "text": "Gold buys little in the dark, but I will take it."
+ },
+ {
+  "key": "hydra/d5b01de0",
+  "speakerId": "hydra",
+  "text": "Then die proud."
+ },
+ {
+  "key": "hydra/7cc50fa1",
+  "speakerId": "hydra",
+  "text": "Cut the last head and still we whisper, Achilles. Riddles do not bleed."
+ },
+ {
+  "key": "hydra/5b70944a",
+  "speakerId": "hydra",
+  "text": "Nothing to remember, nothing to curse. The heads have already forgotten your face."
+ },
+ {
+  "key": "hydra/8bd9ffcf",
+  "speakerId": "hydra",
+  "text": "Deeper, Achilles. The stairs go deeper than the light."
+ },
+ {
+  "key": "hydra/e95ee388",
+  "speakerId": "hydra",
+  "text": "So the Ruined Polis sends me Achilles."
+ },
+ {
+  "key": "hydra/ed06f171",
+  "speakerId": "hydra",
+  "text": "What do you want, mortal?"
+ },
+ {
+  "key": "hydra/67f542cb",
+  "speakerId": "hydra",
+  "text": "Honour… a word I had forgotten. Very well."
+ },
+ {
+  "key": "hydra/e8fc68f3",
+  "speakerId": "hydra",
+  "text": "One head speaks: \"Impossible.\" Another: \"Inevitable.\" The rest are silent."
+ },
+ {
+  "key": "hydra/9066bb78",
+  "speakerId": "hydra",
+  "text": "Pathetic. I will be gentle, so you feel every blow."
+ },
+ {
+  "key": "hydra/af16afda",
+  "speakerId": "hydra",
+  "text": "Below us waits something with no heads at all… and it does not need them."
+ },
+ {
+  "key": "hydra/8a48c5d7",
+  "speakerId": "hydra",
+  "text": "Choose your last words carefully."
+ },
+ {
+  "key": "hydra/2bccfe44",
+  "speakerId": "hydra",
+  "text": "You came, you cut, you leave. So do all of them."
+ },
+ {
+  "key": "hydra/884f892e",
+  "speakerId": "hydra",
+  "text": "A thousand years of voices… and now only echoes."
+ },
+ {
+  "key": "hydra/06366c15",
+  "speakerId": "hydra",
+  "text": "The riddle was never us. Descend and learn the answer."
+ },
+ {
+  "key": "hydra/4224b42c",
+  "speakerId": "hydra",
+  "text": "We fall… we fall… we FALL… no, only one of us is finished."
+ },
+ {
+  "key": "hydra/95d7381a",
+  "speakerId": "hydra",
+  "text": "Mercy, from Achilles? The gods must be laughing."
+ },
+ {
+  "key": "hydra/14be60b2",
+  "speakerId": "hydra",
+  "text": "You spared the small ones. The heads argue whether that was wisdom or weakness."
+ },
+ {
+  "key": "hydra/963be4c1",
+  "speakerId": "hydra",
+  "text": "They say you spared the weak. Weakness recognises weakness."
+ },
+ {
+  "key": "hydra/a81b7b53",
+  "speakerId": "hydra",
+  "text": "Mercy for the weak, death for us. The gods will riddle over that one."
+ },
+ {
+  "key": "hydra/6e503715",
+  "speakerId": "hydra",
+  "text": "So many spared… you carry their gratitude like armour. Let us see if it holds."
+ },
+ {
+  "key": "hydra/3cea13ed",
+  "speakerId": "hydra",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Achilles. It will not save you here."
+ },
+ {
+  "key": "hydra/1a5c3095",
+  "speakerId": "hydra",
+  "text": "Your word is worth less than the dust of this place, oathbreaker."
+ },
+ {
+  "key": "hydra/9f4a6131",
+  "speakerId": "hydra",
+  "text": "You swore an oath to me, Achilles, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "hydra/36a3ffde",
+  "speakerId": "hydra",
+  "text": "I remember your blade, Achilles. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "hydra/97da636e",
+  "speakerId": "hydra",
+  "text": "You again, Achilles? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "hydra/7c0c3d14",
+  "speakerId": "hydra",
+  "text": "So you are the one who killed the Minotaur. I will not fall so easily."
+ },
+ {
+  "key": "hydra/ca371a97",
+  "speakerId": "hydra",
+  "text": "Cruelty grows heads too, mortal. Cut one and two more come."
+ },
+ {
+  "key": "hydra/77b91e20",
+  "speakerId": "hydra",
+  "text": "Every head we lost was a warning. Every innocent you killed was a promise."
+ },
+ {
+  "key": "hydra/41cc2e62",
+  "speakerId": "hydra",
+  "text": "Heracles had your eyes. He also had our hatred. You have only our respect."
+ },
+ {
+  "key": "hydra/ee4b17ec",
+  "speakerId": "hydra",
+  "text": "A hero of the old kind. The heads fall silent for you, Achilles."
+ },
+ {
+  "key": "hydra/9d387548",
+  "speakerId": "hydra",
+  "text": "Another hero comes to die in the Labyrinth of Knossos."
+ },
+ {
+  "key": "hydra/0b56914e",
+  "speakerId": "hydra",
+  "text": "So the Labyrinth of Knossos sends me Achilles."
+ },
+ {
+  "key": "hydra/bff8f083",
+  "speakerId": "hydra",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Achilles. It will not save you here."
+ },
+ {
+  "key": "hydra/429f10d9",
+  "speakerId": "hydra",
+  "text": "Another hero comes to die in the Gates of Tartarus."
+ },
+ {
+  "key": "hydra/d3656407",
+  "speakerId": "hydra",
+  "text": "So the Gates of Tartarus sends me Achilles."
+ },
+ {
+  "key": "hydra/b6f2c9e4",
+  "speakerId": "hydra",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Achilles. It will not save you here."
+ },
+ {
   "key": "trial_nemesis/6c5cc1f6",
   "speakerId": "trial_nemesis",
   "text": "Innocent blood. I keep the ledger, Achilles."
@@ -890,6 +1290,131 @@
   "text": "The ground opened and swallowed my street, Atalanta. Gaia is angry. Is it true it is your fault?"
  },
  {
+  "key": "minotaur/67ae6789",
+  "speakerId": "minotaur",
+  "text": "Asterion. My name was Asterion. Say it, Atalanta."
+ },
+ {
+  "key": "minotaur/cff4a8dd",
+  "speakerId": "minotaur",
+  "text": "So the Ruined Polis sends me Atalanta."
+ },
+ {
+  "key": "minotaur/0e089a91",
+  "speakerId": "minotaur",
+  "text": "Mercy, from Atalanta? The gods must be laughing."
+ },
+ {
+  "key": "minotaur/6cda06a6",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Atalanta. It will not save you here."
+ },
+ {
+  "key": "minotaur/2e3cf86c",
+  "speakerId": "minotaur",
+  "text": "You swore an oath to me, Atalanta, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "minotaur/53e5e765",
+  "speakerId": "minotaur",
+  "text": "I remember your blade, Atalanta. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "minotaur/f1dc317d",
+  "speakerId": "minotaur",
+  "text": "You again, Atalanta? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "minotaur/25cc69da",
+  "speakerId": "minotaur",
+  "text": "Go with my blessing, Atalanta. Few have earned it."
+ },
+ {
+  "key": "minotaur/698af49f",
+  "speakerId": "minotaur",
+  "text": "So the Labyrinth of Knossos sends me Atalanta."
+ },
+ {
+  "key": "minotaur/c3fa6938",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Atalanta. It will not save you here."
+ },
+ {
+  "key": "minotaur/4ca32f92",
+  "speakerId": "minotaur",
+  "text": "So the Gates of Tartarus sends me Atalanta."
+ },
+ {
+  "key": "minotaur/57d8bbdb",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Atalanta. It will not save you here."
+ },
+ {
+  "key": "hydra/860716a0",
+  "speakerId": "hydra",
+  "text": "Cut the last head and still we whisper, Atalanta. Riddles do not bleed."
+ },
+ {
+  "key": "hydra/3ce52844",
+  "speakerId": "hydra",
+  "text": "Deeper, Atalanta. The stairs go deeper than the light."
+ },
+ {
+  "key": "hydra/cff4a8dd",
+  "speakerId": "hydra",
+  "text": "So the Ruined Polis sends me Atalanta."
+ },
+ {
+  "key": "hydra/0e089a91",
+  "speakerId": "hydra",
+  "text": "Mercy, from Atalanta? The gods must be laughing."
+ },
+ {
+  "key": "hydra/6cda06a6",
+  "speakerId": "hydra",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Atalanta. It will not save you here."
+ },
+ {
+  "key": "hydra/2e3cf86c",
+  "speakerId": "hydra",
+  "text": "You swore an oath to me, Atalanta, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "hydra/53e5e765",
+  "speakerId": "hydra",
+  "text": "I remember your blade, Atalanta. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "hydra/f1dc317d",
+  "speakerId": "hydra",
+  "text": "You again, Atalanta? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "hydra/03bd0409",
+  "speakerId": "hydra",
+  "text": "A hero of the old kind. The heads fall silent for you, Atalanta."
+ },
+ {
+  "key": "hydra/698af49f",
+  "speakerId": "hydra",
+  "text": "So the Labyrinth of Knossos sends me Atalanta."
+ },
+ {
+  "key": "hydra/c3fa6938",
+  "speakerId": "hydra",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Atalanta. It will not save you here."
+ },
+ {
+  "key": "hydra/4ca32f92",
+  "speakerId": "hydra",
+  "text": "So the Gates of Tartarus sends me Atalanta."
+ },
+ {
+  "key": "hydra/57d8bbdb",
+  "speakerId": "hydra",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Atalanta. It will not save you here."
+ },
+ {
   "key": "trial_nemesis/f01ca707",
   "speakerId": "trial_nemesis",
   "text": "Innocent blood. I keep the ledger, Atalanta."
@@ -938,6 +1463,131 @@
   "key": "villager/c2d9236e",
   "speakerId": "villager",
   "text": "The ground opened and swallowed my street, Heracles. Gaia is angry. Is it true it is your fault?"
+ },
+ {
+  "key": "minotaur/7bfd0e76",
+  "speakerId": "minotaur",
+  "text": "Asterion. My name was Asterion. Say it, Heracles."
+ },
+ {
+  "key": "minotaur/6e9cbcd2",
+  "speakerId": "minotaur",
+  "text": "So the Ruined Polis sends me Heracles."
+ },
+ {
+  "key": "minotaur/5b3be944",
+  "speakerId": "minotaur",
+  "text": "Mercy, from Heracles? The gods must be laughing."
+ },
+ {
+  "key": "minotaur/9dbd0e87",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Heracles. It will not save you here."
+ },
+ {
+  "key": "minotaur/63978343",
+  "speakerId": "minotaur",
+  "text": "You swore an oath to me, Heracles, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "minotaur/cd26b1a0",
+  "speakerId": "minotaur",
+  "text": "I remember your blade, Heracles. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "minotaur/b2e6f71c",
+  "speakerId": "minotaur",
+  "text": "You again, Heracles? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "minotaur/b31a8025",
+  "speakerId": "minotaur",
+  "text": "Go with my blessing, Heracles. Few have earned it."
+ },
+ {
+  "key": "minotaur/4250b154",
+  "speakerId": "minotaur",
+  "text": "So the Labyrinth of Knossos sends me Heracles."
+ },
+ {
+  "key": "minotaur/c8043c71",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Heracles. It will not save you here."
+ },
+ {
+  "key": "minotaur/57dc5c95",
+  "speakerId": "minotaur",
+  "text": "So the Gates of Tartarus sends me Heracles."
+ },
+ {
+  "key": "minotaur/11ab2ffa",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Heracles. It will not save you here."
+ },
+ {
+  "key": "hydra/4585817f",
+  "speakerId": "hydra",
+  "text": "Cut the last head and still we whisper, Heracles. Riddles do not bleed."
+ },
+ {
+  "key": "hydra/8ef01fa5",
+  "speakerId": "hydra",
+  "text": "Deeper, Heracles. The stairs go deeper than the light."
+ },
+ {
+  "key": "hydra/6e9cbcd2",
+  "speakerId": "hydra",
+  "text": "So the Ruined Polis sends me Heracles."
+ },
+ {
+  "key": "hydra/5b3be944",
+  "speakerId": "hydra",
+  "text": "Mercy, from Heracles? The gods must be laughing."
+ },
+ {
+  "key": "hydra/9dbd0e87",
+  "speakerId": "hydra",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Heracles. It will not save you here."
+ },
+ {
+  "key": "hydra/63978343",
+  "speakerId": "hydra",
+  "text": "You swore an oath to me, Heracles, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "hydra/cd26b1a0",
+  "speakerId": "hydra",
+  "text": "I remember your blade, Heracles. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "hydra/b2e6f71c",
+  "speakerId": "hydra",
+  "text": "You again, Heracles? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "hydra/180baaf6",
+  "speakerId": "hydra",
+  "text": "A hero of the old kind. The heads fall silent for you, Heracles."
+ },
+ {
+  "key": "hydra/4250b154",
+  "speakerId": "hydra",
+  "text": "So the Labyrinth of Knossos sends me Heracles."
+ },
+ {
+  "key": "hydra/c8043c71",
+  "speakerId": "hydra",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Heracles. It will not save you here."
+ },
+ {
+  "key": "hydra/57dc5c95",
+  "speakerId": "hydra",
+  "text": "So the Gates of Tartarus sends me Heracles."
+ },
+ {
+  "key": "hydra/11ab2ffa",
+  "speakerId": "hydra",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Heracles. It will not save you here."
  },
  {
   "key": "trial_nemesis/af34433c",
@@ -990,6 +1640,131 @@
   "text": "The ground opened and swallowed my street, Orpheus. Gaia is angry. Is it true it is your fault?"
  },
  {
+  "key": "minotaur/0c843347",
+  "speakerId": "minotaur",
+  "text": "Asterion. My name was Asterion. Say it, Orpheus."
+ },
+ {
+  "key": "minotaur/c1b246ab",
+  "speakerId": "minotaur",
+  "text": "So the Ruined Polis sends me Orpheus."
+ },
+ {
+  "key": "minotaur/3d7ec45f",
+  "speakerId": "minotaur",
+  "text": "Mercy, from Orpheus? The gods must be laughing."
+ },
+ {
+  "key": "minotaur/8a681062",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Orpheus. It will not save you here."
+ },
+ {
+  "key": "minotaur/e9e9ae64",
+  "speakerId": "minotaur",
+  "text": "You swore an oath to me, Orpheus, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "minotaur/27d48b59",
+  "speakerId": "minotaur",
+  "text": "I remember your blade, Orpheus. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "minotaur/5d7816e9",
+  "speakerId": "minotaur",
+  "text": "You again, Orpheus? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "minotaur/1b2a6e72",
+  "speakerId": "minotaur",
+  "text": "Go with my blessing, Orpheus. Few have earned it."
+ },
+ {
+  "key": "minotaur/ff9b98d1",
+  "speakerId": "minotaur",
+  "text": "So the Labyrinth of Knossos sends me Orpheus."
+ },
+ {
+  "key": "minotaur/f15fca10",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Orpheus. It will not save you here."
+ },
+ {
+  "key": "minotaur/6fdc8c56",
+  "speakerId": "minotaur",
+  "text": "So the Gates of Tartarus sends me Orpheus."
+ },
+ {
+  "key": "minotaur/57ce4eb5",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Orpheus. It will not save you here."
+ },
+ {
+  "key": "hydra/90ccb14a",
+  "speakerId": "hydra",
+  "text": "Cut the last head and still we whisper, Orpheus. Riddles do not bleed."
+ },
+ {
+  "key": "hydra/050e31e8",
+  "speakerId": "hydra",
+  "text": "Deeper, Orpheus. The stairs go deeper than the light."
+ },
+ {
+  "key": "hydra/c1b246ab",
+  "speakerId": "hydra",
+  "text": "So the Ruined Polis sends me Orpheus."
+ },
+ {
+  "key": "hydra/3d7ec45f",
+  "speakerId": "hydra",
+  "text": "Mercy, from Orpheus? The gods must be laughing."
+ },
+ {
+  "key": "hydra/8a681062",
+  "speakerId": "hydra",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Orpheus. It will not save you here."
+ },
+ {
+  "key": "hydra/e9e9ae64",
+  "speakerId": "hydra",
+  "text": "You swore an oath to me, Orpheus, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "hydra/27d48b59",
+  "speakerId": "hydra",
+  "text": "I remember your blade, Orpheus. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "hydra/5d7816e9",
+  "speakerId": "hydra",
+  "text": "You again, Orpheus? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "hydra/48eef4c7",
+  "speakerId": "hydra",
+  "text": "A hero of the old kind. The heads fall silent for you, Orpheus."
+ },
+ {
+  "key": "hydra/ff9b98d1",
+  "speakerId": "hydra",
+  "text": "So the Labyrinth of Knossos sends me Orpheus."
+ },
+ {
+  "key": "hydra/f15fca10",
+  "speakerId": "hydra",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Orpheus. It will not save you here."
+ },
+ {
+  "key": "hydra/6fdc8c56",
+  "speakerId": "hydra",
+  "text": "So the Gates of Tartarus sends me Orpheus."
+ },
+ {
+  "key": "hydra/57ce4eb5",
+  "speakerId": "hydra",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Orpheus. It will not save you here."
+ },
+ {
   "key": "trial_nemesis/691422a9",
   "speakerId": "trial_nemesis",
   "text": "Innocent blood. I keep the ledger, Orpheus."
@@ -1038,6 +1813,131 @@
   "key": "villager/2195dae7",
   "speakerId": "villager",
   "text": "The ground opened and swallowed my street, Kratos. Gaia is angry. Is it true it is your fault?"
+ },
+ {
+  "key": "minotaur/a6fac71b",
+  "speakerId": "minotaur",
+  "text": "Asterion. My name was Asterion. Say it, Kratos."
+ },
+ {
+  "key": "minotaur/b1d38b4f",
+  "speakerId": "minotaur",
+  "text": "So the Ruined Polis sends me Kratos."
+ },
+ {
+  "key": "minotaur/d90217a3",
+  "speakerId": "minotaur",
+  "text": "Mercy, from Kratos? The gods must be laughing."
+ },
+ {
+  "key": "minotaur/a94820e0",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Kratos. It will not save you here."
+ },
+ {
+  "key": "minotaur/7f1486d6",
+  "speakerId": "minotaur",
+  "text": "You swore an oath to me, Kratos, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "minotaur/512c4fff",
+  "speakerId": "minotaur",
+  "text": "I remember your blade, Kratos. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "minotaur/5d5a26a3",
+  "speakerId": "minotaur",
+  "text": "You again, Kratos? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "minotaur/6d7a347c",
+  "speakerId": "minotaur",
+  "text": "Go with my blessing, Kratos. Few have earned it."
+ },
+ {
+  "key": "minotaur/b261276d",
+  "speakerId": "minotaur",
+  "text": "So the Labyrinth of Knossos sends me Kratos."
+ },
+ {
+  "key": "minotaur/df587d5e",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Kratos. It will not save you here."
+ },
+ {
+  "key": "minotaur/1ee53c38",
+  "speakerId": "minotaur",
+  "text": "So the Gates of Tartarus sends me Kratos."
+ },
+ {
+  "key": "minotaur/e8663591",
+  "speakerId": "minotaur",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Kratos. It will not save you here."
+ },
+ {
+  "key": "hydra/d4974c6e",
+  "speakerId": "hydra",
+  "text": "Cut the last head and still we whisper, Kratos. Riddles do not bleed."
+ },
+ {
+  "key": "hydra/6bdcd7ba",
+  "speakerId": "hydra",
+  "text": "Deeper, Kratos. The stairs go deeper than the light."
+ },
+ {
+  "key": "hydra/b1d38b4f",
+  "speakerId": "hydra",
+  "text": "So the Ruined Polis sends me Kratos."
+ },
+ {
+  "key": "hydra/d90217a3",
+  "speakerId": "hydra",
+  "text": "Mercy, from Kratos? The gods must be laughing."
+ },
+ {
+  "key": "hydra/a94820e0",
+  "speakerId": "hydra",
+  "text": "Every shade in the Ruined Polis speaks of your mercy, Kratos. It will not save you here."
+ },
+ {
+  "key": "hydra/7f1486d6",
+  "speakerId": "hydra",
+  "text": "You swore an oath to me, Kratos, then spilled innocent blood. Oathbreaker."
+ },
+ {
+  "key": "hydra/512c4fff",
+  "speakerId": "hydra",
+  "text": "I remember your blade, Kratos. Death was only a door, and I came back through it."
+ },
+ {
+  "key": "hydra/5d5a26a3",
+  "speakerId": "hydra",
+  "text": "You again, Kratos? Hades would not keep me. I have walked back out of the dark for you."
+ },
+ {
+  "key": "hydra/0103ef9b",
+  "speakerId": "hydra",
+  "text": "A hero of the old kind. The heads fall silent for you, Kratos."
+ },
+ {
+  "key": "hydra/b261276d",
+  "speakerId": "hydra",
+  "text": "So the Labyrinth of Knossos sends me Kratos."
+ },
+ {
+  "key": "hydra/df587d5e",
+  "speakerId": "hydra",
+  "text": "Every shade in the Labyrinth of Knossos speaks of your mercy, Kratos. It will not save you here."
+ },
+ {
+  "key": "hydra/1ee53c38",
+  "speakerId": "hydra",
+  "text": "So the Gates of Tartarus sends me Kratos."
+ },
+ {
+  "key": "hydra/e8663591",
+  "speakerId": "hydra",
+  "text": "Every shade in the Gates of Tartarus speaks of your mercy, Kratos. It will not save you here."
  },
  {
   "key": "trial_nemesis/674c5b15",
