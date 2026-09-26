@@ -96,8 +96,8 @@ export class MockDialogueProvider implements DialogueProvider {
             `The shades of those you murdered whisper your name, ${you}.`,
           ])
         : s.npcsSpared > 0
-          ? rng.pick([`They say you spared the weak. Weakness recognises weakness.`, `Mercy, from a ${you}? The gods must be laughing.`])
-          : rng.pick([`So the ${s.stageName} sends me a ${you}.`, `Another hero comes to die on floor ${s.floor}.`]);
+          ? rng.pick([`They say you spared the weak. Weakness recognises weakness.`, `Mercy, from ${you}? The gods must be laughing.`])
+          : rng.pick([`So the ${s.stageName} sends me ${you}.`, `Another hero comes to die on floor ${s.floor}.`]);
 
     const raw =
       req.kind === 'boss_intro'

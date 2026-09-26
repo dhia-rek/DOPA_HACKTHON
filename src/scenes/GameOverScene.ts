@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
+import { TOUCH } from '../core/input';
 import type { RunState } from '../core/run';
 
 export class GameOverScene extends Phaser.Scene {
@@ -45,9 +46,9 @@ export class GameOverScene extends Phaser.Scene {
       this.add.text(cx, 432, `+ ${run.items.length - shown.length} more`, { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(0.5);
     }
 
-    const back = this.add.text(cx, GAME_HEIGHT - 53, 'ENTER  ·  RETURN TO THE SURFACE', {
+    const back = this.add.text(cx, GAME_HEIGHT - 53, `${TOUCH ? 'TAP' : 'ENTER'}  ·  RETURN TO THE SURFACE`, {
       fontFamily: mono, fontSize: '16px', color: COLORS.text,
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    }).setOrigin(0.5).setPadding(16, 10, 16, 10).setInteractive({ useHandCursor: true });
     back.on('pointerover', () => back.setColor(COLORS.uiIvory));
     back.on('pointerout', () => back.setColor(COLORS.text));
     back.on('pointerdown', () => this.scene.start('menu'));

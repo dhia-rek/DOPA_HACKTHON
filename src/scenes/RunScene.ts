@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS, Dir, DIR_VECTORS, GAME_HEIGHT, GAME_WIDTH, GRID_COLS, GRID_ROWS, OPPOSITE, ROOM_COLS, ROOM_ROWS, TILE } from '../config';
 import { events } from '../core/events';
+import { TOUCH } from '../core/input';
 import type { RunState } from '../core/run';
 import { KARMA } from '../core/story';
 import { EnemyDef, getEnemy } from '../data/enemies';
@@ -124,6 +125,10 @@ export class RunScene extends Phaser.Scene {
 
     if (!this.scene.isActive('hud')) this.scene.launch('hud');
     this.scene.bringToTop('hud');
+    if (TOUCH) {
+      if (!this.scene.isActive('touch')) this.scene.launch('touch');
+      this.scene.bringToTop('touch');
+    }
 
     if (this.room.type === 'boss' && !this.room.cleared && !this.room.dialogueDone) {
       const boss = this.hostiles().find((e) => e.def.isBoss);
@@ -656,6 +661,7 @@ export class RunScene extends Phaser.Scene {
     this.tweens.add({ targets: this.player, angle: 90, alpha: 0.3, duration: 600 });
     this.time.delayedCall(900, () => {
       this.scene.stop('hud');
+      this.scene.stop('touch');
       this.scene.start('gameover');
     });
   }

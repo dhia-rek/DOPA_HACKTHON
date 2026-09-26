@@ -7,7 +7,9 @@ import type { RoomNode } from '../gen/floorGen';
 const CELL = 14;
 const GAP = 3;
 const KARMA_WIDTH = 210;
-const KARMA_X = (GAME_WIDTH - KARMA_WIDTH) / 2;
+/** Bottom-right corner: the top-centre slot would sit on the north door. */
+const KARMA_X = GAME_WIDTH - 12 - KARMA_WIDTH;
+const KARMA_Y = GAME_HEIGHT - 60;
 
 function karmaStyle(karma: number): { label: string; color: number } {
   if (karma <= -60) return { label: 'CURSED', color: COLORS.karmaCursed };
@@ -44,12 +46,12 @@ export class HudScene extends Phaser.Scene {
     this.items = this.add.container(12, 68);
     this.minimap = this.add.graphics();
     const meter = this.add.graphics();
-    meter.fillStyle(COLORS.uiPanel, 0.9).fillRoundedRect(KARMA_X - 9, 5, KARMA_WIDTH + 18, 39, 4);
-    meter.lineStyle(1, COLORS.uiBorder, 0.7).strokeRoundedRect(KARMA_X - 9, 5, KARMA_WIDTH + 18, 39, 4);
-    meter.fillStyle(COLORS.karmaCursed, 0.65).fillRect(KARMA_X, 30, KARMA_WIDTH / 2, 5);
-    meter.fillStyle(COLORS.karmaBlessed, 0.65).fillRect(KARMA_X + KARMA_WIDTH / 2, 30, KARMA_WIDTH / 2, 5);
-    this.karmaLabel = this.add.text(GAME_WIDTH / 2, 10, '', { fontFamily: 'monospace', fontSize: '13px' }).setOrigin(0.5, 0);
-    this.karmaNeedle = this.add.rectangle(GAME_WIDTH / 2, 32, 3, 15, COLORS.karmaNeutral);
+    meter.fillStyle(COLORS.uiPanel, 0.9).fillRoundedRect(KARMA_X - 9, KARMA_Y, KARMA_WIDTH + 18, 39, 4);
+    meter.lineStyle(1, COLORS.uiBorder, 0.7).strokeRoundedRect(KARMA_X - 9, KARMA_Y, KARMA_WIDTH + 18, 39, 4);
+    meter.fillStyle(COLORS.karmaCursed, 0.65).fillRect(KARMA_X, KARMA_Y + 25, KARMA_WIDTH / 2, 5);
+    meter.fillStyle(COLORS.karmaBlessed, 0.65).fillRect(KARMA_X + KARMA_WIDTH / 2, KARMA_Y + 25, KARMA_WIDTH / 2, 5);
+    this.karmaLabel = this.add.text(KARMA_X + KARMA_WIDTH / 2, KARMA_Y + 5, '', { fontFamily: 'monospace', fontSize: '13px' }).setOrigin(0.5, 0);
+    this.karmaNeedle = this.add.rectangle(KARMA_X + KARMA_WIDTH / 2, KARMA_Y + 27, 3, 15, COLORS.karmaNeutral);
     this.karma = NaN;
 
     events.on('hud_update', this.refresh, this);

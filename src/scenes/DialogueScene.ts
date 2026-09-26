@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
+import { TOUCH } from '../core/input';
 import type { DialogueOption, DialogueScript } from '../dialogue/types';
 
 export interface DialogueSceneData {
@@ -15,13 +16,15 @@ const PORTRAIT = 120;
 const TEXT_X = BOX_X + PORTRAIT + 48;
 /** Typewriter speed in characters per second. */
 const CHARS_PER_SEC = 40;
+/** Key name used in hints: taps stand in for ENTER on touch devices. */
+const OK = TOUCH ? 'TAP' : 'ENTER';
 
 type Blip = 'move' | 'confirm' | 'advance';
 
 /**
- * Overlay that shows a DialogueScript: speaker lines (ENTER to advance), then
- * numbered options (1-4 or ↑↓ + ENTER). The scene that launched it is expected
- * to pause itself and resume in onDone.
+ * Overlay that shows a DialogueScript: speaker lines (ENTER / tap to advance),
+ * then numbered options (1-4, ↑↓ + ENTER, or tap). The scene that launched it
+ * is expected to pause itself and resume in onDone.
  */
 export class DialogueScene extends Phaser.Scene {
   private data_!: DialogueSceneData;
@@ -49,8 +52,14 @@ export class DialogueScene extends Phaser.Scene {
     this.typer = undefined;
 
     const top = GAME_HEIGHT - BOX_H - 16;
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.35);
-    this.add.rectangle(GAME_WIDTH / 2, top + BOX_H / 2, GAME_WIDTH - 64, BOX_H, 0x0d0b12, 0.96).setStrokeStyle(2, 0xc9a45c);
+    // Interactive backdrop: a tap anywhere advances, and (being hit-tested in the
+    // top scene) it stops the same touch from reaching the sticks underneath.
+    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.35)
+      .setInteractive()
+      .on('pointerdown', () => {
+        if (this.phase !== 'options') this.advance();
+      });
+    this.add.rectangle(GAME_WIDTH / 2, top + BOX_H / 2, GAME_WIDTH - 64, BOX_H, 0x0d0b12, 1).setStrokeStyle(2, 0xc9a45c);
 
     this.drawPortrait(BOX_X + 24 + PORTRAIT / 2, top + BOX_H / 2 - 10, data.script);
     this.add.text(BOX_X + 24 + PORTRAIT / 2, top + BOX_H - 30, data.script.speakerName.toUpperCase(), {
@@ -137,7 +146,7 @@ export class DialogueScene extends Phaser.Scene {
     this.typer = undefined;
     this.shown = this.fullText.length;
     this.body.setText(this.fullText);
-    this.hint.setText('ENTER ▸');
+    this.hint.setText(`${OK} ▸`);
   }
 
   // ---- sound --------------------------------------------------------------
@@ -169,7 +178,7 @@ export class DialogueScene extends Phaser.Scene {
   // ---- flow ---------------------------------------------------------------
 
   private showLine(): void {
-    this.hint.setText('ENTER ▸▸');
+    this.hint.setText(`${OK} ▸▸`);
     this.typeOut(this.data_.script.lines[this.lineIndex]);
   }
 
@@ -178,10 +187,17 @@ export class DialogueScene extends Phaser.Scene {
     this.body.setText('');
     const top = GAME_HEIGHT - BOX_H - 16 + 28;
     this.data_.script.options.forEach((o, i) => {
-      const t = this.add.text(TEXT_X + 8, top + i * 30, `${i + 1}. ${o.text}`, { fontFamily: mono, fontSize: '16px', color: '#ccc' });
+      const t = this.add.text(TEXT_X + 8, top + i * 30, `${i + 1}. ${o.text}`, { fontFamily: mono, fontSize: '16px', color: '#ccc' })
+        .setPadding(6, 5, 6, 5)
+        .setInteractive({ useHandCursor: true });
+      t.on('pointerover', () => this.setSel(i));
+      t.on('pointerdown', () => {
+        this.setSel(i);
+        this.advance();
+      });
       this.optionTexts.push(t);
     });
-    this.hint.setText('↑↓ / 1-4 choose · ENTER confirm');
+    this.hint.setText(TOUCH ? 'TAP an answer' : '↑↓ / 1-4 choose · ENTER confirm');
     this.paintSelection();
   }
 
@@ -190,9 +206,13 @@ export class DialogueScene extends Phaser.Scene {
   }
 
   private moveSel(d: number): void {
-    if (this.phase !== 'options') return;
     const n = this.data_.script.options.length;
-    this.selected = (this.selected + d + n) % n;
+    this.setSel((this.selected + d + n) % n);
+  }
+
+  private setSel(i: number): void {
+    if (this.phase !== 'options' || i === this.selected) return;
+    this.selected = i;
     this.blip('move');
     this.paintSelection();
   }
@@ -217,7 +237,7 @@ export class DialogueScene extends Phaser.Scene {
       this.optionTexts = [];
       if (!opt.reply) return this.finish(opt);
       this.phase = 'reply';
-      this.hint.setText('ENTER ▸▸');
+      this.hint.setText(`${OK} ▸▸`);
       this.typeOut(opt.reply);
       return;
     }
