@@ -894,8 +894,8 @@ export class RunScene extends Phaser.Scene {
 
   private bindDebugKeys(): void {
     this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT - 10, DEBUG_HELP, { fontFamily: 'monospace', fontSize: '11px', color: '#f88', backgroundColor: '#000a' })
-      .setOrigin(0.5, 1)
+      .text(GAME_WIDTH / 2, 48, DEBUG_HELP, { fontFamily: 'monospace', fontSize: '11px', color: '#f88', backgroundColor: '#000a' })
+      .setOrigin(0.5, 0)
       .setDepth(500);
     const kb = this.input.keyboard!;
     const on = (key: string, fn: () => void): void => {
