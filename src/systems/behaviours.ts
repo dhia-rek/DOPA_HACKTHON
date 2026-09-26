@@ -243,6 +243,7 @@ const bossMinotaur: Behaviour = (ctx) => {
     }
   } else if (state === 1) {
     enemy.moveTowards(0, 0);
+    enemy.pose('windup');
     enemy.setTint(0xff8060);
     if (now >= m.until) {
       m.state = 2;
@@ -252,6 +253,7 @@ const bossMinotaur: Behaviour = (ctx) => {
   } else if (state === 2) {
     const s = (enemy.def.chargeSpeed ?? 500) * (enraged ? 1.25 : 1);
     enemy.moveTowards(m.cx * s, m.cy * s);
+    enemy.pose('charge');
     if (!enemy.body.blocked.none || now >= m.until) {
       m.state = 3;
       m.until = now + (enraged ? 500 : 900);
@@ -260,6 +262,7 @@ const bossMinotaur: Behaviour = (ctx) => {
     }
   } else {
     enemy.moveTowards(0, 0);
+    enemy.pose('stagger');
     if (now >= m.until) {
       m.state = 0;
       m.cooldownUntil = now + (enraged ? 600 : 1200);
@@ -310,6 +313,7 @@ const bossGiant: Behaviour = (ctx) => {
     }
   } else if (state === 1) {
     enemy.moveTowards(0, 0);
+    enemy.pose('windup');
     enemy.setTint(0xc0a080);
     if (now >= m.until) {
       enemy.clearTint();
@@ -324,6 +328,7 @@ const bossGiant: Behaviour = (ctx) => {
   } else if (state === 2) {
     const s = (enemy.def.chargeSpeed ?? 450) * (wounded ? 1.2 : 1);
     enemy.moveTowards(m.cx * s, m.cy * s);
+    enemy.pose('charge');
     if (!enemy.body.blocked.none || now >= m.until) {
       m.state = 0;
       m.cooldownUntil = now + (wounded ? 900 : 1500);

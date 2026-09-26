@@ -4,6 +4,11 @@ import type { BossMods } from '../core/story';
 import type { EnemyDef } from '../data/enemies';
 import type { BossBlueprint } from '../director/types';
 
+export type EnemyPose = 'windup' | 'charge' | 'stagger' | 'blink';
+
+/** Bosses ease into their target velocity instead of snapping; higher = snappier. */
+const BOSS_ACCEL = 0.22;
+
 export class Enemy extends Phaser.Physics.Arcade.Sprite {
   declare body: Phaser.Physics.Arcade.Body;
   readonly def: EnemyDef;
@@ -25,6 +30,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private poisonTick = 0;
   /** External push (knockback) blended into the behaviour's velocity. */
   knock = new Phaser.Math.Vector2();
+  /** Resting scale the boss animation breathes around (split halves shrink it). */
+  baseScale = 1;
+  /** Pose declared by the behaviour this frame; consumed by `animate()`. */
+  private poseKind: EnemyPose | null = null;
+  private lastDelta = 16;
   /** "!" bubble shown above innocent NPCs when the player can talk to them. */
   private bubble: Phaser.GameObjects.Image | null = null;
 
@@ -81,14 +91,32 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     return this.hp / this.maxHp;
   }
 
-  /** Behaviours call this instead of setting body velocity directly so knockback composes. */
+  /**
+   * Behaviours call this instead of setting body velocity directly so knockback
+   * composes. Bosses have mass: they accelerate and brake over ~150 ms.
+   */
   moveTowards(vx: number, vy: number): void {
-    this.body.setVelocity(vx + this.knock.x, vy + this.knock.y);
+    const tx = vx + this.knock.x;
+    const ty = vy + this.knock.y;
+    if (!this.def.isBoss) {
+      this.body.setVelocity(tx, ty);
+      return;
+    }
+    const k = 1 - Math.pow(1 - BOSS_ACCEL, this.lastDelta / 16);
+    const v = this.body.velocity;
+    this.body.setVelocity(v.x + (tx - v.x) * k, v.y + (ty - v.y) * k);
+  }
+
+  /** Declare this frame's pose (bosses only); the sprite squashes, leans or flickers to match. */
+  pose(kind: EnemyPose): void {
+    this.poseKind = kind;
   }
 
   step(delta: number): void {
+    this.lastDelta = delta;
     this.knock.scale(Math.pow(ENEMY.knockbackDamping, delta / 16));
     if (this.knock.lengthSq() < 4) this.knock.set(0, 0);
+    if (this.def.isBoss) this.animate();
     if (this.bubble) {
       this.bubble.setPosition(this.x, this.y - this.def.radius - 22 + Math.sin(this.scene.time.now / 160) * 4);
       if (this.isPanicking) this.bubble.setVisible(false);
@@ -108,6 +136,63 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     } else {
       this.clearTint();
     }
+  }
+
+  /**
+   * Boss body language, all procedural: breathing at rest, facing and leaning
+   * into movement, stretching along a charge, squashing on a windup, wobbling
+   * when staggered, flickering before a blink. Eases so poses never snap.
+   */
+  private animate(): void {
+    if (this.isSpawning) return;
+    const kind = this.poseKind;
+    this.poseKind = null;
+    const t = this.scene.time.now;
+    const v = this.body.velocity;
+    const b = this.baseScale;
+    let sx = b;
+    let sy = b;
+    let angle = 0;
+    let alpha = 1;
+    let ease = 0.25;
+
+    switch (kind) {
+      case 'windup':
+        sx = b * (0.9 + Math.sin(t / 40) * 0.03);
+        sy = b * 1.12;
+        break;
+      case 'charge': {
+        const sp = Math.max(1, v.length());
+        const nx = Math.abs(v.x) / sp;
+        const ny = Math.abs(v.y) / sp;
+        sx = b * (1 + 0.2 * nx - 0.1 * ny);
+        sy = b * (1 + 0.2 * ny - 0.1 * nx);
+        angle = Phaser.Math.Clamp(v.x * 0.025, -14, 14);
+        ease = 0.35;
+        break;
+      }
+      case 'stagger':
+        angle = Math.sin(t / 50) * 7;
+        sx = b * 1.04;
+        sy = b * 0.94;
+        break;
+      case 'blink':
+        alpha = 0.3 + 0.7 * Math.abs(Math.sin(t / 30));
+        ease = 1;
+        break;
+      default: {
+        const breath = Math.sin(t / 260) * 0.035;
+        sx = b * (1 + breath);
+        sy = b * (1 - breath);
+        angle = Phaser.Math.Clamp(v.x * 0.02, -8, 8);
+        ease = 0.12;
+      }
+    }
+
+    if (Math.abs(v.x) > 20) this.setFlipX(v.x < 0);
+    this.setScale(this.scaleX + (sx - this.scaleX) * ease, this.scaleY + (sy - this.scaleY) * ease);
+    this.setAngle(this.angle + (angle - this.angle) * ease);
+    this.setAlpha(this.alpha + (alpha - this.alpha) * ease);
   }
 
   get isShielded(): boolean {

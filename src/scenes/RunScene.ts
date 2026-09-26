@@ -340,7 +340,7 @@ export class RunScene extends Phaser.Scene {
         delta,
         difficulty: this.run.difficulty,
         spawn: (id, x, y) => this.spawnEnemy(id, x, y),
-        summonPool: this.run.stage.enemyPool,
+        summonPool: this.run.currentFront.enemyPool,
         announce: (title, text) => this.toast(title, text),
       });
     }
