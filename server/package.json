@@ -2,7 +2,7 @@
   "name": "nekyia-dialogue-server",
   "private": true,
   "version": "0.0.1",
-  "description": "LLM dialogue service for Nekyia: POST DialogueRequest -> DialogueScript",
+  "description": "Gemini dialogue service for Nekyia: POST DialogueRequest -> DialogueScript",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -10,9 +10,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@google/genai": "2.23.0",
     "cors": "2.8.6",
     "express": "5.2.1",
-    "openai": "7.19.0",
     "tsx": "4.23.13"
   },
   "devDependencies": {

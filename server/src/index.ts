@@ -37,7 +37,7 @@ app.post('/', async (req, res) => {
     return;
   }
   if (!llmConfigured) {
-    res.status(503).json({ error: 'LLM not configured (OPENAI_API_KEY missing)' });
+    res.status(503).json({ error: 'LLM not configured (GEMINI_API_KEY missing)' });
     return;
   }
 

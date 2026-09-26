@@ -1,13 +1,13 @@
 # Nekyia dialogue server (Stream C)
 
 Small Express service that turns a `DialogueRequest` into a `DialogueScript`
-using OpenAI. It holds the API key so the browser never sees it.
+using Google Gemini (AI Studio). It holds the API key so the browser never sees it.
 
 ```
 POST /            body: DialogueRequest  ->  200 DialogueScript
                                              400 bad request body
                                              502 LLM failed / returned an invalid script
-                                             503 OPENAI_API_KEY not set
+                                             503 GEMINI_API_KEY not set
 GET  /health      { ok, llm, model, cached }
 ```
 
@@ -22,7 +22,7 @@ the game.
 ```bash
 cd server
 npm install
-cp .env.example .env        # then paste your OPENAI_API_KEY
+cp .env.example .env        # then paste your GEMINI_API_KEY (https://aistudio.google.com/apikey)
 npm run dev                 # http://localhost:8787
 ```
 
@@ -54,8 +54,8 @@ header tells you which.
 ## Deploy
 
 Any Node 20.12+ host works; the start command is `npm start` inside `server/`
-(uses `tsx`, no build step). Set `OPENAI_API_KEY` (and optionally
-`OPENAI_MODEL`, `CORS_ORIGIN=https://your-game-host`) as environment variables.
+(uses `tsx`, no build step). Set `GEMINI_API_KEY` (and optionally
+`GEMINI_MODEL`, `CORS_ORIGIN=https://your-game-host`) as environment variables.
 
 - **Render**: new Web Service → root directory `server`, build `npm install`,
   start `npm start`.

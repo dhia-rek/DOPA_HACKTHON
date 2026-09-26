@@ -11,8 +11,10 @@ const int = (v: string | undefined, fallback: number): number => {
 
 export const CONFIG = {
   port: int(process.env.PORT, 8787),
-  openaiApiKey: process.env.OPENAI_API_KEY ?? '',
-  model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
+  geminiApiKey: process.env.GEMINI_API_KEY ?? '',
+  model: process.env.GEMINI_MODEL ?? 'gemini-2.5-flash',
+  /** Override the Gemini endpoint (tests / proxies). */
+  geminiBaseUrl: process.env.GEMINI_BASE_URL ?? '',
   /** Hard cap so the client's 8 s abort is never hit by a healthy server. */
   llmTimeoutMs: int(process.env.LLM_TIMEOUT_MS, 6000),
   /** Scripts cached by request seed (replays hit the cache, not the LLM). */
