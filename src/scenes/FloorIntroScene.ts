@@ -6,8 +6,8 @@ import { getMutator } from '../data/mutators';
 import { getGod } from '../data/gods';
 import { questTracker } from '../systems/quests';
 import { director, DIRECTOR_DEBUG } from '../systems/director';
+import { mono } from './ui';
 
-const mono = 'monospace';
 
 /**
  * Between floors: waits for the Director's verdict on the player so far, applies

@@ -4,6 +4,7 @@ import { settings } from '../core/settings';
 import { blip } from '../core/sfx';
 import type { CharacterDef } from '../data/characters';
 import type { EnemyDef } from '../data/enemies';
+import { mono } from './ui';
 
 export interface BossIntroData {
   hero: CharacterDef;
@@ -15,7 +16,6 @@ export interface BossIntroData {
   onDone: () => void;
 }
 
-const mono = 'monospace';
 const W = GAME_WIDTH;
 const H = GAME_HEIGHT;
 const GAP = 22;
@@ -53,7 +53,7 @@ export class BossIntroScene extends Phaser.Scene {
       this.label(40, BAND / 2 + 40, data.grudge ? `“${data.grudge}”` : '', 13, '#e08080', 0, W - 400),
     ]);
     this.bottom = this.band(BAND + GAP, data.hero.color, 'left', [
-      this.sprite(`player_${data.hero.id}`, 190, BAND / 2 - 10, 140),
+      this.sprite(this.textures.exists(`portrait_${data.hero.id}`) ? `portrait_${data.hero.id}` : `player_${data.hero.id}`, 190, BAND / 2 - 10, 150),
       this.label(W - 40, BAND / 2 - 36, data.hero.name.toUpperCase(), 30, COLORS.uiIvory, 1),
       this.label(W - 40, BAND / 2 + 10, data.hero.title.toUpperCase(), 14, COLORS.textDim, 1),
     ]);

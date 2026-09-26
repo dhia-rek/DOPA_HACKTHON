@@ -76,7 +76,7 @@ export const bossDirected: Behaviour = (ctx) => {
   if (abilities.includes('split_on_hp') && !m.split && enemy.hpRatio <= 0.5) {
     m.split = 1;
     summon(ctx, 2, ctx.summonPool ?? [], 'divides itself');
-    enemy.setScale(0.85);
+    enemy.stretch.set(0.85, 0.85);
   }
   enemy.vulnerability = m.state === State.Stagger && bp.weakness === 'stagger_after_charge' ? 2 : 1;
 
@@ -102,9 +102,9 @@ export const bossDirected: Behaviour = (ctx) => {
 
   if (state === State.Windup) {
     enemy.moveTowards(0, 0);
-    enemy.setScale(0.92 + Math.sin(now / 40) * 0.04, 1.08);
+    enemy.stretch.set(0.92 + Math.sin(now / 40) * 0.04, 1.08);
     if (now >= m.until) {
-      enemy.setScale(1);
+      enemy.stretch.set(1, 1);
       if (m.pending === 1) {
         // charge
         m.state = State.Charging;
