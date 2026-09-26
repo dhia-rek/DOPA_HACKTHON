@@ -28,6 +28,7 @@ import { voiceFor } from '../voice/types';
 import { OMEN_TINTS, tintWith } from '../omens/types';
 import { BEHAVIOURS, threaten } from '../systems/behaviours';
 import { weaknessDamageMul } from '../systems/bossAbilities';
+import { judgementLines, verdictOf } from '../systems/bossJudgement';
 import { director } from '../systems/director';
 import { getGod, type GodId } from '../data/gods';
 
@@ -103,6 +104,8 @@ export class RunScene extends Phaser.Scene {
   private darknessLight: Phaser.GameObjects.Graphics | null = null;
   /** `plague` mutator: enemies burst into poison on death. */
   private plague = false;
+  /** Judged boss hp bar + title; cleared when the boss dies. */
+  private bossBar: { boss: Enemy; fill: Phaser.GameObjects.Rectangle; width: number; parts: Phaser.GameObjects.GameObject[] } | null = null;
 
   constructor() {
     super('run');
@@ -168,12 +171,15 @@ export class RunScene extends Phaser.Scene {
     const chapter = this.run.takeChapter();
     if (chapter) this.toast(chapter.title, chapter.body, 4200);
 
-    if (this.room.type === 'boss') director.prefetch(this.run, this.run.floor + 1);
-    if (this.room.type === 'boss' && !this.room.cleared && !this.room.dialogueDone) {
+    // The next floor is judged once the boss intro choice is on record (see applyChoice); this covers re-entries.
+    if (this.room.type === 'boss' && this.room.dialogueDone) director.prefetch(this.run, this.run.floor + 1);
+    if (this.room.type === 'boss' && !this.room.cleared) {
       const boss = this.hostiles().find((e) => e.def.isBoss);
-      if (boss) {
+      if (boss && !this.room.dialogueDone) {
         this.room.dialogueDone = true;
         this.time.delayedCall(250, () => this.bossSplash(boss));
+      } else if (boss) {
+        this.showJudgement(boss);
       }
     }
 
@@ -264,6 +270,50 @@ export class RunScene extends Phaser.Scene {
     this.scene.bringToTop('boss_vs');
   }
 
+  /**
+   * The boss's verdict made visible for the fight: title, stance (by the hero's
+   * alignment), the grudge it holds, its own kit vs what it added against this
+   * hero, and a hp bar in the verdict's colour that stays until it dies.
+   */
+  private showJudgement(boss: Enemy): void {
+    const bp = boss.blueprint;
+    if (!bp || this.bossBar) return;
+    const v = verdictOf(this.run.story.alignment);
+    boss.setAura(v.color);
+    const mono = 'monospace';
+    const cx = GAME_WIDTH / 2;
+    const top = 50;
+    const barW = 420;
+
+    const bg = this.add.rectangle(cx, top + 8, barW + 4, 12, 0x0b0a0f, 0.85).setDepth(200);
+    const fill = this.add.rectangle(cx - barW / 2, top + 8, barW, 8, v.color).setOrigin(0, 0.5).setDepth(201);
+    const title = this.add.text(cx, top - 4, bp.title, { fontFamily: mono, fontSize: '15px', color: v.css }).setOrigin(0.5, 1).setDepth(201);
+    this.bossBar = { boss, fill, width: barW, parts: [bg, fill, title] };
+
+    const lines = [v.stance, bp.grudge ? `“${bp.grudge}”` : '', ...judgementLines(boss, this.run.character.name)].filter(Boolean);
+    const card = this.add
+      .text(cx, top + 22, lines.join('\n'), {
+        fontFamily: mono,
+        fontSize: '13px',
+        color: COLORS.text,
+        align: 'center',
+        backgroundColor: '#0b0a0fcc',
+        padding: { x: 12, y: 8 },
+        wordWrap: { width: 560 },
+      })
+      .setOrigin(0.5, 0)
+      .setDepth(201)
+      .setAlpha(0);
+    this.tweens.add({ targets: card, alpha: 1, duration: 300 });
+    this.tweens.add({ targets: card, alpha: 0, delay: 5200, duration: 600, onComplete: () => card.destroy() });
+  }
+
+  private clearJudgement(): void {
+    if (!this.bossBar) return;
+    for (const p of this.bossBar.parts) p.destroy();
+    this.bossBar = null;
+  }
+
   /** Boss dialogue speaker: the Director's title, persona and grudge on top of the authored persona. */
   private bossSpeaker(boss: Enemy): DialogueSpeaker {
     const bp = boss.blueprint;
@@ -318,6 +368,11 @@ export class RunScene extends Phaser.Scene {
     this.playerShots.step();
     this.enemyShots.step();
 
+    if (this.bossBar) {
+      const b = this.bossBar.boss;
+      if (b.active) this.bossBar.fill.width = this.bossBar.width * Math.max(0, b.hpRatio);
+      else this.clearJudgement();
+    }
     const alive = this.enemies.getChildren().filter((e) => e.active) as Enemy[];
     for (const enemy of alive) {
       enemy.step(delta);
@@ -339,8 +394,9 @@ export class RunScene extends Phaser.Scene {
         delta,
         difficulty: this.run.difficulty,
         spawn: (id, x, y) => this.spawnEnemy(id, x, y),
-        summonPool: this.run.stage.enemyPool,
+        summonPool: this.run.currentFront.enemyPool,
         announce: (title, text) => this.toast(title, text),
+        hurtPlayer: (amount, source, fromX, fromY) => this.hurtPlayer(amount, source, fromX, fromY),
       });
     }
 
@@ -464,8 +520,12 @@ export class RunScene extends Phaser.Scene {
     }
 
     const enemy = speaker.enemy;
-    if (script.kind === 'boss_intro' && enemy?.active) {
-      enemy.applyMods(this.run.story.takeBossMods(factionOf(enemy.def.lore)));
+    if (script.kind === 'boss_intro') {
+      if (enemy?.active) {
+        enemy.applyMods(this.run.story.takeBossMods(factionOf(enemy.def.lore)));
+        this.showJudgement(enemy);
+      }
+      director.prefetch(this.run, this.run.floor + 1);
     } else if (script.kind === 'npc' && enemy?.active) {
       this.spareNpc(enemy, option?.effects.npcOutcome === 'wronged');
     } else if (script.kind === 'shrine') {
@@ -645,6 +705,7 @@ export class RunScene extends Phaser.Scene {
       enemy.blueprint = bp;
       enemy.applyMods(bp.mods);
       if (bp.weakness === 'known_secret') enemy.applyMods({ hpMul: 0.85, damageMul: 1, speedMul: 1 });
+      enemy.setAura(verdictOf(this.run.story.alignment).color);
     }
     return enemy;
   }
@@ -696,10 +757,26 @@ export class RunScene extends Phaser.Scene {
         return;
       }
       const before = this.run.hp;
+      const trampling = enemy.def.isBoss && enemy.memory.state === 2;
       this.hurtPlayer(enemy.contactDamage, enemy.def.id, enemy.x, enemy.y);
+      if (this.run.hp < before && trampling) {
+        settings.shake(this.cameras.main, 220, 0.016);
+        this.burst(this.player.x, this.player.y, 0xfff0d0, 14);
+      }
       if (this.run.hp < before && enemy.blueprint?.abilities.includes('steal_hearts')) {
         enemy.hp = Math.min(enemy.maxHp, enemy.hp + 6);
-        this.burst(enemy.x, enemy.y, COLORS.heart, 6);
+        const heart = this.add.circle(this.player.x, this.player.y, 7, COLORS.heart).setDepth(30);
+        this.tweens.add({
+          targets: heart,
+          x: enemy.x,
+          y: enemy.y,
+          duration: 380,
+          ease: 'Quad.In',
+          onComplete: () => {
+            heart.destroy();
+            if (enemy.active) this.burst(enemy.x, enemy.y, COLORS.heart, 8);
+          },
+        });
       }
     });
     this.physics.add.overlap(this.player, this.pickups, (_p, pk) => this.collect(pk as Pickup));

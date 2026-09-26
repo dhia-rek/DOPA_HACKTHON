@@ -29,6 +29,15 @@ export interface Traits {
 
 export interface PlayerProfile {
   story: StorySnapshot;
+  /** The hero as authored (data/characters.ts): what the boss's extra abilities should answer. */
+  character: {
+    id: string;
+    name: string;
+    title: string;
+    description: string;
+    passive: string | null;
+    stats: { maxHp: number; speed: number; damage: number; fireRate: number; range: number };
+  };
   traits: Traits;
   voice: Voice;
   /** e.g. "homing_swarm", "piercing_sniper", "poison", "tank", "basic". */
@@ -58,6 +67,8 @@ export interface PlayerProfile {
     quests: string[];
     enemies: string[];
     bosses: string[];
+    /** Per boss id, the signature abilities it always has (free); extras must complement them. */
+    bossKits: Record<string, string[]>;
     npcs: string[];
     items: string[];
     /** Weaknesses the player has actually earned this run (items, orbs, secrets). */
@@ -86,7 +97,7 @@ export interface BossBlueprint {
   archetype: string;
   title: string;
   persona: string;
-  /** 2..4 */
+  /** 1..3 extras on top of the archetype's signature kit (`EnemyDef.abilities`); the kit is free, these cost budget. */
   abilities: AbilityId[];
   /** <=2 */
   phases: BossPhase[];
@@ -135,8 +146,9 @@ const ids = <T extends string>(v: unknown, allowed: readonly T[], max: number): 
 
 /**
  * Sanitise a directive that came from an LLM. Unknown ids are dropped, numbers
- * clamped, the budget enforced (phases, mutators, then abilities are trimmed
- * from the end; if two abilities still do not fit, the cheapest pair is used).
+ * clamped, the budget enforced (phases, mutators, then extra abilities are
+ * trimmed from the end; if one extra still does not fit, the cheapest is used).
+ * Extras duplicating the archetype's signature kit are dropped.
  * Truthful due prophecies are forced in (boss weakness, returning NPC, promised
  * boon/curse modifier). Returns null only if no usable boss remains.
  */
@@ -151,8 +163,9 @@ export function validateDirective(raw: unknown, req: DirectorRequest): FloorDire
   const archetype = str(bossRaw.archetype, 40);
   if (!cat.bosses.includes(archetype)) return null;
 
-  let abilities = ids(bossRaw.abilities, ABILITY_IDS, 4);
-  if (abilities.length < 2) return null;
+  const kit = (cat.bossKits?.[archetype] ?? []) as AbilityId[];
+  let abilities = ids(bossRaw.abilities, ABILITY_IDS, 4).filter((a) => !kit.includes(a)).slice(0, 3);
+  if (abilities.length < 1) abilities = [cheapest([], kit)];
   const phases: BossPhase[] = [];
   if (Array.isArray(bossRaw.phases)) {
     for (const p of bossRaw.phases.slice(0, 2)) {
@@ -181,8 +194,8 @@ export function validateDirective(raw: unknown, req: DirectorRequest): FloorDire
     const last = mutators.map((m) => (getMutator(m)?.cost ?? 0) > 0).lastIndexOf(true);
     mutators = mutators.filter((_, i) => i !== last);
   }
-  while (cost() > budget && abilities.length > 2) abilities = abilities.slice(0, -1);
-  if (cost() > budget) abilities = cheapestPair(abilities);
+  while (cost() > budget && abilities.length > 1) abilities = abilities.slice(0, -1);
+  if (cost() > budget) abilities = [cheapest(abilities, kit)];
 
   const enemyWeights: Record<string, number> = {};
   if (typeof r.enemyWeights === 'object' && r.enemyWeights !== null) {
@@ -255,10 +268,10 @@ export function validateDirective(raw: unknown, req: DirectorRequest): FloorDire
 
 const abilityCost = (id: AbilityId): number => getAbility(id).cost;
 
-/** Two cheapest abilities; ties go to the ones the Director asked for. */
-function cheapestPair(wanted: AbilityId[]): AbilityId[] {
+/** Cheapest ability outside the boss's kit; ties go to the ones the Director asked for. */
+function cheapest(wanted: AbilityId[], kit: AbilityId[]): AbilityId {
   const rank = (a: AbilityId): number => abilityCost(a) * 2 + (wanted.includes(a) ? 0 : 1);
-  return [...ABILITY_IDS].sort((a, b) => rank(a) - rank(b)).slice(0, 2);
+  return [...ABILITY_IDS].filter((a) => !kit.includes(a)).sort((a, b) => rank(a) - rank(b))[0];
 }
 
 /**

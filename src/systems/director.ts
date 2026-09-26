@@ -16,12 +16,17 @@ class DirectorRuntime {
     void this.forFloor(run, floor);
   }
 
+  /** Drop a cached directive (e.g. the war front changed after it was prefetched) and judge the floor again. */
+  refetch(run: RunState, floor: number): Promise<FloorDirective> {
+    this.pending.delete(`${run.seed}:${floor}`);
+    return this.forFloor(run, floor);
+  }
+
   forFloor(run: RunState, floor: number): Promise<FloorDirective> {
-    const req = directorRequest(run, floor);
-    const key = req.seed;
+    const key = `${run.seed}:${floor}`;
     let p = this.pending.get(key);
     if (!p) {
-      p = directorProvider.direct(req);
+      p = directorProvider.direct(directorRequest(run, floor));
       this.pending.set(key, p);
       p.catch(() => this.pending.delete(key));
     }

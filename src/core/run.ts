@@ -182,16 +182,6 @@ export class RunState {
     events.emit('hud_update', {});
   }
 
-  /**
-   * Boss that `floor` should not repeat: the one slain on the floor above. For
-   * the next floor (Director prefetch at boss-room entry) that is the current
-   * floor's boss, whether or not it is dead yet.
-   */
-  bossToAvoid(floor = this.floor): string | undefined {
-    if (floor === this.floor + 1) return this.floorMap?.boss.bossId;
-    return this.story.deeds.filter((d) => d.kind === 'boss_killed' && d.floor === floor - 1).pop()?.subject;
-  }
-
   /** Lazily generates the current floor's map and places the player in its start room. */
   ensureFloor(): FloorMap {
     if (this.floorMap) return this.floorMap;
@@ -205,7 +195,7 @@ export class RunState {
       enemyPool: front.enemyPool,
       npcPool: front.npcPool,
       omen: this.omen,
-      avoidBossId: this.bossToAvoid(),
+      avoidBossId: this.story.deeds.filter((d) => d.kind === 'boss_killed' && d.floor === this.floor - 1).pop()?.subject,
       pickItem: () => {
         const id = pickItemFromPool(this.itemRng, 'treasure', picked);
         picked.push(id);
@@ -213,7 +203,7 @@ export class RunState {
       },
     });
     if (this.directive) {
-      const pools = { bossPool: front.bossPool, enemyPool: [...front.enemyPool, ...(this.omen?.enemyBias ?? [])], npcPool: front.npcPool };
+      const pools = { ...front, enemyPool: [...front.enemyPool, ...(this.omen?.enemyBias ?? [])] };
       applyDirective(this.floorMap, this.directive, pools, this.floorRng.fork(`director-${this.floor}`));
     }
     this.room = this.floorMap.start;

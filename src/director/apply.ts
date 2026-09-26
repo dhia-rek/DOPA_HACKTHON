@@ -1,26 +1,24 @@
 import type { Rng } from '../core/rng';
 import type { FloorMap } from '../gen/floorGen';
 import type { FloorDirective } from './types';
+import type { ResolvedFront } from '../systems/chronicle';
 
-/** What may spawn on this floor: the war front's pools plus the omen's extra enemies. */
-export interface FloorPools {
-  bossPool: string[];
-  enemyPool: string[];
-  npcPool?: string[];
-}
+type FrontPools = Pick<ResolvedFront, 'bossPool' | 'enemyPool' | 'npcPool'>;
 
 /**
  * Applies the map-level part of a FloorDirective to a freshly generated floor:
  * boss archetype, enemy weights, NPC casting and the mutators that change what
- * spawns. Pure (no Phaser) so it can be simulated headless. Room-level visual
- * mutators (palette, darkness, flooded) are read by RunScene at build time.
+ * spawns. Pools come from the floor's war front (who holds the stage), so a
+ * directive can never bring back a boss the front has driven out. Pure (no
+ * Phaser) so it can be simulated headless. Room-level visual mutators
+ * (palette, darkness, flooded) are read by RunScene at build time.
  */
-export function applyDirective(map: FloorMap, d: FloorDirective, pools: FloorPools, rng: Rng): void {
+export function applyDirective(map: FloorMap, d: FloorDirective, front: FrontPools, rng: Rng): void {
   const normals = [...map.rooms.values()].filter((r) => r.type === 'normal');
 
-  if (pools.bossPool.includes(d.boss.archetype)) map.boss.bossId = d.boss.archetype;
+  if (front.bossPool.includes(d.boss.archetype)) map.boss.bossId = d.boss.archetype;
 
-  const weights = [...new Set(pools.enemyPool)].map((id) => ({ id, w: d.enemyWeights[id] ?? 1 })).filter((e) => e.w > 0);
+  const weights = [...new Set(front.enemyPool)].map((id) => ({ id, w: d.enemyWeights[id] ?? 1 })).filter((e) => e.w > 0);
   if (weights.length && Object.keys(d.enemyWeights).length) {
     for (const room of normals) room.enemies = room.enemies.map(() => weighted(rng, weights));
   }
@@ -44,8 +42,8 @@ export function applyDirective(map: FloorMap, d: FloorDirective, pools: FloorPoo
     const room = empty.length ? empty.splice(rng.int(0, empty.length - 1), 1)[0] : undefined;
     if (room) room.npcs.push(id);
   }
-  if (d.mutators.includes('pilgrim_road') && pools.npcPool?.length) {
-    for (const room of empty.slice(0, 2)) room.npcs.push(rng.pick(pools.npcPool));
+  if (d.mutators.includes('pilgrim_road') && front.npcPool.length) {
+    for (const room of empty.slice(0, 2)) room.npcs.push(rng.pick(front.npcPool));
   }
 }
 

@@ -5,20 +5,26 @@ import type { ShotFlags } from '../core/stats';
 import type { AbilityId, WeaknessId } from '../data/abilities';
 import type { Enemy } from '../entities/Enemy';
 import { type Behaviour, type BehaviourContext, ring, seek, shootAt, toPlayer } from './behaviours';
+import { impact, inReach, shockwave, swipe } from './bossStrikes';
 
 /**
  * `boss_directed`: a boss composed at runtime from the Director's BossBlueprint.
  * The boss roams like a chaser and, every cooldown, performs the next active
- * ability in round-robin order (blueprint abilities + those unlocked by phases).
- * Passive abilities (shields, poison trail, enrage, split, heart theft) run
- * alongside. Every ability has a tell; the weakness the player earned makes
+ * ability in round-robin order (the archetype's signature kit + the Director's
+ * extras + those unlocked by phases). Poses (windup, charge, stagger, blink)
+ * are declared via `enemy.pose()`; Enemy animates them.
+ * At arm's reach every boss swipes (claw/horn wedge) instead of waiting for
+ * its next ability. Passive abilities (shields, poison trail, enrage, split,
+ * heart theft) run alongside. Every ability has a tell; the weakness the player earned makes
  * one of the counters much stronger (see `weaknessDamageMul`).
  */
 
 /** Abilities executed as timed actions; the rest are passive. */
-const ACTIVE: readonly AbilityId[] = ['charge', 'ground_slam', 'projectile_ring', 'summon_minions', 'teleport_behind', 'call_shades', 'mirror_build'];
+const ACTIVE: readonly AbilityId[] = ['charge', 'ground_slam', 'projectile_ring', 'volley', 'summon_minions', 'teleport_behind', 'call_shades', 'mirror_build'];
 
 const State = { Roam: 0, Windup: 1, Charging: 2, Stagger: 3, Blink: 4 } as const;
+/** Tint held through a windup, by `memory.pending`: 1 charge, 2 slam, 3 ring, 4 volley, 5 swipe. */
+const WINDUP_TINT: Record<number, number> = { 1: 0xff8060, 2: 0xd0c0a0, 3: 0xa0e0a0, 4: 0xffe080, 5: 0xffc0a0 };
 type State = (typeof State)[keyof typeof State];
 
 const clampToRoom = (x: number, y: number): { x: number; y: number } => ({
@@ -26,11 +32,12 @@ const clampToRoom = (x: number, y: number): { x: number; y: number } => ({
   y: Phaser.Math.Clamp(y, TILE * 1.5, GAME_HEIGHT - TILE * 1.5),
 });
 
-/** Abilities currently unlocked: the base set plus every phase whose hp threshold has been crossed. */
+/** Abilities currently unlocked: the archetype's signature kit, the Director's extras, and every phase whose hp threshold has been crossed. */
 export function activeAbilities(enemy: Enemy): AbilityId[] {
   const bp = enemy.blueprint;
   if (!bp) return [];
-  const out = [...bp.abilities];
+  const out = [...(enemy.def.abilities ?? [])];
+  for (const a of bp.abilities) if (!out.includes(a)) out.push(a);
   for (const phase of bp.phases) {
     if (enemy.hpRatio * 100 <= phase.atHpPct) for (const a of phase.add) if (!out.includes(a)) out.push(a);
   }
@@ -76,7 +83,7 @@ export const bossDirected: Behaviour = (ctx) => {
   if (abilities.includes('split_on_hp') && !m.split && enemy.hpRatio <= 0.5) {
     m.split = 1;
     summon(ctx, 2, ctx.summonPool ?? [], 'divides itself');
-    enemy.setScale(0.85);
+    enemy.baseScale = 0.85;
   }
   enemy.vulnerability = m.state === State.Stagger && bp.weakness === 'stagger_after_charge' ? 2 : 1;
 
@@ -86,6 +93,16 @@ export const bossDirected: Behaviour = (ctx) => {
     seek(enemy, d, enemy.speed * (enraged ? 1.35 : 1), now);
     if (enraged) enemy.setTint(0xff6050);
     if (m.cooldownUntil === undefined) m.cooldownUntil = now + 1200;
+    if (now >= (m.meleeUntil ?? 0) && inReach(ctx, d)) {
+      const dir = d.clone().normalize();
+      m.cx = dir.x;
+      m.cy = dir.y;
+      m.meleeUntil = now + 1600 * tempo;
+      m.pending = 5;
+      m.state = State.Windup;
+      m.until = now + 340 * tempo;
+      return;
+    }
     if (now >= m.cooldownUntil) {
       const pool = abilities.filter((a) => ACTIVE.includes(a));
       if (!pool.length) {
@@ -102,17 +119,26 @@ export const bossDirected: Behaviour = (ctx) => {
 
   if (state === State.Windup) {
     enemy.moveTowards(0, 0);
-    enemy.setScale(0.92 + Math.sin(now / 40) * 0.04, 1.08);
+    enemy.pose('windup');
+    enemy.setTint(WINDUP_TINT[m.pending] ?? 0xd0c0a0);
     if (now >= m.until) {
-      enemy.setScale(1);
       if (m.pending === 1) {
         // charge
         m.state = State.Charging;
         m.until = now + 1100;
       } else if (m.pending === 2) {
         // ground slam
-        settings.shake(ctx.player.scene.cameras.main, 180, 0.012);
-        ring(ctx, 8, rng.float(0, Math.PI), 190);
+        shockwave(ctx, enraged ? 220 : 190);
+        m.state = State.Roam;
+      } else if (m.pending === 5) {
+        // melee swipe
+        swipe(ctx, new Phaser.Math.Vector2(m.cx, m.cy));
+        m.state = State.Roam;
+      } else if (m.pending === 4) {
+        // volley: a fan aimed at the player
+        const base = Math.atan2(d.y, d.x);
+        const spread = enraged ? [-0.44, -0.22, 0, 0.22, 0.44] : [-0.22, 0, 0.22];
+        for (const off of spread) shootAt(ctx, Math.cos(base + off), Math.sin(base + off), 300);
         m.state = State.Roam;
       } else {
         // projectile ring
@@ -126,32 +152,31 @@ export const bossDirected: Behaviour = (ctx) => {
   if (state === State.Charging) {
     const s = (enemy.def.chargeSpeed ?? 480) * (enraged ? 1.2 : 1);
     enemy.moveTowards(m.cx * s, m.cy * s);
+    enemy.pose('charge');
     if (!enemy.body.blocked.none || now >= m.until) {
       m.state = State.Stagger;
       m.until = now + (bp.weakness === 'stagger_after_charge' ? 1500 : 700);
       settings.shake(ctx.player.scene.cameras.main, 120, 0.008);
+      if (!enemy.body.blocked.none) impact(ctx, enemy.x + m.cx * enemy.def.radius, enemy.y + m.cy * enemy.def.radius, 0xc0b090, 10);
     }
     return;
   }
 
   if (state === State.Stagger) {
     enemy.moveTowards(0, 0);
-    enemy.setAngle(Math.sin(now / 50) * 6);
-    if (now >= m.until) {
-      enemy.setAngle(0);
-      m.state = State.Roam;
-    }
+    enemy.pose('stagger');
+    if (now >= m.until) m.state = State.Roam;
     return;
   }
 
   if (state === State.Blink) {
     enemy.moveTowards(0, 0);
-    enemy.setAlpha(0.3 + 0.7 * Math.abs(Math.sin(now / 30)));
+    enemy.pose('blink');
     if (now >= m.until) {
       const dir = player.body.velocity.lengthSq() > 100 ? player.body.velocity.clone().normalize() : d.clone().normalize();
       const p = clampToRoom(player.x - dir.x * 110, player.y - dir.y * 110);
       enemy.setPosition(p.x, p.y);
-      enemy.setAlpha(1);
+      enemy.body.velocity.set(0, 0);
       m.state = State.Roam;
       m.cooldownUntil = now + 900 * tempo;
     }
@@ -169,7 +194,6 @@ function perform(ctx: BehaviourContext, ability: AbilityId, d: Phaser.Math.Vecto
       m.pending = 1;
       m.state = State.Windup;
       m.until = now + 600 * tempo;
-      enemy.setTint(0xff8060);
       break;
     }
     case 'ground_slam':
@@ -181,6 +205,11 @@ function perform(ctx: BehaviourContext, ability: AbilityId, d: Phaser.Math.Vecto
       m.pending = 3;
       m.state = State.Windup;
       m.until = now + 450 * tempo;
+      break;
+    case 'volley':
+      m.pending = 4;
+      m.state = State.Windup;
+      m.until = now + 500 * tempo;
       break;
     case 'teleport_behind':
       m.state = State.Blink;
