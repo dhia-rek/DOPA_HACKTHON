@@ -50,8 +50,8 @@ Add `?debug=1` to the URL:
 Run the server with a `GEMINI_API_KEY` to get live LLM dialogue, trials, omens and voices:
 
 ```bash
+printf 'VITE_DIALOGUE_API=http://localhost:8787\nVITE_DIRECTOR_API=http://localhost:8787/director\n' > .env.local
 cd server && npm install && GEMINI_API_KEY=... PORT=8787 npx tsx src/index.ts
-cd .. && printf 'VITE_DIALOGUE_API=http://localhost:8787\nVITE_DIRECTOR_API=http://localhost:8787/director\n' > .env.local
 ```
 
 More docs: [STORY.md](STORY.md) (lore), [ARCHITECTURE.md](ARCHITECTURE.md) (code), [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) (dev guide).
