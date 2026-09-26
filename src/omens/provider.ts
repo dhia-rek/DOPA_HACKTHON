@@ -55,26 +55,47 @@ export function mockOmen(req: OmenRequest): FloorOmen {
 }
 
 /**
- * Floors are generated synchronously, so the AI omen for floor N+1 is
- * prefetched while the player finishes floor N; if it has not arrived (or no
- * server is configured) the mock is used. One director per run.
+ * Floors are generated synchronously, so the AI omen is fetched ahead of time:
+ * prefetched when the previous boss falls and awaited (briefly) by
+ * FloorIntroScene. Omens are keyed by seed + deeds, so a deed done after the
+ * prefetch triggers a fresh request; anything not ready in time uses the mock.
  */
 export class OmenDirector {
   private readonly ready = new Map<string, FloorOmen>();
+  private readonly pending = new Map<string, Promise<void>>();
   private readonly url = aiEndpoint('/omen');
 
   prefetch(req: OmenRequest): void {
-    if (!this.url || this.ready.has(req.seed)) return;
-    postJson(this.url, req)
-      .then((raw) => {
-        const omen = validateOmen(raw, req);
-        if (omen) this.ready.set(req.seed, omen);
-        else console.warn('[omen] invalid omen from server, using mock');
-      })
-      .catch((err) => console.warn('[omen] falling back to mock:', err));
+    void this.load(req, 0);
+  }
+
+  /** Resolves once the omen for `req` is ready, or after `timeoutMs` (never rejects). */
+  load(req: OmenRequest, timeoutMs = 3000): Promise<void> {
+    if (!this.url) return Promise.resolve();
+    const key = omenKey(req);
+    if (this.ready.has(key)) return Promise.resolve();
+    let p = this.pending.get(key);
+    if (!p) {
+      p = postJson(this.url, req)
+        .then((raw) => {
+          const omen = validateOmen(raw, req);
+          if (omen) this.ready.set(key, omen);
+          else console.warn('[omen] invalid omen from server, using mock');
+        })
+        .catch((err) => console.warn('[omen] falling back to mock:', err))
+        .finally(() => this.pending.delete(key));
+      this.pending.set(key, p);
+    }
+    return Promise.race([p, new Promise<void>((r) => setTimeout(r, timeoutMs))]);
   }
 
   get(req: OmenRequest): FloorOmen {
-    return this.ready.get(req.seed) ?? mockOmen(req);
+    return this.ready.get(omenKey(req)) ?? mockOmen(req);
   }
+}
+
+/** Seed + the player's deeds; excludes the front-dependent war/lore/stage fields so a prefetch made before descending still matches. */
+function omenKey(req: OmenRequest): string {
+  const s = req.story;
+  return `${req.seed}:${JSON.stringify([s.karma, s.flags, s.npcsKilled, s.npcsSpared, s.bossesKilled, s.recentDeeds, s.shades, s.items])}`;
 }
