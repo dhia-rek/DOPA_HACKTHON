@@ -88,6 +88,7 @@ export class DialogueScene extends Phaser.Scene {
       });
     }
 
+    stopRecordedVoice();
     if (this.recorded) playRecordedVoice(data.script.speakerId);
     this.showLine();
   }
