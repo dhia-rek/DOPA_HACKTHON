@@ -7,6 +7,7 @@ import { TOUCH } from '../core/input';
 import type { RunState } from '../core/run';
 import { music, type MusicKind } from '../core/music';
 import { settings } from '../core/settings';
+import { combatSfx } from '../core/sfx';
 import { KARMA } from '../core/story';
 import { earnedWeaknesses } from '../core/profile';
 import { EnemyDef, getEnemy } from '../data/enemies';
@@ -842,6 +843,7 @@ export class RunScene extends Phaser.Scene {
     shot.hitSet.add(enemy);
     const mul = enemy.blueprint ? weaknessDamageMul(enemy.blueprint.weakness, shot.flags) : 1;
     enemy.takeHit(shot.damage * mul, shot.x, shot.y, (shot.flags.knockback ?? 1) * (mul > 1 ? 1.5 : 1), shot.flags.poison ?? false);
+    combatSfx('hit');
     hitSpark(this, shot.x, shot.y, shot.body.velocity.angle(), mul > 1 ? 0xffe08a : 0xfff4d6, enemy.def.isBoss ? 1.2 : 0.9);
     if (mul > 1) this.burst(shot.x, shot.y, 0xffe08a, 3);
     if (!shot.flags.piercing) shot.kill();
@@ -851,6 +853,7 @@ export class RunScene extends Phaser.Scene {
     if (this.dead || this.player.isInvulnerable || debugState.god) return;
     if (this.run.character.passive === 'glass') amount = Math.max(amount, 2);
     const died = this.player.hurt(amount, source, fromX, fromY);
+    combatSfx('hurt');
     hitSpark(this, this.player.x, this.player.y, Math.atan2(this.player.y - fromY, this.player.x - fromX), 0xff5a3c, 1.1);
     if (died) this.die();
   }
@@ -859,6 +862,7 @@ export class RunScene extends Phaser.Scene {
     if (enemy.def.innocent) return this.killNpc(enemy);
     this.run.killsThisRun++;
     const isBoss = !!enemy.def.isBoss;
+    combatSfx(isBoss ? 'boss_kill' : 'kill');
     this.burst(enemy.x, enemy.y, enemy.def.color, isBoss ? 24 : 8);
     events.emit('enemy_killed', { enemyId: enemy.def.id, isBoss });
     if (this.plague && !isBoss) {

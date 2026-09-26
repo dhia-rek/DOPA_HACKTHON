@@ -5,6 +5,7 @@ import { events } from '../core/events';
 import { input } from '../core/input';
 import type { RunState } from '../core/run';
 import { settings } from '../core/settings';
+import { combatSfx } from '../core/sfx';
 import { getWeapon, type WeaponDef } from '../data/weapons';
 import { dust } from '../systems/fx';
 import type { Projectile, ProjectilePool } from './Projectile';
@@ -174,6 +175,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
     this.recoil = 1;
     this.swing = 1;
+    combatSfx(this.weaponDef.id);
     events.emit('player_shot', {});
   }
 
