@@ -25,7 +25,7 @@ function parseRequest(body: unknown): DialogueRequest | null {
   }
   if (typeof b.story !== 'object' || b.story === null || Array.isArray(b.story)) return null;
   if (JSON.stringify(b.story).length > 8000) return null;
-  if (b.language !== undefined && typeof b.language !== 'string') return null;
+  if (b.language !== undefined && (typeof b.language !== 'string' || b.language.length > 16)) return null;
   return b as unknown as DialogueRequest;
 }
 
@@ -39,7 +39,7 @@ function parseDirectorRequest(body: unknown): DirectorRequest | null {
   if (typeof b.seed !== 'string' || !b.seed || typeof b.stageId !== 'string' || typeof b.floor !== 'number') return null;
   if (typeof b.profile !== 'object' || b.profile === null || Array.isArray(b.profile)) return null;
   if (JSON.stringify(b.profile).length > 24000) return null;
-  if (b.language !== undefined && typeof b.language !== 'string') return null;
+  if (b.language !== undefined && (typeof b.language !== 'string' || b.language.length > 16)) return null;
   return b as unknown as DirectorRequest;
 }
 
@@ -146,12 +146,12 @@ app.post('/director', async (req, res) => {
 function parseTrialRequest(body: unknown): TrialRequest | null {
   if (typeof body !== 'object' || body === null) return null;
   const b = body as Record<string, unknown>;
-  if (typeof b.seed !== 'string' || !b.seed) return null;
+  if (typeof b.seed !== 'string' || !b.seed || b.seed.length > 200) return null;
   if (typeof b.story !== 'object' || b.story === null || Array.isArray(b.story)) return null;
   if (JSON.stringify(b.story).length > 8000) return null;
-  if (!Array.isArray(b.enemyPool) || !b.enemyPool.every((e) => typeof e === 'string') || b.enemyPool.length > 20) return null;
-  if (typeof b.normalRooms !== 'number') return null;
-  if (b.language !== undefined && typeof b.language !== 'string') return null;
+  if (!Array.isArray(b.enemyPool) || !b.enemyPool.every((e) => typeof e === 'string' && e.length <= 40) || b.enemyPool.length > 20) return null;
+  if (typeof b.normalRooms !== 'number' || !Number.isInteger(b.normalRooms) || b.normalRooms < 0 || b.normalRooms > 50) return null;
+  if (b.language !== undefined && (typeof b.language !== 'string' || b.language.length > 16)) return null;
   return b as unknown as TrialRequest;
 }
 
@@ -197,11 +197,13 @@ app.post('/trial', async (req, res) => {
 function parseOmenRequest(body: unknown): OmenRequest | null {
   if (typeof body !== 'object' || body === null) return null;
   const b = body as Record<string, unknown>;
-  if (typeof b.seed !== 'string' || !b.seed || typeof b.floor !== 'number' || typeof b.stageName !== 'string') return null;
+  if (typeof b.seed !== 'string' || !b.seed || b.seed.length > 200) return null;
+  if (typeof b.floor !== 'number' || !Number.isInteger(b.floor) || b.floor < 1 || b.floor > 999) return null;
+  if (typeof b.stageName !== 'string' || b.stageName.length > 80) return null;
   if (typeof b.story !== 'object' || b.story === null || Array.isArray(b.story)) return null;
   if (JSON.stringify(b.story).length > 8000) return null;
-  if (!Array.isArray(b.enemyPool) || !b.enemyPool.every((e) => typeof e === 'string') || b.enemyPool.length > 20) return null;
-  if (b.language !== undefined && typeof b.language !== 'string') return null;
+  if (!Array.isArray(b.enemyPool) || !b.enemyPool.every((e) => typeof e === 'string' && e.length <= 40) || b.enemyPool.length > 20) return null;
+  if (b.language !== undefined && (typeof b.language !== 'string' || b.language.length > 16)) return null;
   return b as unknown as OmenRequest;
 }
 
