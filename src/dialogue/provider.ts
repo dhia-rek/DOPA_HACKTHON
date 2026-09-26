@@ -156,9 +156,9 @@ export class MockDialogueProvider implements DialogueProvider {
           ? {
               lines: [rng.pick(NPC_LINES[req.speakerId] ?? NPC_LINES.villager).replace(/\{you\}/g, you)],
               options: [
-                { id: 'spare', text: 'Let them go.', reply: 'May the gods remember this.', effects: { karma: 10 } },
-                { id: 'rob', text: 'Take their coins and leave.', reply: 'Take it… just go.', effects: { karma: -5, coins: 5 } },
-                { id: 'threaten', text: 'Demand the secret.', reply: 'The beast below fears fire… and pride.', effects: { karma: -2, flags: ['knows_boss_weakness'] } },
+                { id: 'spare', text: 'Let them go.', reply: 'May the gods remember this.', effects: { karma: 10, npcOutcome: 'spared' } },
+                { id: 'rob', text: 'Take their coins and leave.', reply: 'Take it… just go.', effects: { karma: -5, coins: 5, npcOutcome: 'wronged' } },
+                { id: 'threaten', text: 'Demand the secret.', reply: 'The beast below fears fire… and pride.', effects: { karma: -2, flags: ['knows_boss_weakness'], npcOutcome: 'wronged' } },
               ],
             }
           : req.kind === 'shrine'

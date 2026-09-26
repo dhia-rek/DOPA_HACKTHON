@@ -284,7 +284,7 @@ export class RunScene extends Phaser.Scene {
     if (script.kind === 'boss_intro' && enemy?.active) {
       enemy.applyMods(this.run.story.takeBossMods());
     } else if (script.kind === 'npc' && enemy?.active) {
-      this.spareNpc(enemy, (option?.effects.karma ?? 0) < 0);
+      this.spareNpc(enemy, option?.effects.npcOutcome === 'wronged');
     } else if (script.kind === 'shrine') {
       this.extinguishAltar();
     }
