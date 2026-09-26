@@ -43,6 +43,18 @@ SIZES = {
     'enemy_minotaur': ('sprite', 84, 84, {'fill': 1.0}),
     'enemy_hydra': ('sprite', 92, 92, {'fill': 1.0}),
     'enemy_villager': ('sprite', 46, 46, {'fill': 1.0}),
+    'enemy_menoetius': ('sprite', 84, 84, {'fill': 1.0}),
+    'enemy_campe': ('sprite', 92, 92, {'fill': 1.0}),
+    'enemy_alcyoneus': ('sprite', 96, 96, {'fill': 1.0}),
+    'enemy_porphyrion': ('sprite', 104, 104, {'fill': 1.0}),
+    'enemy_talos': ('sprite', 92, 92, {'fill': 1.0}),
+    'enemy_earthborn': ('sprite', 54, 54, {'fill': 1.0}),
+    'enemy_cultist': ('sprite', 50, 50, {'fill': 1.0}),
+    'enemy_shade': ('sprite', 44, 44, {'fill': 1.0}),
+    'enemy_restless_shade': ('sprite', 46, 46, {'fill': 1.0}),
+    'enemy_priestess': ('sprite', 46, 46, {'fill': 1.0}),
+    'enemy_child': ('sprite', 38, 38, {'fill': 1.0}),
+    'enemy_wounded_soldier': ('sprite', 50, 50, {'fill': 1.0}),
     # room
     # room tiles are toned down (Isaac floors are low-contrast so sprites pop) and
     # RunScene multiplies them by the stage palette on top.
@@ -75,6 +87,9 @@ for _c in ('achilles', 'atalanta', 'heracles', 'orpheus', 'kratos'):
 # gods: blessing overlay portraits
 for _g in ('hades', 'athena', 'apollo', 'hermes', 'ares', 'poseidon'):
     SIZES[f'god_{_g}'] = ('sprite', 160, 160, {'fill': 1.0})
+# weapons: held sprites, authored pointing right (the lyre upright)
+for _w in ('spear', 'bow', 'club', 'lyre', 'blades'):
+    SIZES[f'weapon_{_w}'] = ('sprite', 64, 64, {'fill': 1.0})
 # menu portraits: hi-res version of each player sprite
 for _c in ('achilles', 'atalanta', 'heracles', 'orpheus', 'kratos'):
     SIZES[f'portrait_{_c}'] = ('sprite', 96, 96, {'src': f'player_{_c}', 'fill': 0.96})

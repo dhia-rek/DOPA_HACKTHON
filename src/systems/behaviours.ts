@@ -184,6 +184,7 @@ const charger: Behaviour = ({ enemy, player, now }) => {
       const horizontal = Math.abs(d.y) < 36;
       m.cx = horizontal ? Math.sign(d.x) : 0;
       m.cy = horizontal ? 0 : Math.sign(d.y);
+      enemy.chargeFx('windup');
     }
   } else if (state === 1) {
     enemy.moveTowards(0, 0);
@@ -198,8 +199,10 @@ const charger: Behaviour = ({ enemy, player, now }) => {
     const s = enemy.def.chargeSpeed ?? 400;
     enemy.moveTowards(m.cx * s, m.cy * s);
     enemy.attack(120);
+    enemy.chargeFx('charge');
     const hitWall = !enemy.body.blocked.none || !enemy.body.touching.none;
     if (hitWall || now >= m.until) {
+      if (hitWall) enemy.chargeFx('slam');
       m.state = 3;
       m.until = now + 600;
     }
@@ -244,6 +247,7 @@ const bossMinotaur: Behaviour = (ctx) => {
     if (now >= (m.cooldownUntil ?? 0)) {
       m.state = 1;
       m.until = now + (enraged ? 300 : 500);
+      enemy.chargeFx('windup');
       const dir = d.clone().normalize();
       m.cx = dir.x;
       m.cy = dir.y;
@@ -263,7 +267,9 @@ const bossMinotaur: Behaviour = (ctx) => {
     enemy.moveTowards(m.cx * s, m.cy * s);
     enemy.stretch.set(1.12, 0.92);
     enemy.attack(120);
+    enemy.chargeFx('charge');
     if (!enemy.body.blocked.none || now >= m.until) {
+      enemy.chargeFx('slam');
       m.state = 3;
       m.until = now + (enraged ? 500 : 900);
       enemy.stretch.set(1.2, 0.8);
@@ -325,6 +331,7 @@ const bossGiant: Behaviour = (ctx) => {
     if (now >= (m.cooldownUntil ?? 0)) {
       m.state = 1;
       m.until = now + 600;
+      enemy.chargeFx('windup');
     }
   } else if (state === 1) {
     enemy.moveTowards(0, 0);
@@ -342,7 +349,10 @@ const bossGiant: Behaviour = (ctx) => {
   } else if (state === 2) {
     const s = (enemy.def.chargeSpeed ?? 450) * (wounded ? 1.2 : 1);
     enemy.moveTowards(m.cx * s, m.cy * s);
+    enemy.attack(120);
+    enemy.chargeFx('charge');
     if (!enemy.body.blocked.none || now >= m.until) {
+      if (!enemy.body.blocked.none) enemy.chargeFx('slam');
       m.state = 0;
       m.cooldownUntil = now + (wounded ? 900 : 1500);
     }

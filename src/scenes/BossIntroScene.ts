@@ -4,6 +4,7 @@ import { settings } from '../core/settings';
 import { blip } from '../core/sfx';
 import type { CharacterDef } from '../data/characters';
 import type { EnemyDef } from '../data/enemies';
+import { mono } from './ui';
 
 export interface BossIntroData {
   hero: CharacterDef;
@@ -15,7 +16,6 @@ export interface BossIntroData {
   onDone: () => void;
 }
 
-const mono = 'monospace';
 const W = GAME_WIDTH;
 const H = GAME_HEIGHT;
 const GAP = 22;

@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
-import { ART_SCALE } from '../art/manifest';
+import { ACTOR_SCALE, ART_SCALE } from '../art/manifest';
 import { ENEMY, PROJECTILE } from '../config';
 import type { BossMods } from '../core/story';
 import type { EnemyDef } from '../data/enemies';
 import type { BossBlueprint } from '../director/types';
+import { dust, shockwave, speedLine, warnMark } from '../systems/fx';
 
 export type EnemyPose = 'idle' | 'attack' | 'hurt' | 'dead';
 
@@ -20,6 +21,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   memory: Record<string, number> = {};
   /** Set by the scene each frame: horizontal offset to the player, so a standing enemy still faces them. */
   faceX = 0;
+  private lastTrailAt = 0;
   /** True once killed: the death pose plays out, behaviours and collisions stop, then the sprite destroys itself. */
   dying = false;
   /** Director-composed boss: abilities, phases, weakness. Drives `boss_directed`. */
@@ -63,15 +65,15 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     scene.add.existing(this);
     group.add(this);
-    this.shadow = scene.add.image(x, y, 'shadow').setDepth(7).setAlpha(0).setScale((def.radius / 16) * 0.9, (def.radius / 16) * 0.7);
+    this.shadow = scene.add.image(x, y, 'shadow').setDepth(7).setAlpha(0).setScale((def.radius / 16) * 0.9 * ACTOR_SCALE, (def.radius / 16) * 0.7 * ACTOR_SCALE);
     this.once(Phaser.GameObjects.Events.DESTROY, () => this.shadow.destroy());
-    const r = def.radius * ART_SCALE;
+    const r = def.radius * ART_SCALE * 1.1;
     this.body.setCircle(r, this.width / 2 - r, this.height / 2 - r);
     this.body.setCollideWorldBounds(true);
     this.setDepth(def.isBoss ? 9 : 8);
     this.setAlpha(0);
-    this.setScale(0.3 / ART_SCALE);
-    scene.tweens.add({ targets: this, alpha: 1, scale: 1 / ART_SCALE, duration: ENEMY.spawnDelayMs, ease: 'Back.Out' });
+    this.setScale((0.3 * ACTOR_SCALE) / ART_SCALE);
+    scene.tweens.add({ targets: this, alpha: 1, scale: ACTOR_SCALE / ART_SCALE, duration: ENEMY.spawnDelayMs, ease: 'Back.Out' });
     scene.tweens.add({ targets: this.shadow, alpha: 0.6, duration: ENEMY.spawnDelayMs });
 
     if (def.innocent) {
@@ -121,6 +123,26 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.attackUntil = Math.max(this.attackUntil, this.scene.time.now + ms);
   }
 
+  /**
+   * Charge telegraphs for chargers and slamming bosses: a warning mark and dust
+   * while winding up, speed streaks while charging, a shockwave on the stop.
+   */
+  chargeFx(kind: 'windup' | 'charge' | 'slam'): void {
+    const r = this.def.radius;
+    if (kind === 'windup') {
+      warnMark(this.scene, this.x, this.y - r * ACTOR_SCALE - 6);
+      dust(this.scene, this.x, this.y + r, 3);
+    } else if (kind === 'charge') {
+      const now = this.scene.time.now;
+      if (now - this.lastTrailAt < 45) return;
+      this.lastTrailAt = now;
+      speedLine(this.scene, this.x, this.y, this.body.velocity.x, this.body.velocity.y, 0xfff0d0);
+      dust(this.scene, this.x, this.y + r, 1);
+    } else {
+      shockwave(this.scene, this.x, this.y + r * 0.5, 0xe8d8b8, this.def.isBoss ? 1.4 : 0.9);
+    }
+  }
+
   /** Behaviours call this instead of setting body velocity directly so knockback composes. */
   moveTowards(vx: number, vy: number): void {
     this.body.setVelocity(vx + this.knock.x, vy + this.knock.y);
@@ -140,7 +162,8 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       const bob = Math.sin(this.scene.time.now / (speed > 20 ? 90 : 260) + this.bobPhase) * (speed > 20 ? 0.05 : 0.025);
       const hit = this.scene.time.now < this.flashUntil ? 0.12 : 0;
       const lunge = this.pose === 'attack' ? 0.06 : 0;
-      this.setScale((this.stretch.x / ART_SCALE) * (1 - bob * 0.6 + hit + lunge), (this.stretch.y / ART_SCALE) * (1 + bob - hit - lunge * 0.5));
+      const base = ACTOR_SCALE / ART_SCALE;
+      this.setScale(this.stretch.x * base * (1 - bob * 0.6 + hit + lunge), this.stretch.y * base * (1 + bob - hit - lunge * 0.5));
       const vx = this.body.velocity.x;
       const face = Math.abs(vx) > 8 ? vx : this.faceX;
       if (Math.abs(face) > 4) this.setFlipX(face < 0);
@@ -194,7 +217,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.dying = true;
     this.disableBody();
     this.clearTint();
-    const s = 1 / ART_SCALE;
+    const s = ACTOR_SCALE / ART_SCALE;
     const dead = this.poses.dead;
     if (!dead) {
       this.scene.tweens.add({ targets: this, scaleX: s * 1.35, scaleY: s * 0.55, alpha: 0, duration: 170, ease: 'Quad.In', onComplete: () => this.destroy() });

@@ -13,9 +13,11 @@ export const GAME_HEIGHT = GRID_ROWS * TILE;
 
 export const PLAYER = {
   /** How quickly the player reaches max speed (px/s²). */
-  acceleration: 2600,
+  acceleration: 3400,
   /** How quickly the player stops (px/s²). */
-  drag: 2000,
+  drag: 2600,
+  /** Radians of body tilt at full horizontal speed. */
+  lean: 0.09,
   radius: 20,
   /** Invulnerability after being hit, ms. */
   iFramesMs: 700,

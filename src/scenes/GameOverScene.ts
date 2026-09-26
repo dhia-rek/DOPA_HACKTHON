@@ -3,6 +3,7 @@ import { ART_SCALE } from '../art/manifest';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import type { RunState } from '../core/run';
 import { judge } from '../data/war';
+import { mono } from './ui';
 
 export class GameOverScene extends Phaser.Scene {
   constructor() {
@@ -11,7 +12,6 @@ export class GameOverScene extends Phaser.Scene {
 
   create(): void {
     const run = this.registry.get('run') as RunState;
-    const mono = 'monospace';
     const cx = GAME_WIDTH / 2;
     const mins = Math.floor(run.elapsedMs / 60000);
     const secs = Math.floor((run.elapsedMs % 60000) / 1000);

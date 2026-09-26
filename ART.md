@@ -112,3 +112,28 @@ second folder and are processed together:
 
 `BossIntroScene` (VS splash) reuses `portrait_<hero>` and the boss's base
 sprite; `BlessingScene` uses `god_<id>`.
+
+## Weapons, hits and telegraphs
+
+- Every hero holds a signature weapon (`src/data/weapons.ts`): `weapon_<id>` is a
+  64×64 sprite authored pointing right (the lyre upright). `Player.updateWeapon`
+  places it in the hand of the current facing and plays a per-weapon swing on
+  each shot: spear thrusts, bow draws, club smashes over the head, blades slash
+  in an arc, lyre strums. Shots leave from the weapon's reach.
+- Shots take the weapon's look (`shot_dart`, `shot_arrow`, `shot_boulder`,
+  `shot_note`, `shot_blade`, drawn procedurally in BootScene): darts and arrows
+  point along their flight, boulders and blades spin, notes wobble.
+- `src/systems/fx.ts` holds the reactive feedback: `hitSpark` (flash + ring +
+  sparks fanning back along the hit direction) on every shot landing and on the
+  player being hurt, `dust` for footsteps and wall hits, `warnMark` + dust when a
+  charger winds up, `speedLine` streaks while it charges, and a `shockwave` when
+  it slams into a wall (`Enemy.chargeFx`).
+- Heroes, enemies and weapons render at `ACTOR_SCALE` (1.2×) on top of the 2×
+  art so they read big in the 13×7 room.
+
+## Type
+
+Cinzel (Trajan-style Roman capitals, `public/fonts/`) is the UI face; Cinzel
+Decorative is used for the title and dialogue drop caps. Fonts are declared in
+`index.html` and awaited in `main.ts` before Phaser boots, since Phaser
+rasterises text to canvas.

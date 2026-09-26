@@ -1,13 +1,13 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../config';
 import type { GodDef } from '../data/gods';
+import { mono } from './ui';
 
 export interface BlessingSceneData {
   god: GodDef;
   onDone: () => void;
 }
 
-const mono = 'monospace';
 const W = GAME_WIDTH;
 const H = GAME_HEIGHT;
 const HOLD_MS = 3000;

@@ -15,7 +15,7 @@ import { RunScene } from './scenes/RunScene';
 
 telemetry.listen();
 
-new Phaser.Game({
+const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'game',
   width: GAME_WIDTH,
@@ -32,4 +32,8 @@ new Phaser.Game({
     arcade: { debug: false },
   },
   scene: [BootScene, MenuScene, ChallengesScene, OptionsScene, FloorIntroScene, RunScene, HudScene, DialogueScene, BossIntroScene, BlessingScene, GameOverScene],
-});
+};
+
+// Phaser rasterises text on canvas, so the web fonts must be ready before the first scene draws.
+const fonts = Promise.all(['16px Cinzel', "16px 'Cinzel Decorative'"].map((f) => document.fonts.load(f)));
+Promise.race([fonts, new Promise((r) => setTimeout(r, 1500))]).then(() => new Phaser.Game(config));

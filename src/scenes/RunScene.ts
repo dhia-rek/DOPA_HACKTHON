@@ -30,6 +30,8 @@ import { BEHAVIOURS, threaten } from '../systems/behaviours';
 import { weaknessDamageMul } from '../systems/bossAbilities';
 import { director } from '../systems/director';
 import { getGod, type GodId } from '../data/gods';
+import { dust, hitSpark } from '../systems/fx';
+import { mono } from './ui';
 
 /** Distance (px) at which an innocent NPC shows its "!" talk bubble. */
 const TALK_RANGE = 150;
@@ -102,6 +104,7 @@ export class RunScene extends Phaser.Scene {
   private dialogueOpen = false;
   /** Delays room completion while a boss outro is pending/showing. */
   private holdClear = false;
+  private activeToast: Phaser.GameObjects.Text | null = null;
   /** `flooded` mutator: everyone wades. */
   private speedMul = 1;
   /** `darkness` mutator: mask that follows the player. */
@@ -361,10 +364,10 @@ export class RunScene extends Phaser.Scene {
       this.bossLabel?.setVisible(false);
       return;
     }
-    const w = 420;
-    const h = 14;
+    const w = 360;
+    const h = 12;
     const x = GAME_WIDTH / 2 - w / 2;
-    const y = GAME_HEIGHT - 42;
+    const y = 54;
     const ratio = Math.max(0, boss.hpRatio);
     g.fillStyle(0x0b0a0f, 0.85).fillRoundedRect(x - 3, y - 3, w + 6, h + 6, 5);
     g.fillStyle(0x3a1418).fillRoundedRect(x, y, w, h, 4);
@@ -374,8 +377,8 @@ export class RunScene extends Phaser.Scene {
     }
     if (!this.bossLabel) {
       this.bossLabel = this.add
-        .text(GAME_WIDTH / 2, y - 6, boss.def.name.toUpperCase(), { fontFamily: 'monospace', fontSize: '14px', color: '#f3e6c8', stroke: '#0b0a0f', strokeThickness: 4 })
-        .setOrigin(0.5, 1)
+        .text(GAME_WIDTH / 2, y + h + 5, boss.def.name.toUpperCase(), { fontFamily: mono, fontSize: '14px', color: '#f3e6c8', stroke: '#0b0a0f', strokeThickness: 4 })
+        .setOrigin(0.5, 0)
         .setDepth(30);
     }
     this.bossLabel.setVisible(true);
@@ -390,6 +393,7 @@ export class RunScene extends Phaser.Scene {
       this.time.delayedCall(400, () => this.grantBlessing());
       return;
     }
+    this.activeToast?.destroy();
     const god = this.run.grantRandomBlessing();
     this.scene.pause();
     const data: BlessingSceneData = { god, onDone: () => this.scene.resume() };
@@ -430,7 +434,7 @@ export class RunScene extends Phaser.Scene {
     const room = this.room;
     this.scene.pause();
     const waiting = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT - 120, `${speaker.name} is about to speak…`, { fontFamily: 'monospace', fontSize: '14px', color: COLORS.textDim })
+      .text(GAME_WIDTH / 2, GAME_HEIGHT - 120, `${speaker.name} is about to speak…`, { fontFamily: mono, fontSize: '14px', color: COLORS.textDim })
       .setOrigin(0.5)
       .setDepth(1000);
     let script: DialogueScript;
@@ -756,6 +760,7 @@ export class RunScene extends Phaser.Scene {
 
   private shotHitsWall(shot: Projectile): void {
     if (!shot.active) return;
+    dust(this, shot.x, shot.y, 2, shot.owner === 'player' ? 0xe8e0ff : 0xff8a7a, 3);
     if (shot.owner === 'player' && shot.flags.splitOnWall && !shot.flags.piercing) {
       const v = shot.body.velocity;
       const speed = v.length();
@@ -783,6 +788,7 @@ export class RunScene extends Phaser.Scene {
     shot.hitSet.add(enemy);
     const mul = enemy.blueprint ? weaknessDamageMul(enemy.blueprint.weakness, shot.flags) : 1;
     enemy.takeHit(shot.damage * mul, shot.x, shot.y, (shot.flags.knockback ?? 1) * (mul > 1 ? 1.5 : 1), shot.flags.poison ?? false);
+    hitSpark(this, shot.x, shot.y, shot.body.velocity.angle(), mul > 1 ? 0xffe08a : 0xfff4d6, enemy.def.isBoss ? 1.2 : 0.9);
     if (mul > 1) this.burst(shot.x, shot.y, 0xffe08a, 3);
     if (!shot.flags.piercing) shot.kill();
   }
@@ -791,6 +797,7 @@ export class RunScene extends Phaser.Scene {
     if (this.dead || this.player.isInvulnerable || debugState.god) return;
     if (this.run.character.passive === 'glass') amount = Math.max(amount, 2);
     const died = this.player.hurt(amount, source, fromX, fromY);
+    hitSpark(this, this.player.x, this.player.y, Math.atan2(this.player.y - fromY, this.player.x - fromX), 0xff5a3c, 1.1);
     if (died) this.die();
   }
 
@@ -959,7 +966,7 @@ export class RunScene extends Phaser.Scene {
 
   private bindDebugKeys(): void {
     this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT - 10, DEBUG_HELP, { fontFamily: 'monospace', fontSize: '11px', color: '#f88', backgroundColor: '#000a' })
+      .text(GAME_WIDTH / 2, GAME_HEIGHT - 10, DEBUG_HELP, { fontFamily: mono, fontSize: '11px', color: '#f88', backgroundColor: '#000a' })
       .setOrigin(0.5, 1)
       .setDepth(500);
     const kb = this.input.keyboard!;
@@ -1032,7 +1039,7 @@ export class RunScene extends Phaser.Scene {
   private toast(title: string, body: string, holdMs = 2200): void {
     const t = this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT - 120, `${title}\n${body}`, {
-        fontFamily: 'monospace',
+        fontFamily: mono,
         fontSize: '18px',
         color: COLORS.text,
         align: 'center',
@@ -1042,6 +1049,7 @@ export class RunScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(200);
+    this.activeToast = t;
     this.tweens.add({ targets: t, alpha: 0, delay: holdMs, duration: 500, onComplete: () => t.destroy() });
   }
 

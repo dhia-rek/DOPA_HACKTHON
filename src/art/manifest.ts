@@ -2,6 +2,7 @@ import { CHARACTERS } from '../data/characters';
 import { ENEMIES } from '../data/enemies';
 import { GODS } from '../data/gods';
 import { ITEMS } from '../data/items';
+import { WEAPONS } from '../data/weapons';
 
 /**
  * Sprites (players, enemies, pickups, hearts, items, portraits) are authored at
@@ -9,6 +10,9 @@ import { ITEMS } from '../data/items';
  * stay crisp when the canvas is scaled up. Room tiles are 1:1.
  */
 export const ART_SCALE = 2;
+
+/** Heroes, enemies and weapons are drawn this much larger than their authored size so they read big in the room. */
+export const ACTOR_SCALE = 1.2;
 
 const EXT: Record<string, string> = { menu_bg: 'jpg' };
 
@@ -43,6 +47,7 @@ export const STATIC_ART_KEYS = [
  *   portrait_<character.id>  96x96    menu portrait (falls back to player_* at 2x)
  *   enemy_<enemy.id>         radius*2+16 square; _attack/_hurt/_dead pose variants
  *   god_<god.id>             160x160  blessing overlay portrait
+ *   weapon_<weapon.id>       64x64    held weapon, drawn pointing right (lyre upright)
  *   item_<item.id>           28x28
  */
 export function artKeys(): string[] {
@@ -52,6 +57,7 @@ export function artKeys(): string[] {
     ...ENEMIES.flatMap((e) => [`enemy_${e.id}`, `enemy_${e.id}_hurt`, ...(e.innocent ? [] : [`enemy_${e.id}_attack`]), ...(e.isBoss ? [`enemy_${e.id}_dead`] : [])]),
     ...ITEMS.map((i) => `item_${i.id}`),
     ...GODS.map((g) => `god_${g.id}`),
+    ...WEAPONS.map((w) => `weapon_${w.id}`),
   ];
 }
 

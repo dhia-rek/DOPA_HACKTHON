@@ -6,6 +6,7 @@ import { CHARACTERS } from '../data/characters';
 import { ENEMIES, EnemyDef } from '../data/enemies';
 import { GODS } from '../data/gods';
 import { ITEMS } from '../data/items';
+import { WEAPONS } from '../data/weapons';
 import { ART_SCALE, artKeys, artUrl } from '../art/manifest';
 import { GAME_HEIGHT, GAME_WIDTH } from '../config';
 
@@ -39,6 +40,8 @@ export class BootScene extends Phaser.Scene {
     this.makeRock();
     this.makePit();
     this.makeTears();
+    this.makeShots();
+    this.makeFx();
     this.makeHearts();
     this.makeCoin();
     this.makePedestal();
@@ -51,6 +54,7 @@ export class BootScene extends Phaser.Scene {
     for (const e of ENEMIES) this.makeEnemy(e);
     for (const i of ITEMS) this.makeItemIcon(`item_${i.id}`, i.color);
     for (const g of GODS) this.makeGod(`god_${g.id}`, g.color);
+    for (const w of WEAPONS) this.makeWeapon(`weapon_${w.id}`);
 
     this.scene.start('menu');
   }
@@ -187,6 +191,69 @@ export class BootScene extends Phaser.Scene {
     poison.fillStyle(0xd0ff90).fillCircle(pr - 2, pr - 2, pr / 3);
     poison.generateTexture('tear_poison', pr * 2 + 2, pr * 2 + 2);
     poison.destroy();
+  }
+
+  /** Weapon projectiles, drawn pointing right (+x); Projectile rotates them along their flight. */
+  private makeShots(): void {
+    const dart = this.gfx();
+    dart.fillStyle(0x6a4a2a).fillRect(2, 3, 18, 3);
+    dart.fillStyle(0xe8d0a0).fillTriangle(0, 1, 5, 4.5, 0, 8);
+    dart.fillStyle(0xe0c070).fillTriangle(17, 0, 28, 4.5, 17, 9);
+    dart.fillStyle(0xfff4d0).fillTriangle(20, 2.5, 26, 4.5, 20, 4.5);
+    dart.generateTexture('shot_dart', 28, 9);
+    dart.destroy();
+
+    const arrow = this.gfx();
+    arrow.fillStyle(0x8a6a3a).fillRect(3, 3, 19, 2);
+    arrow.fillStyle(0xf0e6d0).fillTriangle(0, 0, 7, 4, 0, 8);
+    arrow.fillStyle(0xd8b060).fillTriangle(20, 0, 28, 4, 20, 8);
+    arrow.generateTexture('shot_arrow', 28, 8);
+    arrow.destroy();
+
+    const boulder = this.gfx();
+    boulder.fillStyle(0x6b6470).fillCircle(10, 10, 9);
+    boulder.fillStyle(0x8a8090).fillCircle(8, 8, 6);
+    boulder.fillStyle(0x4b4550).fillCircle(13, 12, 2.5).fillCircle(7, 13, 1.8);
+    boulder.generateTexture('shot_boulder', 20, 20);
+    boulder.destroy();
+
+    const note = this.gfx();
+    note.fillStyle(0x8fb0ff, 0.35).fillCircle(9, 12, 9);
+    note.fillStyle(0xdfe8ff).fillEllipse(7, 14, 9, 7);
+    note.fillRect(10, 2, 2.5, 12);
+    note.fillStyle(0xbfd0ff).fillTriangle(12, 2, 18, 5, 12, 8);
+    note.generateTexture('shot_note', 20, 20);
+    note.destroy();
+
+    const blade = this.gfx();
+    blade.lineStyle(3, 0xff8040, 0.8).beginPath().arc(11, 11, 9.5, -2.4, 0.9, false).strokePath();
+    blade.lineStyle(4, 0xd8d8e8).beginPath().arc(11, 11, 8, -2.4, 0.9, false).strokePath();
+    blade.lineStyle(1.5, 0x404050).beginPath().arc(11, 11, 6, -2.4, 0.9, false).strokePath();
+    blade.generateTexture('shot_blade', 22, 22);
+    blade.destroy();
+  }
+
+  /** White shapes tinted at runtime by systems/fx.ts. */
+  private makeFx(): void {
+    const ring = this.gfx();
+    ring.lineStyle(4, 0xffffff).strokeCircle(24, 24, 21);
+    ring.generateTexture('fx_ring', 48, 48);
+    ring.destroy();
+
+    const spark = this.gfx();
+    spark.fillStyle(0xffffff).fillRoundedRect(0, 0, 20, 4, 2);
+    spark.generateTexture('fx_spark', 20, 4);
+    spark.destroy();
+  }
+
+  /** Placeholder weapon: a shaft with a bronze head, pointing right. */
+  private makeWeapon(key: string): void {
+    if (!this.missing(key)) return;
+    const g = this.gfx();
+    g.fillStyle(0x6a4a2a).fillRect(6, 29, 42, 6);
+    g.fillStyle(0xc9a45c).fillTriangle(46, 22, 64, 32, 46, 42);
+    g.fillStyle(0x8a6a3a).fillRect(22, 27, 12, 10);
+    this.bake(g, key, 64, 64);
   }
 
   private heartShape(g: Phaser.GameObjects.Graphics, color: number, half = false): void {

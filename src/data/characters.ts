@@ -1,4 +1,5 @@
 import type { Stats } from '../core/stats';
+import type { WeaponId } from './weapons';
 
 export interface CharacterDef {
   id: string;
@@ -7,6 +8,8 @@ export interface CharacterDef {
   description: string;
   color: number;
   shadeColor: number;
+  /** Held weapon; decides the swing and the projectile look (data/weapons.ts). */
+  weapon: WeaponId;
   stats: Stats;
   /** Items the character starts with. */
   startingItems: string[];
@@ -34,6 +37,7 @@ export const CHARACTERS: CharacterDef[] = [
     description: 'Balanced. Hits hard.',
     color: 0xd9b26a,
     shadeColor: 0x8a6a2e,
+    weapon: 'spear',
     stats: { maxHp: 6, speed: 300, damage: 3.5, fireRate: 2.6, shotSpeed: 520, range: 520, luck: 0 },
     startingItems: [],
     lore: 'achilles',
@@ -45,6 +49,7 @@ export const CHARACTERS: CharacterDef[] = [
     description: 'Fast, rapid arrows, low damage.',
     color: 0x7fc98a,
     shadeColor: 0x3f7a4a,
+    weapon: 'bow',
     stats: { maxHp: 4, speed: 360, damage: 2.2, fireRate: 4.2, shotSpeed: 600, range: 620, luck: 1 },
     startingItems: [],
     lore: 'atalanta',
@@ -56,6 +61,7 @@ export const CHARACTERS: CharacterDef[] = [
     description: 'Huge health and damage, slow and short range.',
     color: 0xc96a4a,
     shadeColor: 0x7a3a2a,
+    weapon: 'club',
     stats: { maxHp: 10, speed: 240, damage: 5.5, fireRate: 1.8, shotSpeed: 420, range: 360, luck: 0 },
     startingItems: [],
     lore: 'heracles',
@@ -67,6 +73,7 @@ export const CHARACTERS: CharacterDef[] = [
     description: 'Fragile. Starts with the Lyre (homing shots) and regenerates.',
     color: 0x8a9ad9,
     shadeColor: 0x4a5a9a,
+    weapon: 'lyre',
     stats: { maxHp: 4, speed: 300, damage: 2.8, fireRate: 2.4, shotSpeed: 480, range: 560, luck: 2 },
     startingItems: ['lyre_of_orpheus'],
     passive: 'regen',
@@ -79,6 +86,7 @@ export const CHARACTERS: CharacterDef[] = [
     description: 'Spartan Rage: taking damage massively boosts damage for a few seconds. The gods despise him.',
     color: 0xe8e0d0,
     shadeColor: 0xb03030,
+    weapon: 'blades',
     stats: { maxHp: 8, speed: 280, damage: 4.5, fireRate: 2.2, shotSpeed: 460, range: 300, luck: 0 },
     startingItems: ['blades_of_chaos'],
     passive: 'rage',
