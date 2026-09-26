@@ -10,7 +10,9 @@ Return ONLY JSON matching:
  "enemyWeights": {enemyId: number 0..3},
  "modifier": {"id": string, "label": string} | null,
  "npcs": [{"id": npcId, "name": string, "role": "quest_giver"|"victim"|"witness"}] (<=3),
- "quest": {"templateId": id from catalogs.quests, "params": {...}, "giverNpcId": npcId, "hook": string, "reward": string} | null,
+ "quest": {"templateId": id from catalogs.quests, "params": {...}, "giverNpcId": npcId, "hook": string, "reward": "heart" | "coins:5".."coins:20" | itemId from catalogs.items} | null,
+   quest params by template: slay {"enemyId": id from catalogs.enemies, "n": 2..8} · spare_all {"floors": 1..2} · deliver {"itemId", "npcId"} ·
+   no_damage_rooms {"n": 1..4} · reach_boss_under {"seconds": 60..240} · betray {"npcId"} · sacrifice {"hearts": 1..2},
  "boss": {"archetype": id from catalogs.bosses, "title": string, "persona": string,
           "abilities": [2-4 ids from catalogs.abilities], "phases": [{"atHpPct": 10..90, "add": [ability ids], "line": string}] (<=2),
           "weakness": id from catalogs.earnedWeaknesses, "mods": {"hpMul": 0.5..2, "damageMul": 0.5..2, "speedMul": 0.5..2},

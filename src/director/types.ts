@@ -2,7 +2,7 @@ import type { BossMods, Prophecy, QuestOutcome, StorySnapshot } from '../core/st
 import { ABILITY_IDS, AbilityId, getAbility, WEAKNESS_IDS, WeaknessId } from '../data/abilities';
 import type { GodId } from '../data/gods';
 import { MUTATOR_IDS, getMutator } from '../data/mutators';
-import { QUEST_TEMPLATE_IDS, QuestTemplateId } from '../data/quests';
+import { QUEST_TEMPLATE_IDS, QuestTemplateId, getQuestTemplate } from '../data/quests';
 
 /**
  * THE contract between the game and the LLM "Director" (or its offline mock).
@@ -59,6 +59,7 @@ export interface PlayerProfile {
     enemies: string[];
     bosses: string[];
     npcs: string[];
+    items: string[];
     /** Weaknesses the player has actually earned this run (items, orbs, secrets). */
     earnedWeaknesses: string[];
   };
@@ -209,14 +210,8 @@ export function validateDirective(raw: unknown, req: DirectorRequest): FloorDire
     const templateId = str(q.templateId, 40);
     const giverNpcId = str(q.giverNpcId, 40);
     if ((QUEST_TEMPLATE_IDS as readonly string[]).includes(templateId) && cat.npcs.includes(giverNpcId)) {
-      const params: Record<string, number | string> = {};
-      if (typeof q.params === 'object' && q.params !== null) {
-        for (const [k, v] of Object.entries(q.params as Record<string, unknown>)) {
-          if (typeof v === 'number' && isFinite(v)) params[k] = clamp(Math.round(v), 1, 300);
-          else if (typeof v === 'string') params[k] = v.slice(0, 40);
-        }
-      }
-      quest = { templateId: templateId as QuestTemplateId, params, giverNpcId, hook: str(q.hook, 200), reward: str(q.reward, 40, 'coins:5') };
+      const params = questParams(templateId as QuestTemplateId, q.params, cat);
+      quest = { templateId: templateId as QuestTemplateId, params, giverNpcId, hook: str(q.hook, 200), reward: questReward(str(q.reward, 40), cat) };
     }
   }
 
@@ -282,4 +277,40 @@ export function honours(p: Prophecy, d: FloorDirective): boolean {
     case 'curse':
       return d.modifier?.id === p.payload;
   }
+}
+
+/** Loose param names the model tends to use for each spec name. */
+const PARAM_ALIASES: Record<string, string[]> = {
+  n: ['n', 'count', 'targetCount', 'amount', 'rooms', 'kills'],
+  enemyId: ['enemyId', 'targetType', 'target', 'enemy'],
+  npcId: ['npcId', 'npc', 'target'],
+  itemId: ['itemId', 'item'],
+  floors: ['floors', 'n'],
+  seconds: ['seconds', 'time', 'n'],
+  hearts: ['hearts', 'n'],
+};
+
+/** Keep only the template's declared params, accept common aliases, clamp ints and check catalog ids. */
+function questParams(templateId: QuestTemplateId, raw: unknown, cat: PlayerProfile['catalogs']): Record<string, number | string> {
+  const src = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
+  const out: Record<string, number | string> = {};
+  for (const spec of getQuestTemplate(templateId).params) {
+    const v = (PARAM_ALIASES[spec.name] ?? [spec.name]).map((k) => src[k]).find((x) => x !== undefined);
+    if (spec.kind === 'int') {
+      const n = typeof v === 'number' && isFinite(v) ? Math.round(v) : typeof v === 'string' && /^\d+$/.test(v) ? Number(v) : spec.min ?? 1;
+      out[spec.name] = clamp(n, spec.min ?? 1, spec.max ?? 300);
+    } else {
+      const pool = spec.kind === 'enemyId' ? cat.enemies : spec.kind === 'npcId' ? cat.npcs : cat.items;
+      if (typeof v === 'string' && pool.includes(v)) out[spec.name] = v;
+    }
+  }
+  return out;
+}
+
+/** "heart" | "coins:N" | a catalog item id; anything else becomes a small coin reward. */
+function questReward(raw: string, cat: PlayerProfile['catalogs']): string {
+  if (raw === 'heart' || cat.items.includes(raw)) return raw;
+  const coins = /coins?:?\s*(\d+)/i.exec(raw);
+  if (coins) return `coins:${clamp(Number(coins[1]), 1, 30)}`;
+  return 'coins:5';
 }

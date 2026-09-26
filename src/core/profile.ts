@@ -1,4 +1,5 @@
 import { ABILITY_IDS, WEAKNESS_IDS, WeaknessId } from '../data/abilities';
+import { ITEMS } from '../data/items';
 import { ENEMIES } from '../data/enemies';
 import { MUTATOR_IDS } from '../data/mutators';
 import { QUEST_TEMPLATE_IDS } from '../data/quests';
@@ -186,6 +187,7 @@ export function buildProfile(run: RunState, floor = run.floor): PlayerProfile {
       enemies: [...stage.enemyPool],
       bosses: [...stage.bossPool],
       npcs: [...(stage.npcPool ?? [])].filter((id) => ENEMIES.some((e) => e.id === id && e.innocent)),
+      items: ITEMS.map((i) => i.id),
       earnedWeaknesses: earnedWeaknesses(run),
     },
   };
