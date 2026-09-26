@@ -193,9 +193,8 @@ export class RunScene extends Phaser.Scene {
       }
     }
 
-    if (this.room === map.start && trials.offeredFloor !== this.run.floor) {
-      trials.offeredFloor = this.run.floor;
-      const omen = this.run.omen;
+    if (this.room.type !== 'boss' && trials.offeredFloor !== this.run.floor) {
+      const omen = this.room === map.start ? this.run.omen : null;
       if (omen) this.time.delayedCall(100, () => events.emit('omen_revealed', { name: omen.name, line: omen.line, theme: omen.theme }));
       this.time.delayedCall(omen ? 1600 : 450, () => void this.offerTrial());
     }
@@ -208,11 +207,12 @@ export class RunScene extends Phaser.Scene {
 
   /** At the start of each floor a god or shade offers one AI-written trial (src/trials). */
   private async offerTrial(): Promise<void> {
-    if (this.dead) return;
+    if (this.dead || trials.offeredFloor === this.run.floor || this.room.type === 'boss') return;
     if (this.transitioning || this.dialogueOpen) {
       this.time.delayedCall(500, () => void this.offerTrial());
       return;
     }
+    trials.offeredFloor = this.run.floor;
     this.dialogueOpen = true;
     this.scene.pause();
     let offer: TrialOffer;
@@ -1034,8 +1034,8 @@ export class RunScene extends Phaser.Scene {
 
   private bindDebugKeys(): void {
     this.add
-      .text(GAME_WIDTH / 2, 48, DEBUG_HELP, { fontFamily: mono, fontSize: '11px', color: '#f88', backgroundColor: '#000a' })
-      .setOrigin(0.5, 0)
+      .text(GAME_WIDTH / 2, GAME_HEIGHT - 1, DEBUG_HELP, { fontFamily: mono, fontSize: '11px', color: '#f88', backgroundColor: '#000a' })
+      .setOrigin(0.5, 1)
       .setDepth(500);
     const kb = this.input.keyboard!;
     const on = (key: string, fn: () => void): void => {
