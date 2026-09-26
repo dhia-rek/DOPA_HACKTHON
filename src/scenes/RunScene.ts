@@ -204,6 +204,10 @@ export class RunScene extends Phaser.Scene {
     this.dialogueOpen = true;
     const room = this.room;
     this.scene.pause();
+    const waiting = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT - 120, `${speaker.name} is about to speak…`, { fontFamily: 'monospace', fontSize: '14px', color: COLORS.textDim })
+      .setOrigin(0.5)
+      .setDepth(1000);
     let script: DialogueScript;
     try {
       script = await dialogueProvider.generate({
@@ -215,12 +219,14 @@ export class RunScene extends Phaser.Scene {
         seed: `${this.run.seed}:${this.run.floor}:${this.room.gx},${this.room.gy}:${kind}`,
       });
     } catch (err) {
+      waiting.destroy();
       console.warn('[dialogue] skipped:', err);
       this.dialogueOpen = false;
       this.holdClear = false;
       this.scene.resume();
       return;
     }
+    if (waiting.active) waiting.destroy();
     // Scene restarted (new room) or run ended while we were waiting.
     if (this.room !== room || this.dead) return;
     const data: DialogueSceneData = {
