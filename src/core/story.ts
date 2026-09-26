@@ -67,9 +67,12 @@ export const KARMA = {
   cruelThreshold: -25,
   /** |karma| below this has no effect on bosses (a stray choice should not matter). */
   neutralBand: 10,
-  /** Cruel cap at karma = min: boss hp +30%, damage +15%. */
+  /**
+   * Cruel cap at karma = min: boss hp +30%, damage +30%. Contact damage is whole
+   * half-hearts (Enemy.applyMods rounds), so a 2-dmg boss hits for 3 once karma ≤ ≈−77.
+   */
   cruelBossHp: 0.3,
-  cruelBossDamage: 0.15,
+  cruelBossDamage: 0.3,
   /** Heroic cap at karma = max: boss hp -10%, speed -5%. Rewarding, never trivialising. */
   heroicBossHp: 0.1,
   heroicBossSpeed: 0.05,
