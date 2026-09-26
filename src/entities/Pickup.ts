@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { ART_SCALE } from '../art/manifest';
 
 export type PickupKind = 'heart' | 'coin';
 
@@ -12,7 +13,8 @@ export class Pickup extends Phaser.Physics.Arcade.Image {
     this.kind = kind;
     scene.add.existing(this);
     group.add(this);
-    this.body.setCircle(11, 2, 1);
+    this.setScale(1 / ART_SCALE);
+    this.body.setCircle(11 * ART_SCALE, 2 * ART_SCALE, 1 * ART_SCALE);
     this.body.setDrag(600);
     this.body.setCollideWorldBounds(true);
     this.setDepth(5);

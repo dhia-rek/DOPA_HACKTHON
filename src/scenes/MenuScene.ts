@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { COLORS, GAME_WIDTH } from '../config';
+import { ART_SCALE } from '../art/manifest';
+import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import { events } from '../core/events';
 import { Rng } from '../core/rng';
 import { RunState } from '../core/run';
@@ -46,6 +47,10 @@ export class MenuScene extends Phaser.Scene {
     this.view = data?.view ?? 'main';
     this.menuIndex = 0;
     this.charIndex = Math.max(0, CHARACTERS.findIndex((c) => !this.locked(c)));
+    if (this.textures.exists('menu_bg')) {
+      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'menu_bg').setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x0b0a0f, 0.55);
+    }
     drawTitle(this);
     this.root = this.add.container(0, 0);
     this.render();
@@ -185,10 +190,12 @@ export class MenuScene extends Phaser.Scene {
       arrow.on('pointerdown', () => this.moveChar(dir));
       add(arrow);
     }
-    const portrait = this.add.image(cx, cy, `player_${c.id}`).setScale(2);
+    const hires = this.textures.exists(`portrait_${c.id}`);
+    const portraitScale = hires ? 1 / ART_SCALE : 2;
+    const portrait = this.add.image(cx, cy, hires ? `portrait_${c.id}` : `player_${c.id}`).setScale(portraitScale);
     if (locked) portrait.setTint(0x333333);
     add(portrait);
-    this.tweens.add({ targets: portrait, scale: { from: 2.18, to: 2 }, duration: 260, ease: 'Sine.Out' });
+    this.tweens.add({ targets: portrait, scale: { from: portraitScale * 1.09, to: portraitScale }, duration: 260, ease: 'Sine.Out' });
     add(this.add.text(cx, cy + 70, locked ? '???' : c.name.toUpperCase(), { fontFamily: mono, fontSize: '28px', color: locked ? COLORS.textDim : COLORS.uiIvory }).setOrigin(0.5));
     add(this.add.text(cx, cy + 100, locked ? `Locked — ${c.unlockHint ?? ''}` : c.title, { fontFamily: mono, fontSize: '15px', color: COLORS.textDim, wordWrap: { width: 450 }, align: 'center' }).setOrigin(0.5));
     if (!locked) {

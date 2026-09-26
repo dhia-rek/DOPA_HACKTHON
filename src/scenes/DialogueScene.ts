@@ -5,6 +5,7 @@ import { blip } from '../core/sfx';
 import type { DialogueOption, DialogueScript } from '../dialogue/types';
 import { voice, voiceSettings } from '../voice/provider';
 import type { VoiceProfile } from '../voice/types';
+import { mono, display } from './ui';
 
 export interface DialogueSceneData {
   script: DialogueScript;
@@ -14,7 +15,6 @@ export interface DialogueSceneData {
   voice?: VoiceProfile;
 }
 
-const mono = 'monospace';
 const BOX_H = 200;
 const BOX_X = 32;
 const PORTRAIT = 120;
@@ -107,7 +107,7 @@ export class DialogueScene extends Phaser.Scene {
       const letter = this.make.text({
         x: PORTRAIT / 2, y: PORTRAIT / 2,
         text: (script.speakerName[0] ?? '?').toUpperCase(),
-        style: { fontFamily: 'serif', fontSize: '64px', color: '#f0e6c8', fontStyle: 'bold' },
+        style: { fontFamily: display, fontSize: '64px', color: '#f0e6c8', fontStyle: 'bold' },
       }, false).setOrigin(0.5);
       rt.draw(g).draw(letter).saveTexture(key);
       g.destroy();

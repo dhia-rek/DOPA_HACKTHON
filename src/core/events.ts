@@ -15,6 +15,7 @@ export interface GameEvents {
   damage_taken: { amount: number; hp: number; source: string };
   item_picked: { itemId: string };
   pickup_collected: { kind: 'heart' | 'coin' };
+  blessing_granted: { godId: string; blessingName: string };
   player_shot: Record<string, never>;
   floor_cleared: { floor: number };
   run_won: { seed: string; characterId: string; timeMs: number };
