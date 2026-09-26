@@ -18,11 +18,12 @@ const DEFAULT_VOICES: Record<VoiceName, string> = {
 /** The team's custom Gradium voices, by speaker id; they win over the per-voice map. */
 const DEFAULT_SPEAKER_VOICES: Record<string, string> = {
   minotaur: '5MmCdRhVPfoo27AO', // "Minotaur Boss"
+  menoetius: '5MmCdRhVPfoo27AO',
+  talos: '5MmCdRhVPfoo27AO',
   hydra: '3LCB6zcRDqzOq6TY', // "Monster Hydra"
-  menoetius: 'tKWvk4gllFxxmwnv', // "Minotaur Monster": dark echoing bass for the giants
-  alcyoneus: 'tKWvk4gllFxxmwnv',
+  campe: '3LCB6zcRDqzOq6TY',
+  alcyoneus: 'tKWvk4gllFxxmwnv', // "Minotaur Monster"
   porphyrion: 'tKWvk4gllFxxmwnv',
-  talos: 'tKWvk4gllFxxmwnv',
 };
 
 function parsePairs(raw: string): [string, string][] {
