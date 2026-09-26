@@ -1,0 +1,20 @@
+{
+  "name": "nekyia",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Greek-mythology roguelike in the spirit of The Binding of Isaac",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "phaser": "3.90.0"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vite": "8.3.0"
+  }
+}
