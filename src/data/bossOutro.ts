@@ -100,15 +100,31 @@ export const BOSS_OUTRO: Record<string, BossOutroVoice> = {
   },
 };
 
+const INTRO_CHOICES = ['knelt', 'bargained', 'honoured', 'defied'] as const;
+
+/**
+ * The intro choice made against this boss. Flags persist for the whole run
+ * and a boss can return on a later loop, so the most recently set choice flag
+ * (`StorySnapshot.flags` keeps insertion order) wins over older ones.
+ */
+export function bossIntroChoice(bossId: string, s: StorySnapshot): (typeof INTRO_CHOICES)[number] | undefined {
+  let latest: (typeof INTRO_CHOICES)[number] | undefined;
+  let latestIdx = -1;
+  for (const c of INTRO_CHOICES) {
+    const idx = s.flags.lastIndexOf(`${c}_${bossId}`);
+    if (idx > latestIdx) [latest, latestIdx] = [c, idx];
+  }
+  return latest;
+}
+
 /** Which reaction fits the run, most specific first. */
 export function bossOutroMood(bossId: string, s: StorySnapshot): BossOutroMood {
   const has = (f: string): boolean => s.flags.includes(f);
-  if (has(`knelt_${bossId}`)) return 'knelt';
-  if (has(`bargained_${bossId}`)) return 'bargained';
+  const choice = bossIntroChoice(bossId, s);
+  if (choice === 'knelt' || choice === 'bargained') return choice;
   if (s.npcsKilled > 0 || has('blood_on_hands')) return 'butcher';
   if (has('knows_boss_weakness')) return 'weakness';
-  if (has(`honoured_${bossId}`)) return 'honoured';
-  if (has(`defied_${bossId}`)) return 'defied';
+  if (choice) return choice;
   if (s.alignment === 'cruel') return 'cruel';
   if (s.alignment === 'heroic') return 'heroic';
   if (s.npcsSpared > 0) return 'merciful';
