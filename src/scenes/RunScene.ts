@@ -385,7 +385,11 @@ export class RunScene extends Phaser.Scene {
 
   /** A god notices the hero: pause the room and play the blessing overlay. */
   private grantBlessing(): void {
-    if (this.dead || this.transitioning || this.dialogueOpen) return;
+    if (this.dead || this.transitioning) return;
+    if (this.dialogueOpen) {
+      this.time.delayedCall(400, () => this.grantBlessing());
+      return;
+    }
     const god = this.run.grantRandomBlessing();
     this.scene.pause();
     const data: BlessingSceneData = { god, onDone: () => this.scene.resume() };
