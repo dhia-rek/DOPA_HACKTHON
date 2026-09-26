@@ -101,15 +101,20 @@ export class TouchScene extends Phaser.Scene {
     const v = this.views[stick];
     let dx = p.x - v.ox;
     let dy = p.y - v.oy;
-    const dist = Math.hypot(dx, dy);
+    let dist = Math.hypot(dx, dy);
     if (dist > BASE_R) {
-      // Drag the base along so a thumb that wanders keeps full control.
+      // Drag the base along so a thumb that wanders keeps full control, but never onto the HUD bands.
       const over = dist - BASE_R;
-      v.ox += (dx / dist) * over;
-      v.oy += (dy / dist) * over;
+      v.ox = Phaser.Math.Clamp(v.ox + (dx / dist) * over, BASE_R, GAME_WIDTH - BASE_R);
+      v.oy = Phaser.Math.Clamp(v.oy + (dy / dist) * over, HUD_TOP + BASE_R, HUD_BOTTOM - BASE_R);
       v.base.setPosition(v.ox, v.oy);
       dx = p.x - v.ox;
       dy = p.y - v.oy;
+      dist = Math.hypot(dx, dy);
+      if (dist > BASE_R) {
+        dx *= BASE_R / dist;
+        dy *= BASE_R / dist;
+      }
     }
     v.knob.setPosition(v.ox + dx, v.oy + dy);
     const mag = Math.min(1, Math.hypot(dx, dy) / BASE_R);
