@@ -148,7 +148,7 @@ export const ENEMIES: EnemyDef[] = [
       'Asterion, a proud exile with a low, grinding voice; still bleeding from the day Athens caged him and called him a monster. ' +
       'Respects an honest duel and a kept oath, despises cowards and oathbreakers: he taunts a cruel player as a fellow beast, and offers a heroic one a clean fight. Kept by Minos for the Olympian order he despises.',
     lore: 'minotaur',
-    reactsTo: ['blood_on_hands', 'defied_minotaur', 'swore_oath_to_minotaur', 'broke_oath_to_minotaur', 'knows_boss_weakness', 'spared_many'],
+    reactsTo: ['blood_on_hands', 'child_dead', 'defied_minotaur', 'swore_oath_to_minotaur', 'broke_oath_to_minotaur', 'knows_boss_weakness', 'spared_many'],
   },
   {
     id: 'hydra',
@@ -167,7 +167,7 @@ export const ENEMIES: EnemyDef[] = [
       'Ancient and many-voiced, each head finishing or contradicting the last in hissing riddles; still aches where Heracles burned her severed necks. ' +
       'Respects patience and cunning, despises fire and rash heroes: she flatters a cruel player as kin and mocks a heroic one as another Heracles doomed to fail. Hera\'s creature, Typhon\'s daughter, grows a head for every innocent buried.',
     lore: 'hydra',
-    reactsTo: ['blood_on_hands', 'defied_hydra', 'spared_many', 'knows_boss_weakness', 'bargained_with_hydra', 'slew_minotaur'],
+    reactsTo: ['blood_on_hands', 'child_dead', 'defied_hydra', 'spared_many', 'knows_boss_weakness', 'bargained_with_hydra', 'slew_minotaur'],
   },
   {
     id: 'menoetius',

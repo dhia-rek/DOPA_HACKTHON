@@ -1,5 +1,6 @@
 import { Rng } from '../core/rng';
 import { bossOutroLines } from '../data/bossOutro';
+import { CHILD_DEAD_BOSS_LINES, CHILD_HINTS, CHILD_ID } from '../data/child';
 import { ENEMIES, getEnemy } from '../data/enemies';
 import type { WarFaction } from '../data/lore';
 import { factionOf } from '../data/war';
@@ -115,7 +116,10 @@ export class MockDialogueProvider implements DialogueProvider {
     const brokeOath = s.flags.includes(`broke_oath_to_${req.speakerId}`);
     const returning = req.kind === 'boss_intro' && s.bossesKilled.includes(req.speakerId);
     const fallen = s.bossesKilled.filter((id) => id !== req.speakerId);
-    const memory = brokeOath
+    const childMeetings = s.flags.filter((f) => f.startsWith('child_floor_')).length;
+    const memory = s.flags.includes('child_dead')
+      ? rng.pick(CHILD_DEAD_BOSS_LINES).replace(/\{you\}/g, you)
+      : brokeOath
       ? rng.pick([`You swore an oath to me, ${you}, then spilled innocent blood. Oathbreaker.`, `Your word is worth less than the dust of this place, oathbreaker.`])
       : returning
         ? rng.pick([`You again, ${you}? Hades would not keep me. I have walked back out of the dark for you.`, `I remember your blade, ${you}. Death was only a door, and I came back through it.`])
@@ -212,7 +216,11 @@ export class MockDialogueProvider implements DialogueProvider {
           : req.kind === 'npc'
             ? {
                 lines: [
-                  req.speakerId === 'villager' || !NPC_LINES[req.speakerId]
+                  req.speakerId === CHILD_ID && childMeetings > 0
+                    ? CHILD_HINTS[Math.min(childMeetings - 1, CHILD_HINTS.length - 1)].replace(/\{you\}/g, you)
+                    : req.speakerId !== CHILD_ID && s.flags.includes('child_dead')
+                    ? rng.pick([`Stay back! They say you killed the little girl. They say the Lord Below wept.`, `The child… everyone down here knows what you did to the child, ${you}.`])
+                    : req.speakerId === 'villager' || !NPC_LINES[req.speakerId]
                     ? front === 'olympian'
                       ? rng.pick(NPC_LINES.villager).replace(/\{you\}/g, you)
                       : front === 'titan'

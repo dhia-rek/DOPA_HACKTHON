@@ -38,6 +38,8 @@ export function tideDeltaFor(deed: Deed, subjectFaction: WarFaction | null): Par
   switch (deed.kind) {
     case 'npc_killed':
       // Zeus Xenios protects the helpless; Gaia drinks whatever blood reaches the soil.
+      // The child is Hades' own (data/child.ts): Olympus recoils, the earth feasts.
+      if (deed.subject === 'child') return { olympian: -12, giant: +14 };
       return { olympian: -6, giant: +7 };
     case 'npc_spared':
       return { olympian: +4 };
@@ -173,6 +175,7 @@ const SHADE_NAMES = ['Lykos', 'Phaidra', 'Nikias', 'Melitta', 'Dorieus', 'Chloe'
 
 const EPITAPHS: Record<string, string[]> = {
   villager: ['was counting the goats when the arrow came.', 'had a child waiting at home.', 'never learned why.'],
+  child: ['was picking flowers in the dark.', 'thought you were her father.', 'had a mother waiting above, and a father below.'],
   restless_shade: ['died a second time, and did not deserve the first.'],
   default: ['was no one\u2019s enemy.', 'asked for nothing.', 'died looking at you.'],
 };

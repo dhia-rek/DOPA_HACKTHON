@@ -6,6 +6,7 @@ import type { RunState } from '../core/run';
 import { settings } from '../core/settings';
 import { KARMA } from '../core/story';
 import { earnedWeaknesses } from '../core/profile';
+import { CHILD, CHILD_ID, childFloorFlag, childProtected, PERSEPHONE_REVEAL } from '../data/child';
 import { EnemyDef, getEnemy } from '../data/enemies';
 import { getItem, ITEMS } from '../data/items';
 import { factionOf, makeShade } from '../data/war';
@@ -502,6 +503,7 @@ export class RunScene extends Phaser.Scene {
     } else {
       this.run.story.record({ kind: 'npc_spared', subject: npc.def.id, floor: this.run.floor, karmaDelta: KARMA.npcSpared, summary: `Spared the ${npc.def.name} on floor ${this.run.floor}` });
       if (this.run.story.count('npc_spared') >= SPARED_MANY) this.run.story.addFlag('spared_many');
+      if (npc.def.id === CHILD_ID) this.run.story.addFlag(childFloorFlag(this.run.floor));
       events.emit('npc_spared', { npcId: npc.def.id, floor: this.run.floor });
     }
     this.tweens.add({ targets: npc, alpha: 0, duration: 500, onComplete: () => npc.destroy() });
@@ -778,8 +780,10 @@ export class RunScene extends Phaser.Scene {
     this.scareAllInnocents();
     this.burst(npc.x, npc.y, def.color, 10);
     const shade = makeShade(this.run.storyRng, def.id, def.name, this.run.floor, this.run.stage.name, this.run.story.shades.length);
-    this.run.story.record({ kind: 'npc_killed', subject: def.id, lore: def.lore, floor: this.run.floor, karmaDelta: KARMA.npcKilled, summary: `Killed ${shade.name}, an innocent ${def.name}, on floor ${this.run.floor}` });
+    const isChild = def.id === CHILD_ID;
+    this.run.story.record({ kind: 'npc_killed', subject: def.id, lore: def.lore, floor: this.run.floor, karmaDelta: KARMA.npcKilled + (isChild ? CHILD.killKarma : 0), summary: `Killed ${shade.name}, an innocent ${def.name}, on floor ${this.run.floor}` });
     this.run.story.addFlag('blood_on_hands');
+    if (isChild) this.run.story.addFlag('child_dead');
     this.run.story.addShade(shade);
     for (const flag of [...this.run.story.flags]) {
       if (flag.startsWith('swore_oath_to_')) this.run.story.addFlag(flag.replace('swore_oath_to_', 'broke_oath_to_'));
@@ -828,8 +832,11 @@ export class RunScene extends Phaser.Scene {
       this.run.omens.prefetch(this.run.omenRequest(this.run.floor + 1));
       if (this.run.isVictoryFloor && !this.run.won) {
         this.run.won = true;
+        const reveal = childProtected(this.run.story);
+        if (reveal) this.run.story.addFlag('persephone_revealed');
         events.emit('run_won', { seed: this.run.seed, characterId: this.run.character.id, timeMs: this.run.elapsedMs });
-        this.toast('Nostos', 'You have descended through every realm. The descent continues, ever deeper…');
+        if (reveal) this.toast(PERSEPHONE_REVEAL.title, PERSEPHONE_REVEAL.body.replace(/\{you\}/g, this.run.character.name), 5000);
+        else this.toast('Nostos', 'You have descended through every realm. The descent continues, ever deeper…');
       }
       this.dropPickup(GAME_WIDTH / 2 - TILE, GAME_HEIGHT / 2, 'heart');
       this.spawnTrapdoor();

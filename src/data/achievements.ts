@@ -123,4 +123,12 @@ export const ACHIEVEMENTS: AchievementDef[] = [
       return ctx.story.hasFlagOnFloor(`swore_oath_to_${enemyId}`, floor) && ctx.story.hasFlagOnFloor('knows_boss_weakness', floor);
     },
   },
+  {
+    id: 'kore',
+    title: 'Kore',
+    description: 'Walk the Lost Child home through every realm and learn her name.',
+    on: 'run_won',
+    check: (_p, ctx) => ctx.story.hasFlag('persephone_revealed'),
+    secret: true,
+  },
 ];

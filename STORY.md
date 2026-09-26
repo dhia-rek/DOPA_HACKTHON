@@ -131,8 +131,11 @@ Death before the last gate keeps today's `judge()` verdicts (`A HERO'S SHADE`
 etc.) — endings are only for runs that finish.
 
 Implementation order (all Stream A except the last two, which are B):
-1. flags + karma + tide changes for the Child (`story.ts`, `data/war.ts` epitaph stays).
-2. hints in `data/*` + `SYSTEM_PROMPT` wording; Director casting weight.
+1. ~~flags + karma + tide changes for the Child~~ — landed: `data/child.ts` holds the
+   arc (`CHILD`, `childProtected()`, hints, reveal text); `child_dead` gives every
+   later boss ×1.15 damage in `takeBossMods()`; `kore` achievement fires at the last
+   gate while the child is protected (met and let go on ≥ 2 floors, never robbed).
+2. ~~hints in `data/*` + `SYSTEM_PROMPT` wording~~ (landed); Director casting weight (open).
 3. `kind: 'epilogue'` content in the mock provider (`src/dialogue/types.ts` needs
    the new kind → review by all three).
 4. three ending achievements in `data/achievements.ts`.

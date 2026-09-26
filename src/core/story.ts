@@ -4,6 +4,7 @@ import type { GodId } from '../data/gods';
 import { GOD_IDS } from '../data/gods';
 import { events } from './events';
 import { type FloorDirective, honours } from '../director/types';
+import { CHILD } from '../data/child';
 
 /**
  * The run's moral/narrative memory. Everything the player does that the story
@@ -225,16 +226,18 @@ export class StoryState {
 
   /**
    * Boss mods for the next boss: dialogue mods × karmaBossFactor(karma) × the war (a boss
-   * whose side is winning is bolder: up to +20% damage at tide 100), each clamped to
-   * [KARMA.bossMulMin, KARMA.bossMulMax]. Dialogue mods reset afterwards; karma persists.
+   * whose side is winning is bolder: up to +20% damage at tide 100) × Hades' grudge once
+   * the child is dead, each clamped to [KARMA.bossMulMin, KARMA.bossMulMax]. Dialogue
+   * mods reset afterwards; karma persists.
    */
   takeBossMods(bossFaction: WarFaction | null = null): BossMods {
     const k = karmaBossFactor(this.karma);
     const tideFactor = bossFaction ? 1 + Math.max(0, this.tide[bossFaction]) / 500 : 1;
+    const grudgeFactor = this.hasFlag('child_dead') ? CHILD.bossDamageMul : 1;
     const mul = (a: number, b = 1): number => clamp(a * b, KARMA.bossMulMin, KARMA.bossMulMax);
     const out: BossMods = {
       hpMul: mul(this.bossMods.hpMul, k.hpMul),
-      damageMul: mul(this.bossMods.damageMul, (k.damageMul ?? 1) * tideFactor),
+      damageMul: mul(this.bossMods.damageMul, (k.damageMul ?? 1) * tideFactor * grudgeFactor),
       speedMul: mul(this.bossMods.speedMul, k.speedMul),
     };
     this.bossMods = { hpMul: 1, damageMul: 1, speedMul: 1 };
