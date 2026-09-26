@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from './config';
+import { BlessingScene } from './scenes/BlessingScene';
 import { BootScene } from './scenes/BootScene';
+import { BossIntroScene } from './scenes/BossIntroScene';
 import { DialogueScene } from './scenes/DialogueScene';
 import { GameOverScene } from './scenes/GameOverScene';
 import { HudScene } from './scenes/HudScene';
@@ -23,5 +25,5 @@ new Phaser.Game({
     default: 'arcade',
     arcade: { debug: false },
   },
-  scene: [BootScene, MenuScene, RunScene, HudScene, DialogueScene, GameOverScene],
+  scene: [BootScene, MenuScene, RunScene, HudScene, DialogueScene, BossIntroScene, BlessingScene, GameOverScene],
 });

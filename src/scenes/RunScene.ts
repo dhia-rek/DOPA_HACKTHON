@@ -7,6 +7,8 @@ import { EnemyDef, getEnemy } from '../data/enemies';
 import { getItem } from '../data/items';
 import { dialogueProvider } from '../dialogue/provider';
 import type { DialogueKind, DialogueOption, DialogueScript } from '../dialogue/types';
+import type { BlessingSceneData } from './BlessingScene';
+import type { BossIntroSceneData } from './BossIntroScene';
 import type { DialogueSceneData } from './DialogueScene';
 import { doorsOf, neighbour, RoomNode } from '../gen/floorGen';
 import { Enemy } from '../entities/Enemy';
@@ -22,6 +24,9 @@ const DOOR_TILES: Record<Dir, { col: number; row: number }> = {
   left: { col: 0, row: Math.floor(GRID_ROWS / 2) },
   right: { col: GRID_COLS - 1, row: Math.floor(GRID_ROWS / 2) },
 };
+
+/** Chance a cleared (non-boss) combat room draws a god's attention. Boss rooms always do. */
+const BLESSING_CHANCE = 0.25;
 
 export interface RunSceneData {
   enterFrom?: Dir;
@@ -47,6 +52,8 @@ export class RunScene extends Phaser.Scene {
   private enemyShots!: ProjectilePool;
   private pedestal: Phaser.Physics.Arcade.Image | null = null;
   private trapdoor: Phaser.Physics.Arcade.Image | null = null;
+  private bossBar: Phaser.GameObjects.Graphics | null = null;
+  private bossLabel: Phaser.GameObjects.Text | null = null;
   private transitioning = false;
   private dead = false;
   private dialogueOpen = false;
@@ -62,6 +69,8 @@ export class RunScene extends Phaser.Scene {
     this.doorSprites = {};
     this.pedestal = null;
     this.trapdoor = null;
+    this.bossBar = null;
+    this.bossLabel = null;
 
     this.run = this.registry.get('run') as RunState;
     achievements.attachRun(this.run);
@@ -89,6 +98,7 @@ export class RunScene extends Phaser.Scene {
     this.spawnRoomContents();
     if (!this.room.cleared && this.hostiles().length === 0) this.room.cleared = true;
     this.refreshDoors();
+    if (this.room.type === 'boss' && !this.room.cleared) this.bossBar = this.add.graphics().setDepth(30);
 
     events.emit('room_entered', { roomType: this.room.type, floor: this.run.floor });
     events.emit('hud_update', {});
@@ -99,13 +109,13 @@ export class RunScene extends Phaser.Scene {
 
     if (this.room.type === 'boss' && !this.room.cleared && !this.room.dialogueDone) {
       const boss = this.hostiles().find((e) => e.def.isBoss);
-      if (boss) this.time.delayedCall(250, () => this.startDialogue('boss_intro', boss));
+      if (boss) this.time.delayedCall(250, () => this.bossIntro(boss));
     }
   }
 
   /** Enemies that must die for the room to clear (innocents excluded). */
   private hostiles(): Enemy[] {
-    return (this.enemies.getChildren() as Enemy[]).filter((e) => e.active && !e.def.innocent);
+    return (this.enemies.getChildren() as Enemy[]).filter((e) => e.active && !e.dying && !e.def.innocent);
   }
 
   update(time: number, delta: number): void {
@@ -117,6 +127,8 @@ export class RunScene extends Phaser.Scene {
 
     const alive = this.enemies.getChildren().filter((e) => e.active) as Enemy[];
     for (const enemy of alive) {
+      if (enemy.dying) continue;
+      enemy.faceX = this.player.x - enemy.x;
       enemy.step(delta);
       if (enemy.hp <= 0) {
         this.killEnemy(enemy);
@@ -137,7 +149,71 @@ export class RunScene extends Phaser.Scene {
       });
     }
 
-    if (!this.room.cleared && !alive.some((e) => !e.def.innocent) && this.roomHadEnemies()) this.clearRoom();
+    if (this.bossBar) this.drawBossBar(alive.find((e) => e.def.isBoss) ?? null);
+    if (!this.room.cleared && !alive.some((e) => !e.def.innocent && !e.dying) && this.roomHadEnemies()) this.clearRoom();
+  }
+
+  // -------------------------------------------------------------------- boss
+
+  /** VS splash, then the boss's opening dialogue. */
+  private bossIntro(boss: Enemy): void {
+    if (this.dead || this.transitioning || this.dialogueOpen) return;
+    this.scene.pause();
+    const data: BossIntroSceneData = {
+      heroKey: `portrait_${this.run.character.id}`,
+      heroName: this.run.character.name,
+      heroTitle: this.run.character.title,
+      bossKey: `enemy_${boss.def.id}`,
+      bossName: boss.def.name,
+      bossTitle: `Guardian of ${this.run.stage.name}`,
+      bossColor: boss.def.color,
+      onDone: () => {
+        this.scene.resume();
+        void this.startDialogue('boss_intro', boss);
+      },
+    };
+    this.scene.launch('bossintro', data);
+    this.scene.bringToTop('bossintro');
+  }
+
+  private drawBossBar(boss: Enemy | null): void {
+    const g = this.bossBar;
+    if (!g) return;
+    g.clear();
+    if (!boss || boss.isSpawning) {
+      this.bossLabel?.setVisible(false);
+      return;
+    }
+    const w = 420;
+    const h = 14;
+    const x = GAME_WIDTH / 2 - w / 2;
+    const y = GAME_HEIGHT - 42;
+    const ratio = Math.max(0, boss.hpRatio);
+    g.fillStyle(0x0b0a0f, 0.85).fillRoundedRect(x - 3, y - 3, w + 6, h + 6, 5);
+    g.fillStyle(0x3a1418).fillRoundedRect(x, y, w, h, 4);
+    if (ratio > 0) {
+      g.fillStyle(ratio < 0.5 ? 0xff5a3c : 0xd23838).fillRoundedRect(x, y, Math.max(8, w * ratio), h, 4);
+      g.fillStyle(0xffffff, 0.18).fillRect(x + 3, y + 2, Math.max(2, w * ratio - 6), 4);
+    }
+    if (!this.bossLabel) {
+      this.bossLabel = this.add
+        .text(GAME_WIDTH / 2, y - 6, boss.def.name.toUpperCase(), { fontFamily: 'monospace', fontSize: '14px', color: '#f3e6c8', stroke: '#0b0a0f', strokeThickness: 4 })
+        .setOrigin(0.5, 1)
+        .setDepth(30);
+    }
+    this.bossLabel.setVisible(true);
+  }
+
+  // --------------------------------------------------------------- blessings
+
+  /** A god notices the hero: pause the room and play the blessing overlay. */
+  private grantBlessing(): void {
+    if (this.dead || this.transitioning || this.dialogueOpen) return;
+    const god = this.run.grantRandomBlessing();
+    this.scene.pause();
+    const data: BlessingSceneData = { god, onDone: () => this.scene.resume() };
+    this.scene.launch('blessing', data);
+    this.scene.bringToTop('blessing');
   }
 
   // ---------------------------------------------------------------- dialogue
@@ -365,6 +441,7 @@ export class RunScene extends Phaser.Scene {
         if (!this.room.dialogueDone) void this.startDialogue('npc', enemy);
         return;
       }
+      enemy.attack(400);
       this.hurtPlayer(enemy.contactDamage, enemy.def.id, enemy.x, enemy.y);
     });
     this.physics.add.overlap(this.player, this.pickups, (_p, pk) => this.collect(pk as Pickup));
@@ -424,7 +501,7 @@ export class RunScene extends Phaser.Scene {
     } else if (this.run.dropRng.chance(enemy.def.dropChance ?? 0)) {
       this.dropPickup(enemy.x, enemy.y, this.run.dropRng.chance(0.4) ? 'heart' : 'coin');
     }
-    enemy.destroy();
+    enemy.die();
   }
 
   private killNpc(npc: Enemy): void {
@@ -480,6 +557,9 @@ export class RunScene extends Phaser.Scene {
       }
       this.dropPickup(GAME_WIDTH / 2 - TILE, GAME_HEIGHT / 2, 'heart');
       this.spawnTrapdoor();
+      this.time.delayedCall(1500, () => this.grantBlessing());
+    } else if (this.run.dropRng.chance(BLESSING_CHANCE)) {
+      this.time.delayedCall(450, () => this.grantBlessing());
     }
   }
 

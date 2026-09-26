@@ -87,3 +87,28 @@ Needs `python3` with `pillow` and `numpy`.
 - Tears: replace the circles with small bronze arrowheads / spear tips per character
 - NPC "!" talk bubble, shrine altar prop, boss health bar frame with meander
 - Menu background: vase-painting frieze
+
+## Reactive poses, facing and gods
+
+Pose and facing variants are plain extra textures next to the base one; the
+game falls back to the base texture whenever a variant is missing, so any
+subset can be shipped.
+
+| key | used when |
+| --- | --- |
+| `player_<id>_back` | hero moves/aims up |
+| `player_<id>_side` | hero moves/aims left or right (flipped for left); the base sprite is the front view |
+| `enemy_<id>_attack` | behaviour calls `enemy.attack(ms)`: contact range, firing, charge wind-up/charge |
+| `enemy_<id>_hurt` | ~260 ms after `takeHit()` |
+| `enemy_<id>_dead` | bosses only: collapse pose shown while the death flicker/fade plays |
+| `god_<id>` | 160x160 portrait for the blessing overlay + 24px HUD icon (`src/data/gods.ts`) |
+
+Prompts: same character sheet as the base sprite passed as a reference image,
+plus the pose ("mid axe swing", "recoiling from a hit, eyes shut", "collapsed,
+axe dropped", "seen from behind", "walking right, profile"). Sources go in a
+second folder and are processed together:
+
+    python3 scripts/art/process.py ~/art_raw ~/art_raw2
+
+`BossIntroScene` (VS splash) reuses `portrait_<hero>` and the boss's base
+sprite; `BlessingScene` uses `god_<id>`.

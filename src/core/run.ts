@@ -1,4 +1,5 @@
 import { CharacterDef, getCharacter } from '../data/characters';
+import { GodDef, pickGod } from '../data/gods';
 import { getItem, ItemDef } from '../data/items';
 import { STAGES, StageDef } from '../data/stages';
 import type { RunSnapshot } from '../data/achievements';
@@ -30,6 +31,8 @@ export class RunState {
   readonly story = new StoryState();
 
   items: ItemDef[] = [];
+  /** Gods who blessed this run; each adds a permanent modifier set (see data/gods.ts). */
+  blessings: GodDef[] = [];
   stats: Stats;
   flags: ShotFlags = {};
   hp: number;
@@ -109,13 +112,24 @@ export class RunState {
     events.emit('hud_update', {});
   }
 
+  /** A god takes notice of the hero. Draws without repeats until every god has spoken. */
+  grantRandomBlessing(): GodDef {
+    const god = pickGod(this.dropRng, this.blessings.map((g) => g.id));
+    this.blessings.push(god);
+    this.recompute();
+    if (god.blessing.heal) this.heal(god.blessing.heal);
+    events.emit('blessing_granted', { godId: god.id, blessingName: god.blessing.name });
+    events.emit('hud_update', {});
+    return god;
+  }
+
   recompute(): void {
     const prevMax = this.stats.maxHp;
-    this.stats = computeStats(
-      this.character.stats,
-      this.items.map((i) => i.stats ?? {}),
-    );
-    this.flags = mergeFlags(this.items.map((i) => i.flags ?? {}));
+    this.stats = computeStats(this.character.stats, [
+      ...this.items.map((i) => i.stats ?? {}),
+      ...this.blessings.map((g) => g.blessing.stats ?? {}),
+    ]);
+    this.flags = mergeFlags([...this.items.map((i) => i.flags ?? {}), ...this.blessings.map((g) => g.blessing.flags ?? {})]);
     if (this.stats.maxHp > prevMax) this.hp += this.stats.maxHp - prevMax;
     this.hp = Math.min(this.hp, this.stats.maxHp);
   }

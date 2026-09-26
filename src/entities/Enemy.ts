@@ -4,6 +4,10 @@ import { ENEMY, PROJECTILE } from '../config';
 import type { BossMods } from '../core/story';
 import type { EnemyDef } from '../data/enemies';
 
+export type EnemyPose = 'idle' | 'attack' | 'hurt' | 'dead';
+
+const HURT_POSE_MS = 260;
+
 export class Enemy extends Phaser.Physics.Arcade.Sprite {
   declare body: Phaser.Physics.Arcade.Body;
   readonly def: EnemyDef;
@@ -13,8 +17,14 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   contactDamage: number;
   /** Free-form memory for the behaviour function driving this enemy. */
   memory: Record<string, number> = {};
+  /** Set by the scene each frame: horizontal offset to the player, so a standing enemy still faces them. */
+  faceX = 0;
+  /** True once killed: the death pose plays out, behaviours and collisions stop, then the sprite destroys itself. */
+  dying = false;
   private spawnedAt: number;
   private flashUntil = 0;
+  private hurtUntil = 0;
+  private attackUntil = 0;
   private poisonUntil = 0;
   private poisonTick = 0;
   /** External push (knockback) blended into the behaviour's velocity. */
@@ -23,11 +33,19 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private bobPhase = Math.random() * Math.PI * 2;
   /** Extra squash/stretch a behaviour can request (1,1 = none); composed with the idle bob. */
   stretch = new Phaser.Math.Vector2(1, 1);
+  private readonly baseKey: string;
+  /** Pose textures that exist for this enemy (enemy_<id>_attack / _hurt / _dead); missing ones fall back to the base. */
+  private readonly poses: Partial<Record<EnemyPose, string>> = {};
 
   /** `group` must be passed here: adding to an arcade group afterwards would reset body settings. */
   constructor(scene: Phaser.Scene, group: Phaser.Physics.Arcade.Group, x: number, y: number, def: EnemyDef, difficulty: number) {
     super(scene, x, y, `enemy_${def.id}`);
     this.def = def;
+    this.baseKey = `enemy_${def.id}`;
+    for (const pose of ['attack', 'hurt', 'dead'] as const) {
+      const key = `${this.baseKey}_${pose}`;
+      if (scene.textures.exists(key)) this.poses[pose] = key;
+    }
     this.maxHp = Math.round(def.hp * difficulty);
     this.hp = this.maxHp;
     this.speed = def.speed * (1 + (difficulty - 1) * 0.4);
@@ -65,12 +83,26 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     return this.hp / this.maxHp;
   }
 
+  get pose(): EnemyPose {
+    const now = this.scene.time.now;
+    if (this.dying) return 'dead';
+    if (now < this.hurtUntil) return 'hurt';
+    if (now < this.attackUntil) return 'attack';
+    return 'idle';
+  }
+
+  /** Behaviours call this when striking or firing so the attack pose shows for `ms`. */
+  attack(ms = 350): void {
+    this.attackUntil = Math.max(this.attackUntil, this.scene.time.now + ms);
+  }
+
   /** Behaviours call this instead of setting body velocity directly so knockback composes. */
   moveTowards(vx: number, vy: number): void {
     this.body.setVelocity(vx + this.knock.x, vy + this.knock.y);
   }
 
   step(delta: number): void {
+    if (this.dying) return;
     this.knock.scale(Math.pow(ENEMY.knockbackDamping, delta / 16));
     if (this.knock.lengthSq() < 4) this.knock.set(0, 0);
 
@@ -78,8 +110,13 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
       const speed = this.body.velocity.length();
       const bob = Math.sin(this.scene.time.now / (speed > 20 ? 90 : 260) + this.bobPhase) * (speed > 20 ? 0.05 : 0.025);
       const hit = this.scene.time.now < this.flashUntil ? 0.12 : 0;
-      this.setScale((this.stretch.x / ART_SCALE) * (1 - bob * 0.6 + hit), (this.stretch.y / ART_SCALE) * (1 + bob - hit));
-      if (this.body.velocity.x !== 0) this.setFlipX(this.body.velocity.x < 0);
+      const lunge = this.pose === 'attack' ? 0.06 : 0;
+      this.setScale((this.stretch.x / ART_SCALE) * (1 - bob * 0.6 + hit + lunge), (this.stretch.y / ART_SCALE) * (1 + bob - hit - lunge * 0.5));
+      const vx = this.body.velocity.x;
+      const face = Math.abs(vx) > 8 ? vx : this.faceX;
+      if (Math.abs(face) > 4) this.setFlipX(face < 0);
+      const key = this.poses[this.pose] ?? this.baseKey;
+      if (this.texture.key !== key) this.setTexture(key);
     }
     this.shadow.setPosition(this.x, this.y + this.def.radius + 2);
 
@@ -98,12 +135,45 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   }
 
   takeHit(damage: number, fromX: number, fromY: number, knockback = 1, poison = false): void {
-    if (this.isSpawning) return;
+    if (this.isSpawning || this.dying) return;
     this.hp -= damage;
     this.flashUntil = this.scene.time.now + ENEMY.hitFlashMs;
+    this.hurtUntil = this.scene.time.now + HURT_POSE_MS;
     if (poison) this.poisonUntil = this.scene.time.now + PROJECTILE.poisonMs;
     const mass = this.def.isBoss ? 0.15 : 1;
     const push = new Phaser.Math.Vector2(this.x - fromX, this.y - fromY).normalize().scale(160 * knockback * mass);
     this.knock.add(push);
+  }
+
+  /**
+   * Death presentation, then destroy. Bosses with an enemy_<id>_dead texture
+   * collapse into it and fade; everything else pops flat. Collisions stop immediately.
+   */
+  die(): void {
+    if (this.dying) return;
+    this.dying = true;
+    this.disableBody();
+    this.clearTint();
+    const s = 1 / ART_SCALE;
+    const dead = this.poses.dead;
+    if (!dead) {
+      this.scene.tweens.add({ targets: this, scaleX: s * 1.35, scaleY: s * 0.55, alpha: 0, duration: 170, ease: 'Quad.In', onComplete: () => this.destroy() });
+      this.scene.tweens.add({ targets: this.shadow, alpha: 0, duration: 170 });
+      return;
+    }
+    this.setTexture(dead);
+    this.setScale(s * 1.15, s * 0.85);
+    this.scene.tweens.add({ targets: this, scaleX: s, scaleY: s, y: this.y + 6, duration: 260, ease: 'Back.Out' });
+    this.scene.time.addEvent({
+      delay: 90,
+      repeat: 8,
+      callback: () => {
+        if (!this.active) return;
+        if (this.isTinted) this.clearTint();
+        else this.setTintFill(0xffffff);
+      },
+    });
+    this.scene.tweens.add({ targets: this, alpha: 0, delay: 1300, duration: 500, onComplete: () => this.destroy() });
+    this.scene.tweens.add({ targets: this.shadow, alpha: 0, delay: 1300, duration: 500 });
   }
 }

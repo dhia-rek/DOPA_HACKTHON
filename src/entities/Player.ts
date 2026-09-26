@@ -23,9 +23,19 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   nearestEnemy: Phaser.Physics.Arcade.Sprite | null = null;
   private shadow: Phaser.GameObjects.Image;
   private squash = 0;
+  private recoil = 0;
+  private facing: 'front' | 'back' | 'side' = 'front';
+  /** Texture per facing; sides without their own art fall back to the front view. */
+  private readonly faceKeys: Record<'front' | 'back' | 'side', string>;
 
   constructor(scene: Phaser.Scene, x: number, y: number, run: RunState, shots: ProjectilePool) {
-    super(scene, x, y, `player_${run.character.id}`);
+    const base = `player_${run.character.id}`;
+    super(scene, x, y, base);
+    this.faceKeys = {
+      front: base,
+      back: scene.textures.exists(`${base}_back`) ? `${base}_back` : base,
+      side: scene.textures.exists(`${base}_side`) ? `${base}_side` : base,
+    };
     this.run = run;
     this.shots = shots;
     scene.add.existing(this);
@@ -74,15 +84,32 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       const v = new Phaser.Math.Vector2(x, y).normalize().scale(PLAYER.acceleration);
       this.body.setAcceleration(v.x, v.y);
     }
-    if (x !== 0) this.setFlipX(x < 0);
+    this.face(x, y);
 
-    // Walk bob: stretch with speed, bounce while moving, squash briefly when hurt.
+    // Walk bob: stretch with speed, bounce while moving, squash briefly when hurt, kick back on each shot.
     const t = this.body.velocity.length() / this.run.stats.speed;
     const bob = Math.sin(this.scene.time.now / 70) * 0.06 * t;
     this.squash = Math.max(0, this.squash - 0.08);
+    this.recoil = Math.max(0, this.recoil - 0.15);
     const s = 1 / ART_SCALE;
-    this.setScale(s * (1 + t * 0.04 + this.squash * 0.3 - bob * 0.5), s * (1 - t * 0.04 - this.squash * 0.3 + bob));
+    this.setScale(
+      s * (1 + t * 0.04 + this.squash * 0.3 - bob * 0.5 + this.recoil * 0.08),
+      s * (1 - t * 0.04 - this.squash * 0.3 + bob - this.recoil * 0.05),
+    );
     this.shadow.setPosition(this.x, this.y + PLAYER.radius + 2).setScale(0.9 + t * 0.05, 0.8);
+  }
+
+  /** Turn toward the aim direction while shooting, otherwise toward the movement direction. */
+  private face(moveX: number, moveY: number): void {
+    const aim = input.shootAxes();
+    const dx = aim.x || aim.y ? aim.x : moveX;
+    const dy = aim.x || aim.y ? aim.y : moveY;
+    if (dx !== 0 || dy !== 0) {
+      this.facing = Math.abs(dy) > Math.abs(dx) ? (dy < 0 ? 'back' : 'front') : 'side';
+      if (dx !== 0) this.setFlipX(dx < 0);
+    }
+    const key = this.faceKeys[this.facing];
+    if (this.texture.key !== key) this.setTexture(key);
   }
 
   private handleShooting(): void {
@@ -110,6 +137,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       const shot = child as Projectile;
       if (shot.active && shot.flags.homing && !shot.homingTarget) shot.homingTarget = this.nearestEnemy;
     }
+    this.recoil = 1;
     events.emit('player_shot', {});
   }
 

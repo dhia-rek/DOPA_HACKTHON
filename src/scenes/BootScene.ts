@@ -3,6 +3,7 @@ import { COLORS, PLAYER, PROJECTILE, TILE } from '../config';
 import { save } from '../core/save';
 import { CHARACTERS } from '../data/characters';
 import { ENEMIES, EnemyDef } from '../data/enemies';
+import { GODS } from '../data/gods';
 import { ITEMS } from '../data/items';
 import { ART_SCALE, artKeys, artUrl } from '../art/manifest';
 import { GAME_HEIGHT, GAME_WIDTH } from '../config';
@@ -45,6 +46,7 @@ export class BootScene extends Phaser.Scene {
     for (const c of CHARACTERS) this.makePlayer(`player_${c.id}`, c.color, c.shadeColor);
     for (const e of ENEMIES) this.makeEnemy(e);
     for (const i of ITEMS) this.makeItemIcon(`item_${i.id}`, i.color);
+    for (const g of GODS) this.makeGod(`god_${g.id}`, g.color);
 
     this.scene.start('menu');
   }
@@ -293,6 +295,15 @@ export class BootScene extends Phaser.Scene {
     g.fillCircle(c - r * 0.35, c - r * 0.15, Math.max(2, r * 0.14));
     g.fillCircle(c + r * 0.35, c - r * 0.15, Math.max(2, r * 0.14));
     this.bake(g, `enemy_${def.id}`, size, size);
+  }
+
+  private makeGod(key: string, color: number): void {
+    if (!this.missing(key)) return;
+    const g = this.gfx();
+    g.fillStyle(color, 0.35).fillCircle(80, 80, 78);
+    g.fillStyle(color).fillCircle(80, 80, 52);
+    g.fillStyle(0xfff4d6).fillCircle(80, 72, 26);
+    this.bake(g, key, 160, 160);
   }
 
   private makeItemIcon(key: string, color: number): void {

@@ -63,6 +63,11 @@ export class HudScene extends Phaser.Scene {
     run.items.forEach((item, i) => {
       this.items.add(this.add.image(i * 30, 0, `item_${item.id}`).setOrigin(0, 0).setScale(0.8 / ART_SCALE));
     });
+    run.blessings.forEach((god, i) => {
+      const icon = this.add.image(run.items.length * 30 + 6 + i * 30, 0, `god_${god.id}`).setOrigin(0, 0);
+      icon.setScale(24 / Math.max(icon.width, icon.height));
+      this.items.add(icon);
+    });
 
     this.drawMinimap();
   }

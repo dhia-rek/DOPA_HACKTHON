@@ -6,6 +6,7 @@ bodies in src/entities/* expect (see SIZES below).
 
     python3 scripts/art/process.py ~/art_raw            # all assets
     python3 scripts/art/process.py ~/art_raw enemy_boar # one asset
+    python3 scripts/art/process.py ~/art_raw ~/more_raw  # several source folders (first match wins)
 
 Sources live outside the repo (they are ~1 MB each); only the outputs are
 committed. Regenerate a source with the prompt in ART.md, rerun this script.
@@ -63,6 +64,17 @@ SIZES = {
     'pickup_coin': ('sprite', 22, 22, {'src': 'coin', 'fill': 1.0}),
     'heart_full': ('sprite', 26, 24, {'src': 'heart', 'fill': 1.0}),
 }
+# pose variants share the base sprite's box: enemies get _attack/_hurt (+ _dead for bosses),
+# heroes get _back/_side facing views. The game falls back to the base key when a variant is missing.
+for _k in [k for k in SIZES if k.startswith('enemy_')]:
+    for _v in ('attack', 'hurt', 'dead'):
+        SIZES[f'{_k}_{_v}'] = SIZES[_k]
+for _c in ('achilles', 'atalanta', 'heracles', 'orpheus', 'kratos'):
+    for _v in ('back', 'side'):
+        SIZES[f'player_{_c}_{_v}'] = SIZES[f'player_{_c}']
+# gods: blessing overlay portraits
+for _g in ('zeus', 'athena', 'apollo', 'hermes', 'ares', 'poseidon'):
+    SIZES[f'god_{_g}'] = ('sprite', 160, 160, {'fill': 1.0})
 # menu portraits: hi-res version of each player sprite
 for _c in ('achilles', 'atalanta', 'heracles', 'orpheus', 'kratos'):
     SIZES[f'portrait_{_c}'] = ('sprite', 96, 96, {'src': f'player_{_c}', 'fill': 0.96})
@@ -165,14 +177,15 @@ def derive_hearts(full: Image.Image) -> None:
 
 
 def main() -> None:
-    raw = Path(sys.argv[1]).expanduser()
-    only = sys.argv[2:] or list(SIZES)
+    raws = [Path(a).expanduser() for a in sys.argv[1:] if a not in SIZES]
+    only = [a for a in sys.argv[1:] if a in SIZES] or list(SIZES)
     OUT.mkdir(parents=True, exist_ok=True)
     for key in only:
         mode, w, h, opt = SIZES[key]
-        src_path = raw / f"{opt.get('src', key)}.png"
+        src_path = next((r / f"{opt.get('src', key)}.png" for r in raws if (r / f"{opt.get('src', key)}.png").exists()), raws[0] / f"{opt.get('src', key)}.png")
         if not src_path.exists():
-            print(f'skip {key}: {src_path} missing')
+            if len(sys.argv) > 2:
+                print(f'skip {key}: {src_path} missing')
             continue
         src = Image.open(src_path)
         if mode == 'menu_bg':

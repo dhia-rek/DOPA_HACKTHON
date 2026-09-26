@@ -1,5 +1,6 @@
 import { CHARACTERS } from '../data/characters';
 import { ENEMIES } from '../data/enemies';
+import { GODS } from '../data/gods';
 import { ITEMS } from '../data/items';
 
 /**
@@ -37,17 +38,20 @@ export const STATIC_ART_KEYS = [
  * ids, so adding `public/art/enemy_<id>.png` is all it takes to give a new
  * enemy real art; until then BootScene draws a placeholder shape for it.
  *
- *   player_<character.id>    48x48    in-room sprite
+ *   player_<character.id>    56x56    in-room sprite, facing the camera
+ *   player_<id>_back/_side   56x56    facing away / facing right (flipped for left)
  *   portrait_<character.id>  96x96    menu portrait (falls back to player_* at 2x)
- *   enemy_<enemy.id>         radius*2+8 square
+ *   enemy_<enemy.id>         radius*2+16 square; _attack/_hurt/_dead pose variants
+ *   god_<god.id>             160x160  blessing overlay portrait
  *   item_<item.id>           28x28
  */
 export function artKeys(): string[] {
   return [
     ...STATIC_ART_KEYS,
-    ...CHARACTERS.flatMap((c) => [`player_${c.id}`, `portrait_${c.id}`]),
-    ...ENEMIES.map((e) => `enemy_${e.id}`),
+    ...CHARACTERS.flatMap((c) => [`player_${c.id}`, `player_${c.id}_back`, `player_${c.id}_side`, `portrait_${c.id}`]),
+    ...ENEMIES.flatMap((e) => [`enemy_${e.id}`, `enemy_${e.id}_hurt`, ...(e.innocent ? [] : [`enemy_${e.id}_attack`]), ...(e.isBoss ? [`enemy_${e.id}_dead`] : [])]),
     ...ITEMS.map((i) => `item_${i.id}`),
+    ...GODS.map((g) => `god_${g.id}`),
   ];
 }
 

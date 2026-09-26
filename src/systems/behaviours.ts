@@ -92,7 +92,9 @@ const flee: Behaviour = ({ enemy, player, rng, now }) => {
 
 /** Walks straight at the player. */
 const chaser: Behaviour = ({ enemy, player, now }) => {
-  seek(enemy, toPlayer(enemy, player), enemy.speed, now);
+  const d = toPlayer(enemy, player);
+  seek(enemy, d, enemy.speed, now);
+  if (d.length() < enemy.def.radius + 40) enemy.attack(300);
 };
 
 /** Picks a random direction every so often, occasionally drifting toward the player. */
@@ -106,6 +108,7 @@ const wanderer: Behaviour = ({ enemy, player, rng, now }) => {
     m.vy = Math.sin(angle) * enemy.speed;
   }
   enemy.moveTowards(m.vx ?? 0, m.vy ?? 0);
+  if (toPlayer(enemy, player).length() < enemy.def.radius + 40) enemy.attack(300);
 };
 
 /** Keeps mid distance and fires aimed shots. */
@@ -122,6 +125,7 @@ const shooter: Behaviour = (ctx) => {
   if (now >= (m.nextFire ?? now + 600)) {
     m.nextFire = now + (enemy.def.fireInterval ?? 1500);
     const aim = d.normalize();
+    enemy.attack(450);
     shootAt(ctx, aim.x, aim.y);
   } else if (m.nextFire === undefined) {
     m.nextFire = now + 600;
@@ -147,6 +151,7 @@ const charger: Behaviour = ({ enemy, player, now }) => {
   } else if (state === 1) {
     enemy.moveTowards(0, 0);
     enemy.stretch.set(0.9, 1.1);
+    enemy.attack(120);
     if (now >= m.until) {
       m.state = 2;
       m.until = now + 1500;
@@ -155,6 +160,7 @@ const charger: Behaviour = ({ enemy, player, now }) => {
   } else if (state === 2) {
     const s = enemy.def.chargeSpeed ?? 400;
     enemy.moveTowards(m.cx * s, m.cy * s);
+    enemy.attack(120);
     const hitWall = !enemy.body.blocked.none || !enemy.body.touching.none;
     if (hitWall || now >= m.until) {
       m.state = 3;
@@ -183,6 +189,7 @@ const orbiter: Behaviour = (ctx) => {
   if (now >= m.nextFire) {
     m.nextFire = now + (enemy.def.fireInterval ?? 2000);
     const aim = d.normalize();
+    enemy.attack(450);
     shootAt(ctx, aim.x, aim.y);
   }
 };
@@ -205,26 +212,34 @@ const bossMinotaur: Behaviour = (ctx) => {
       m.cy = dir.y;
     }
   } else if (state === 1) {
+    // Wind-up: crouch, raise the axe, face the target.
     enemy.moveTowards(0, 0);
-    enemy.setTint(0xff8060);
+    enemy.stretch.set(0.88, 1.12);
+    enemy.attack(120);
+    enemy.faceX = m.cx;
     if (now >= m.until) {
       m.state = 2;
       m.until = now + 1200;
-      enemy.clearTint();
     }
   } else if (state === 2) {
     const s = (enemy.def.chargeSpeed ?? 500) * (enraged ? 1.25 : 1);
     enemy.moveTowards(m.cx * s, m.cy * s);
+    enemy.stretch.set(1.12, 0.92);
+    enemy.attack(120);
     if (!enemy.body.blocked.none || now >= m.until) {
       m.state = 3;
       m.until = now + (enraged ? 500 : 900);
+      enemy.stretch.set(1.2, 0.8);
       ctx.player.scene.cameras.main.shake(150, 0.01);
       if (enraged) ring(ctx, 8, ctx.rng.float(0, Math.PI), 220);
     }
   } else {
+    // Recovery: slumped, then springs back to idle.
     enemy.moveTowards(0, 0);
+    enemy.stretch.lerp(new Phaser.Math.Vector2(1, 1), 0.15);
     if (now >= m.until) {
       m.state = 0;
+      enemy.stretch.set(1, 1);
       m.cooldownUntil = now + (enraged ? 600 : 1200);
     }
   }
@@ -236,12 +251,15 @@ const bossHydra: Behaviour = (ctx) => {
   const m = enemy.memory;
   const d = toPlayer(enemy, player);
   seek(enemy, d, enemy.speed, now);
+  enemy.stretch.lerp(new Phaser.Math.Vector2(1, 1), 0.1);
 
   if (m.nextFire === undefined) m.nextFire = now + 1000;
   if (now >= m.nextFire) {
     const heads = enemy.hpRatio > 0.66 ? 6 : enemy.hpRatio > 0.33 ? 9 : 12;
     m.nextFire = now + (enemy.def.fireInterval ?? 900) * (enemy.hpRatio > 0.33 ? 1 : 0.8);
     m.phase = (m.phase ?? 0) + 1;
+    enemy.attack(520);
+    enemy.stretch.set(1.1, 0.9);
     if (m.phase % 3 === 0) {
       const aim = d.normalize();
       for (const off of [-0.25, 0, 0.25]) {
