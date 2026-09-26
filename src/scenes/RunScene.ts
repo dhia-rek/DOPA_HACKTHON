@@ -276,6 +276,7 @@ export class RunScene extends Phaser.Scene {
     const bp = boss.blueprint;
     if (!bp || this.bossBar) return;
     const v = verdictOf(this.run.story.alignment);
+    boss.setAura(v.color);
     const mono = 'monospace';
     const cx = GAME_WIDTH / 2;
     const top = 50;
