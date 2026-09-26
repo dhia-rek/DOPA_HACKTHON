@@ -5,6 +5,7 @@ import type { RunSnapshot } from '../data/achievements';
 import { FloorMap, generateFloor, RoomNode } from '../gen/floorGen';
 import { chapterFor, loreFor, resolveFront, ResolvedFront, warSnapshot } from '../systems/chronicle';
 import { pickItemFromPool } from '../systems/loot';
+import { debugState } from './debug';
 import { events } from './events';
 import { Rng } from './rng';
 import { computeStats, mergeFlags, ShotFlags, Stats } from './stats';
@@ -55,6 +56,7 @@ export class RunState {
 
   constructor(seed: string, characterId: string) {
     this.seed = seed;
+    debugState.god = false;
     this.character = getCharacter(characterId);
     this.story = new StoryState(this.character.startingKarma ?? 0, this.character.storyFlags ?? []);
     this.rng = new Rng(seed);
@@ -82,9 +84,12 @@ export class RunState {
     return this.floor === STAGES.length;
   }
 
-  /** Multiplier applied to enemy hp/speed/damage in endless loops. */
+  /**
+   * Multiplier applied to enemy hp/speed/damage. Floor 1 is a quick warm-up
+   * (0.75), then it ramps per floor and jumps each endless loop.
+   */
   get difficulty(): number {
-    return 1 + this.loop * 0.35 + (this.floor - 1) * 0.06;
+    return 0.75 + (this.floor - 1) * 0.15 + this.loop * 0.35;
   }
 
   won = false;
@@ -158,6 +163,7 @@ export class RunState {
 
   /** Returns true if the player died. */
   takeDamage(amount: number, source: string): boolean {
+    if (debugState.god) return false;
     this.hp = Math.max(0, this.hp - amount);
     this.damageTakenThisRun += amount;
     this.damageTakenThisFloor += amount;

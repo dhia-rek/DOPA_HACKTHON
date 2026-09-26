@@ -111,7 +111,11 @@ export function generateFloor(rng: Rng, opts: FloorGenOptions): FloorMap {
     .sort((a, b) => (dist.get(key(b.gx, b.gy)) ?? 0) - (dist.get(key(a.gx, a.gy)) ?? 0));
 
   const bossCell = deadEnds[0] ?? [...cells.values()].sort((a, b) => (dist.get(key(b.gx, b.gy)) ?? 0) - (dist.get(key(a.gx, a.gy)) ?? 0))[0];
-  const treasureCell = deadEnds.find((c) => c !== bossCell);
+  const treasureCell =
+    deadEnds.find((c) => c !== bossCell) ??
+    [...cells.values()]
+      .filter((c) => c !== startCell && c !== bossCell)
+      .sort((a, b) => (dist.get(key(b.gx, b.gy)) ?? 0) - (dist.get(key(a.gx, a.gy)) ?? 0))[0];
   const spareEnds = deadEnds.filter((c) => c !== bossCell && c !== treasureCell);
   const shrineCell = spareEnds.length && rng.chance(opts.shrineChance ?? 0.75) ? rng.pick(spareEnds) : undefined;
 
