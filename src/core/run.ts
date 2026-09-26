@@ -202,7 +202,10 @@ export class RunState {
         return id;
       },
     });
-    if (this.directive) applyDirective(this.floorMap, this.directive, front, this.floorRng.fork(`director-${this.floor}`));
+    if (this.directive) {
+      const pools = { ...front, enemyPool: [...front.enemyPool, ...(this.omen?.enemyBias ?? [])] };
+      applyDirective(this.floorMap, this.directive, pools, this.floorRng.fork(`director-${this.floor}`));
+    }
     this.room = this.floorMap.start;
     events.emit('floor_started', { floor: this.floor, stageId: this.stage.id });
     return this.floorMap;

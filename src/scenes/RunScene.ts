@@ -219,7 +219,7 @@ export class RunScene extends Phaser.Scene {
       this.scene.resume();
       return;
     }
-    if (this.dead) return;
+    if (this.dead) return this.releaseDialogue();
     const script: DialogueScript = {
       id: offer.id,
       kind: 'shrine',
@@ -459,7 +459,7 @@ export class RunScene extends Phaser.Scene {
     }
     if (waiting.active) waiting.destroy();
     // Scene restarted (new room) or run ended while we were waiting.
-    if (this.room !== room || this.dead) return;
+    if (this.room !== room || this.dead) return this.releaseDialogue();
     const data: DialogueSceneData = {
       script,
       voice: voiceFor(speaker.id, kind, this.run.storySnapshot()),
@@ -472,6 +472,13 @@ export class RunScene extends Phaser.Scene {
     };
     this.scene.launch('dialogue', data);
     this.scene.bringToTop('dialogue');
+  }
+
+  /** Undo the pause taken for an awaited dialogue that will not be shown. */
+  private releaseDialogue(): void {
+    this.dialogueOpen = false;
+    this.holdClear = false;
+    if (this.scene.isPaused()) this.scene.resume();
   }
 
   private applyChoice(script: DialogueScript, option: DialogueOption | null, speaker: DialogueSpeaker): void {
