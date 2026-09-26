@@ -1,5 +1,6 @@
 import { Rng } from '../core/rng';
 import { bossOutroLines } from '../data/bossOutro';
+import { ENEMIES } from '../data/enemies';
 import { DialogueRequest, DialogueScript, validateScript } from './types';
 
 /**
@@ -79,6 +80,15 @@ export class HttpDialogueProvider implements DialogueProvider {
   }
 }
 
+const NPC_LINES: Record<string, string[]> = {
+  villager: ['Please, {you}, I am no fighter. I only tend the goats.', "Don't hurt me! I know a secret of this place…"],
+  priestess: ['Athena sees all you have done, {you}. Speak, and be judged.', 'I do not beg. The goddess weighs your deeds, not my life.'],
+  child: ['Are you… are you my father? You look like a hero from the stories.', 'The monsters took everyone. Please don\'t leave me here.'],
+  wounded_soldier: ['Water… or a quick end, {you}. Either is a kindness.', 'I held this line until my shield broke. I know what waits ahead.'],
+};
+
+const nameOf = (id: string): string => ENEMIES.find((e) => e.id === id)?.name ?? id;
+
 /**
  * Seeded, offline dialogue. Deliberately simple: it proves the pipeline
  * (request → script → choice → effects) and is the safety net for the LLM.
@@ -89,15 +99,25 @@ export class MockDialogueProvider implements DialogueProvider {
     const s = req.story;
     const you = s.characterName;
 
-    const memory =
-      s.npcsKilled > 0
+    const brokeOath = s.flags.includes(`broke_oath_to_${req.speakerId}`);
+    const returning = req.kind === 'boss_intro' && s.bossesKilled.includes(req.speakerId);
+    const fallen = s.bossesKilled.filter((id) => id !== req.speakerId);
+    const memory = brokeOath
+      ? rng.pick([`You swore an oath to me, ${you}, then spilled innocent blood. Oathbreaker.`, `Your word is worth less than the dust of this place, oathbreaker.`])
+      : returning
+        ? rng.pick([`You again, ${you}? Hades would not keep me. I have walked back out of the dark for you.`, `I remember your blade, ${you}. Death was only a door, and I came back through it.`])
+      : s.npcsKilled > 0
         ? rng.pick([
             `I smell the blood of the ${s.npcsKilled} innocent${s.npcsKilled > 1 ? 's' : ''} you cut down.`,
             `The shades of those you murdered whisper your name, ${you}.`,
           ])
+        : fallen.length > 0 && s.flags.includes(`slew_${fallen[fallen.length - 1]}`)
+          ? `So you are the one who killed the ${nameOf(fallen[fallen.length - 1])}. I will not fall so easily.`
+        : s.flags.includes('spared_many')
+          ? rng.pick([`Every shade in the ${s.stageName} speaks of your mercy, ${you}. It will not save you here.`, `So many spared… you carry their gratitude like armour. Let us see if it holds.`])
         : s.npcsSpared > 0
-          ? rng.pick([`They say you spared the weak. Weakness recognises weakness.`, `Mercy, from a ${you}? The gods must be laughing.`])
-          : rng.pick([`So the ${s.stageName} sends me a ${you}.`, `Another hero comes to die on floor ${s.floor}.`]);
+          ? rng.pick([`They say you spared the weak. Weakness recognises weakness.`, `Mercy, from ${you}? The gods must be laughing.`])
+          : rng.pick([`So the ${s.stageName} sends me ${you}.`, `Another hero comes to die in the ${s.stageName}.`]);
 
     const raw =
       req.kind === 'boss_intro'
@@ -134,13 +154,11 @@ export class MockDialogueProvider implements DialogueProvider {
           ? { lines: bossOutroLines(req, rng), options: [] }
           : req.kind === 'npc'
           ? {
-              lines: [
-                rng.pick([`Please, ${you}, I am no fighter. I only tend the goats.`, `Don't hurt me! I know a secret of this place…`]),
-              ],
+              lines: [rng.pick(NPC_LINES[req.speakerId] ?? NPC_LINES.villager).replace(/\{you\}/g, you)],
               options: [
-                { id: 'spare', text: 'Let them go.', reply: 'May the gods remember this.', effects: { karma: 10 } },
-                { id: 'rob', text: 'Take their coins and leave.', reply: 'Take it… just go.', effects: { karma: -5, coins: 5 } },
-                { id: 'threaten', text: 'Demand the secret.', reply: 'The beast below fears fire… and pride.', effects: { karma: -2, flags: ['knows_boss_weakness'] } },
+                { id: 'spare', text: 'Let them go.', reply: 'May the gods remember this.', effects: { karma: 10, npcOutcome: 'spared' } },
+                { id: 'rob', text: 'Take their coins and leave.', reply: 'Take it… just go.', effects: { karma: -5, coins: 5, npcOutcome: 'wronged' } },
+                { id: 'threaten', text: 'Demand the secret.', reply: 'The beast below fears fire… and pride.', effects: { karma: -2, flags: ['knows_boss_weakness'], npcOutcome: 'wronged' } },
               ],
             }
           : req.kind === 'shrine'

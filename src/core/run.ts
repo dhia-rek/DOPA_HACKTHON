@@ -160,6 +160,7 @@ export class RunState {
       stage: this.stage,
       loop: this.loop,
       omen: this.omen,
+      avoidBossId: this.story.deeds.filter((d) => d.kind === 'boss_killed' && d.floor === this.floor - 1).pop()?.subject,
       pickItem: () => {
         const id = pickItemFromPool(this.itemRng, 'treasure', picked);
         picked.push(id);

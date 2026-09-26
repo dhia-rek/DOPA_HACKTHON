@@ -19,6 +19,8 @@ export interface FloorGenOptions {
   shrineChance?: number;
   /** AI/mock omen that reshapes the floor (src/omens). */
   omen?: FloorOmen;
+  /** Boss to skip when the stage pool offers another (e.g. the one slain on the previous floor). */
+  avoidBossId?: string;
 }
 
 export interface RoomNode {
@@ -159,7 +161,8 @@ export function generateFloor(rng: Rng, opts: FloorGenOptions): FloorMap {
       for (let i = 0; i < wanted; i++) node.enemies.push(rng.pick(enemyPool));
       if (stage.npcPool?.length && rng.chance(omen?.npcChance ?? stage.npcChance ?? 0)) node.npcs.push(rng.pick(stage.npcPool));
     } else if (type === 'boss') {
-      node.bossId = rng.pick(stage.bossPool);
+      const pool = stage.bossPool.filter((id) => id !== opts.avoidBossId);
+      node.bossId = rng.pick(pool.length ? pool : stage.bossPool);
     } else if (type === 'treasure') {
       node.itemId = pickItem();
     }

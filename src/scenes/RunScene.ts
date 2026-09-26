@@ -27,6 +27,8 @@ import { BEHAVIOURS, threaten } from '../systems/behaviours';
 const TALK_RANGE = 150;
 /** A player shot passing this close to an innocent scares it. */
 const SCARE_RANGE = 90;
+/** Spared innocents before bosses start calling you merciful (`spared_many`). */
+const SPARED_MANY = 3;
 
 /** Who a dialogue is with: an Enemy (boss/NPC) or a static prop such as the altar. */
 interface DialogueSpeaker {
@@ -247,7 +249,7 @@ export class RunScene extends Phaser.Scene {
   /** Talk bubble when in range; panic when a player shot flies close by. */
   private watchInnocent(npc: Enemy, now: number): void {
     const near = Phaser.Math.Distance.Between(npc.x, npc.y, this.player.x, this.player.y) < TALK_RANGE;
-    npc.showBubble(near && !this.room.dialogueDone);
+    npc.showBubble(near && !npc.getData('talked'));
     if (npc.isPanicking) return;
     for (const child of this.playerShots.getChildren()) {
       const shot = child as Projectile;
@@ -320,6 +322,10 @@ export class RunScene extends Phaser.Scene {
       this.toast('Not enough coins', 'The offering is refused.');
       option = null;
     }
+    if (option && option.effects.hp && option.effects.hp < 0 && this.run.hp <= -option.effects.hp) {
+      this.toast('Too weak', 'You have no blood left to give.');
+      option = null;
+    }
     if (option) {
       const fx = option.effects;
       if (fx.hp && fx.hp < 0 && this.run.takeDamage(-fx.hp, 'oath')) {
@@ -351,7 +357,7 @@ export class RunScene extends Phaser.Scene {
     if (script.kind === 'boss_intro' && enemy?.active) {
       enemy.applyMods(this.run.story.takeBossMods());
     } else if (script.kind === 'npc' && enemy?.active) {
-      this.spareNpc(enemy);
+      this.spareNpc(enemy, option?.effects.npcOutcome === 'wronged');
     } else if (script.kind === 'shrine') {
       this.extinguishAltar();
     }
@@ -373,11 +379,16 @@ export class RunScene extends Phaser.Scene {
     this.burst(this.altar.x, this.altar.y - 16, COLORS.doorFrame, 12);
   }
 
-  /** The NPC walks away alive; counts as spared. */
-  private spareNpc(npc: Enemy): void {
+  /** The NPC walks away alive; counts as spared unless the player wronged them. */
+  private spareNpc(npc: Enemy, wronged: boolean): void {
     this.room.npcs = this.room.npcs.filter((id) => id !== npc.def.id);
-    this.run.story.record({ kind: 'npc_spared', subject: npc.def.id, floor: this.run.floor, karmaDelta: KARMA.npcSpared, summary: `Spared the ${npc.def.name} on floor ${this.run.floor}` });
-    events.emit('npc_spared', { npcId: npc.def.id, floor: this.run.floor });
+    if (wronged) {
+      this.run.story.record({ kind: 'custom', subject: `wronged_${npc.def.id}`, floor: this.run.floor, karmaDelta: 0, summary: `Wronged the ${npc.def.name} on floor ${this.run.floor}` });
+    } else {
+      this.run.story.record({ kind: 'npc_spared', subject: npc.def.id, floor: this.run.floor, karmaDelta: KARMA.npcSpared, summary: `Spared the ${npc.def.name} on floor ${this.run.floor}` });
+      if (this.run.story.count('npc_spared') >= SPARED_MANY) this.run.story.addFlag('spared_many');
+      events.emit('npc_spared', { npcId: npc.def.id, floor: this.run.floor });
+    }
     this.tweens.add({ targets: npc, alpha: 0, duration: 500, onComplete: () => npc.destroy() });
     npc.body.enable = false;
   }
@@ -539,8 +550,8 @@ export class RunScene extends Phaser.Scene {
       const enemy = e as Enemy;
       if (enemy.isSpawning) return;
       if (enemy.def.innocent) {
-        if (!this.room.dialogueDone && !enemy.isPanicking) {
-          this.room.dialogueDone = true;
+        if (!enemy.getData('talked') && !enemy.isPanicking && !this.dialogueOpen) {
+          enemy.setData('talked', true);
           void this.startDialogue('npc', speakerOf(enemy));
         }
         return;
@@ -601,6 +612,7 @@ export class RunScene extends Phaser.Scene {
     if (isBoss) {
       this.cameras.main.shake(300, 0.012);
       this.run.story.record({ kind: 'boss_killed', subject: enemy.def.id, floor: this.run.floor, karmaDelta: 0, summary: `Slew ${enemy.def.name} on floor ${this.run.floor}` });
+      this.run.story.addFlag(`slew_${enemy.def.id}`);
       events.emit('boss_killed', { enemyId: enemy.def.id, floor: this.run.floor });
       this.bossOutro({ ...speakerOf(enemy), enemy: undefined });
     } else if (this.run.dropRng.chance(enemy.def.dropChance ?? 0)) {
@@ -632,6 +644,9 @@ export class RunScene extends Phaser.Scene {
     this.burst(npc.x, npc.y, def.color, 10);
     this.run.story.record({ kind: 'npc_killed', subject: def.id, floor: this.run.floor, karmaDelta: KARMA.npcKilled, summary: `Killed the innocent ${def.name} on floor ${this.run.floor}` });
     this.run.story.addFlag('blood_on_hands');
+    for (const flag of [...this.run.story.flags]) {
+      if (flag.startsWith('swore_oath_to_')) this.run.story.addFlag(flag.replace('swore_oath_to_', 'broke_oath_to_'));
+    }
     events.emit('npc_killed', { npcId: def.id, floor: this.run.floor });
     this.toast('Innocent blood', 'The gods have seen this.');
     npc.destroy();
