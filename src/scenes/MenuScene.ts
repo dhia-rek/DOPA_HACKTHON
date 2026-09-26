@@ -11,6 +11,7 @@ import { settings } from '../core/settings';
 import { blip } from '../core/sfx';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { CHARACTERS, CharacterDef } from '../data/characters';
+import { playRecordedVoice } from '../voice/clips';
 import { getItem } from '../data/items';
 import { achievements } from '../systems/achievements';
 import { drawTitle, hintText, mono } from './ui';
@@ -130,6 +131,7 @@ export class MenuScene extends Phaser.Scene {
     }
     this.starting = true;
     blip('confirm');
+    playRecordedVoice(c.id);
     if (TOUCH && this.scale.fullscreen.available && !this.scale.isFullscreen) this.scale.startFullscreen();
     const run = new RunState(this.seed, c.id);
     this.registry.set('run', run);

@@ -5,6 +5,7 @@ import { CHARS_PER_SEC, settings } from '../core/settings';
 import { blip } from '../core/sfx';
 import type { DialogueOption, DialogueScript } from '../dialogue/types';
 import { music } from '../core/music';
+import { playRecordedVoice, stopRecordedVoice } from '../voice/clips';
 import { voice, voiceSettings } from '../voice/provider';
 import type { VoiceProfile } from '../voice/types';
 import { mono, display } from './ui';
@@ -38,6 +39,7 @@ export class DialogueScene extends Phaser.Scene {
   private fullText = '';
   private shown = 0;
   private typer?: Phaser.Time.TimerEvent;
+  private introPlaying = false;
 
   constructor() {
     super('dialogue');
@@ -51,6 +53,7 @@ export class DialogueScene extends Phaser.Scene {
     this.phase = 'lines';
     this.optionTexts = [];
     this.typer = undefined;
+    this.introPlaying = false;
 
     const top = GAME_HEIGHT - BOX_H - 16;
     // Interactive backdrop: a tap anywhere advances, and (being hit-tested in the
@@ -76,7 +79,13 @@ export class DialogueScene extends Phaser.Scene {
     kb.on('keydown-SPACE', this.advance, this);
     const toggleVoice = (): void => {
       voiceSettings.enabled = !voiceSettings.enabled;
-      if (!voiceSettings.enabled) voice.stop();
+      if (!voiceSettings.enabled) {
+        voice.stop();
+        stopRecordedVoice();
+        this.introPlaying = false;
+      } else if (this.phase !== 'options') {
+        this.speakCurrentLine();
+      }
       this.voiceTag.setText(this.voiceLabel());
     };
     kb.on('keydown-M', toggleVoice);
@@ -98,6 +107,11 @@ export class DialogueScene extends Phaser.Scene {
       });
     }
 
+    voice.stop();
+    this.introPlaying = playRecordedVoice(data.script.speakerId, () => {
+      this.introPlaying = false;
+      this.speakCurrentLine();
+    });
     this.showLine();
   }
 
@@ -143,7 +157,7 @@ export class DialogueScene extends Phaser.Scene {
   }
 
   private typeOut(text: string): void {
-    if (this.data_.voice) voice.speak(text, this.data_.voice);
+    if (!this.introPlaying && this.data_.voice) voice.speak(text, this.data_.voice);
     this.typer?.remove(false);
     this.fullText = text;
     this.shown = 0;
@@ -171,6 +185,10 @@ export class DialogueScene extends Phaser.Scene {
     this.hint.setText(`${OK_KEY} ▸`);
   }
 
+  private speakCurrentLine(): void {
+    if (this.data_.voice && this.fullText) voice.speak(this.fullText, this.data_.voice);
+  }
+
   // ---- flow ---------------------------------------------------------------
 
   private showLine(): void {
@@ -179,6 +197,7 @@ export class DialogueScene extends Phaser.Scene {
   }
 
   private showOptions(): void {
+    voice.stop();
     this.phase = 'options';
     this.body.setText('');
     const top = GAME_HEIGHT - BOX_H - 16 + 24;
@@ -220,6 +239,12 @@ export class DialogueScene extends Phaser.Scene {
 
   private advance(): void {
     const { script } = this.data_;
+    if (this.introPlaying) {
+      stopRecordedVoice();
+      this.introPlaying = false;
+      this.speakCurrentLine();
+      return;
+    }
     if (this.typing) {
       this.completeLine();
       return;
@@ -249,6 +274,7 @@ export class DialogueScene extends Phaser.Scene {
   private finish(option: DialogueOption | null): void {
     this.typer?.remove(false);
     voice.stop();
+    stopRecordedVoice();
     music.duck(false);
     const cb = this.data_.onDone;
     this.scene.stop();

@@ -180,15 +180,15 @@ export class RunState {
     events.emit('hud_update', {});
   }
 
-  /** Returns true if the player died. */
+  /** Heroes cannot die: health never drops below half a heart. Always returns false. */
   takeDamage(amount: number, source: string): boolean {
     if (debugState.god) return false;
-    this.hp = Math.max(0, this.hp - amount);
+    this.hp = Math.max(1, this.hp - amount);
     this.damageTakenThisRun += amount;
     this.damageTakenThisFloor += amount;
     events.emit('damage_taken', { amount, hp: this.hp, source });
     events.emit('hud_update', {});
-    return this.hp <= 0;
+    return false;
   }
 
   addCoins(n: number): void {
