@@ -1,5 +1,5 @@
 import { aiEndpoint } from '../core/ai';
-import type { VoiceProfile } from './types';
+import { isFemaleVoice, type VoiceProfile } from './types';
 
 export interface VoiceProvider {
   /** Speak a line; any previous line is cut off. Never throws. */
@@ -21,6 +21,17 @@ export const voiceSettings = {
   },
 };
 
+const FEMALE_HINT = /female|woman|zira|aria|jenny|emma|libby|sonia|natasha|samantha|victoria|karen|moira|tessa|fiona|susan|serena|allison|ava|kate|hazel|heera/i;
+const MALE_HINT = /\bmale\b|\bman\b|david|mark|guy|ryan|thomas|brian|christopher|daniel|alex|fred|arthur|oliver|george|james|aaron|tom|rishi|gordon/i;
+
+/** An English browser voice of the wanted gender, if the browser exposes one. */
+function pickBrowserVoice(female: boolean): SpeechSynthesisVoice | undefined {
+  const english = speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith('en'));
+  const want = female ? FEMALE_HINT : MALE_HINT;
+  const avoid = female ? MALE_HINT : FEMALE_HINT;
+  return english.find((v) => want.test(v.name) && !avoid.test(v.name)) ?? english.find((v) => want.test(v.name));
+}
+
 /** Offline voice: the browser's speechSynthesis with a pitch/rate per speaker and mood. */
 export class BrowserVoiceProvider implements VoiceProvider {
   speak(text: string, profile: VoiceProfile): void {
@@ -30,6 +41,8 @@ export class BrowserVoiceProvider implements VoiceProvider {
     u.pitch = profile.pitch;
     u.rate = profile.rate;
     u.lang = 'en-US';
+    const match = pickBrowserVoice(isFemaleVoice(profile.voice));
+    if (match) u.voice = match;
     speechSynthesis.speak(u);
   }
 

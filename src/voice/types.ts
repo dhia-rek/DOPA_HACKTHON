@@ -12,6 +12,10 @@ export type VoiceMood = 'calm' | 'angry' | 'fearful' | 'mournful' | 'mocking' | 
 export const VOICE_NAMES = ['Charon', 'Fenrir', 'Orus', 'Kore', 'Aoede', 'Leda', 'Puck', 'Zephyr'] as const;
 export type VoiceName = (typeof VOICE_NAMES)[number];
 
+/** Catalogue voices that are female; speechSynthesis picks a matching browser voice. */
+const FEMALE_VOICES: ReadonlySet<VoiceName> = new Set<VoiceName>(['Kore', 'Aoede', 'Leda', 'Zephyr']);
+export const isFemaleVoice = (v: VoiceName): boolean => FEMALE_VOICES.has(v);
+
 export interface VoiceProfile {
   /** Who speaks: lets the server use a speaker's own custom voice. */
   speakerId?: string;
@@ -46,6 +50,12 @@ const SPEAKER_VOICES: Record<string, { voice: VoiceName; pitch: number; rate: nu
   child: { voice: 'Leda', pitch: 1.7, rate: 1.1 },
   wounded_soldier: { voice: 'Orus', pitch: 0.8, rate: 0.85 },
   altar: { voice: 'Kore', pitch: 0.9, rate: 0.85 },
+  trial_hermes: { voice: 'Puck', pitch: 1.1, rate: 1.15 },
+  trial_ares: { voice: 'Fenrir', pitch: 0.5, rate: 0.9 },
+  trial_charon: { voice: 'Charon', pitch: 0.4, rate: 0.8 },
+  trial_artemis: { voice: 'Zephyr', pitch: 1.1, rate: 1 },
+  trial_athena: { voice: 'Aoede', pitch: 1, rate: 0.9 },
+  trial_nemesis: { voice: 'Kore', pitch: 0.8, rate: 0.85 },
 };
 
 export type SpeechKind = 'boss_intro' | 'boss_outro' | 'npc' | 'shrine' | 'trial';
