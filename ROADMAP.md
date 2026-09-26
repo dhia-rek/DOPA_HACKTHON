@@ -95,6 +95,19 @@ POST {VITE_DIALOGUE_API}            body: DialogueRequest   (src/dialogue/types.
 * Achievements for the moral axis (`saint`, `butcher`, `oathbreaker`).
 * Tune karma values / `takeBossMods()` curve.
 
+#### Boss flags
+`EnemyDef.reactsTo` lists the `StorySnapshot.flags` a boss's dialogue should
+react to. Set by: `blood_on_hands` (`RunScene.killNpc`), `defied_<bossId>` and
+`knows_boss_weakness` (mock/LLM option effects); the rest are for future
+dialogue options. Cerberus and Medusa are planned (behaviours TBD, Julien).
+
+| Boss (id) | Reacts to | Intended reaction |
+|---|---|---|
+| Minotaur (`minotaur`) | `blood_on_hands`, `defied_minotaur`, `swore_oath_to_minotaur`, `broke_oath_to_minotaur`, `knows_boss_weakness`, `spared_many` | Cruel → "we are both beasts", angrier (dmg↑); oath kept → honourable duel (speed↓); oath broken → enraged, no bargain option; weakness known → charges shorter |
+| Hydra (`hydra`) | `blood_on_hands`, `defied_hydra`, `spared_many`, `knows_boss_weakness`, `bargained_with_hydra`, `slew_minotaur` | Cruel → flatters as kin, offers a pact; merciful → mocks softness (hp↑); `slew_minotaur` → fears you, heads bicker; bargain → fewer shots, coins taken |
+| Cerberus (`cerberus`, planned) | `blood_on_hands`, `defied_cerberus`, `fed_cerberus`, `stole_from_hades`, `spared_many` | Three heads = three moods; fed → one head sleeps (hp↓); thief → all heads awake, faster; merciful → lets you pass one gate for free |
+| Medusa (`medusa`, planned) | `blood_on_hands`, `defied_medusa`, `looked_away`, `knows_boss_weakness`, `slew_hydra`, `swore_oath_to_minotaur` | Cruel → recognises Poseidon's cruelty in you, pities you; averted gaze → petrify slower; weakness → mirror shield hint; oath-keeper → offers a truce |
+
 ---
 
 ## 3. Workflow
