@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH, TILE } from '../config';
+import { settings } from '../core/settings';
 import type { ShotFlags } from '../core/stats';
 import type { AbilityId, WeaknessId } from '../data/abilities';
 import type { Enemy } from '../entities/Enemy';
@@ -110,7 +111,7 @@ export const bossDirected: Behaviour = (ctx) => {
         m.until = now + 1100;
       } else if (m.pending === 2) {
         // ground slam
-        ctx.player.scene.cameras.main.shake(180, 0.012);
+        settings.shake(ctx.player.scene.cameras.main, 180, 0.012);
         ring(ctx, 8, rng.float(0, Math.PI), 190);
         m.state = State.Roam;
       } else {
@@ -128,7 +129,7 @@ export const bossDirected: Behaviour = (ctx) => {
     if (!enemy.body.blocked.none || now >= m.until) {
       m.state = State.Stagger;
       m.until = now + (bp.weakness === 'stagger_after_charge' ? 1500 : 700);
-      ctx.player.scene.cameras.main.shake(120, 0.008);
+      settings.shake(ctx.player.scene.cameras.main, 120, 0.008);
     }
     return;
   }

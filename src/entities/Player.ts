@@ -3,6 +3,7 @@ import { PLAYER } from '../config';
 import { events } from '../core/events';
 import { input } from '../core/input';
 import type { RunState } from '../core/run';
+import { settings } from '../core/settings';
 import type { Projectile, ProjectilePool } from './Projectile';
 
 /**
@@ -122,7 +123,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
     if (this.run.character.passive === 'rage') this.rageUntil = this.scene.time.now + 3000;
 
-    this.scene.cameras.main.shake(120, 0.006);
+    settings.shake(this.scene.cameras.main, 120, 0.006);
     return this.run.takeDamage(amount, source);
   }
 }

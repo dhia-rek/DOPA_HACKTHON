@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { COLORS, Dir, DIR_VECTORS, GAME_HEIGHT, GAME_WIDTH, GRID_COLS, GRID_ROWS, OPPOSITE, ROOM_COLS, ROOM_ROWS, TILE } from '../config';
 import { events } from '../core/events';
 import type { RunState } from '../core/run';
+import { settings } from '../core/settings';
 import { KARMA } from '../core/story';
 import { earnedWeaknesses } from '../core/profile';
 import { EnemyDef, getEnemy } from '../data/enemies';
@@ -9,6 +10,7 @@ import { getItem } from '../data/items';
 import { factionOf, makeShade } from '../data/war';
 import { dialogueProvider } from '../dialogue/provider';
 import type { DialogueKind, DialogueOption, DialogueScript } from '../dialogue/types';
+import type { BossIntroData } from './BossIntroScene';
 import type { DialogueSceneData } from './DialogueScene';
 import { doorsOf, neighbour, RoomNode } from '../gen/floorGen';
 import { Enemy } from '../entities/Enemy';
@@ -155,9 +157,30 @@ export class RunScene extends Phaser.Scene {
       const boss = this.hostiles().find((e) => e.def.isBoss);
       if (boss) {
         this.room.dialogueDone = true;
-        this.time.delayedCall(250, () => this.startDialogue('boss_intro', this.bossSpeaker(boss)));
+        this.time.delayedCall(250, () => this.bossSplash(boss));
       }
     }
+  }
+
+  /** Pokémon-style VS splash over the paused room, then the boss_intro dialogue. */
+  private bossSplash(boss: Enemy): void {
+    if (this.dead || this.transitioning || this.dialogueOpen) return;
+    const room = this.room;
+    this.scene.pause();
+    const data: BossIntroData = {
+      hero: this.run.character,
+      boss: boss.def,
+      title: boss.blueprint?.title,
+      grudge: boss.blueprint?.grudge,
+      floor: this.run.floor,
+      onDone: () => {
+        if (this.room !== room || this.dead) return;
+        this.scene.resume();
+        if (boss.active) void this.startDialogue('boss_intro', this.bossSpeaker(boss));
+      },
+    };
+    this.scene.launch('boss_vs', data);
+    this.scene.bringToTop('boss_vs');
   }
 
   /** Boss dialogue speaker: the Director's title, persona and grudge on top of the authored persona. */
@@ -650,7 +673,7 @@ export class RunScene extends Phaser.Scene {
       }
     }
     if (isBoss) {
-      this.cameras.main.shake(300, 0.012);
+      settings.shake(this.cameras.main, 300, 0.012);
       this.run.story.record({ kind: 'boss_killed', subject: enemy.def.id, lore: enemy.def.lore, floor: this.run.floor, karmaDelta: 0, summary: `Slew ${enemy.def.name} on floor ${this.run.floor}` });
       this.run.story.addFlag(`slew_${enemy.def.id}`);
       events.emit('boss_killed', { enemyId: enemy.def.id, floor: this.run.floor });

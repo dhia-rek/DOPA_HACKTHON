@@ -1,59 +1,77 @@
 import Phaser from 'phaser';
-import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
+import { COLORS, GAME_WIDTH } from '../config';
 import { events } from '../core/events';
 import { Rng } from '../core/rng';
 import { RunState } from '../core/run';
 import { save } from '../core/save';
+import { settings } from '../core/settings';
+import { blip } from '../core/sfx';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { CHARACTERS, CharacterDef } from '../data/characters';
 import { getItem } from '../data/items';
 import { achievements } from '../systems/achievements';
+import { drawTitle, hintText, mono } from './ui';
+
+type View = 'main' | 'select';
+
+interface MenuEntry {
+  label: () => string;
+  run: () => void;
+}
 
 /**
- * Title + character select + challenge list. Locked characters show their
- * unlock hint; the seed can be re-rolled with R so runs are shareable.
+ * Title screen: Descend / Challenges / Options. Descend opens the character
+ * select (locked characters show their unlock hint; R re-rolls the seed so
+ * runs are shareable).
  */
 export class MenuScene extends Phaser.Scene {
-  private index = 0;
+  private view: View = 'main';
+  private menuIndex = 0;
+  private charIndex = 0;
   private seed = new URLSearchParams(location.search).get('seed') ?? Rng.randomSeed();
   private root!: Phaser.GameObjects.Container;
+
+  private readonly entries: MenuEntry[] = [
+    { label: () => 'DESCEND', run: () => this.setView('select') },
+    { label: () => `CHALLENGES  ${ACHIEVEMENTS.filter((a) => save.hasAchievement(a.id)).length} / ${ACHIEVEMENTS.length}`, run: () => this.go('challenges') },
+    { label: () => 'OPTIONS', run: () => this.go('options') },
+  ];
 
   constructor() {
     super('menu');
   }
 
-  create(): void {
+  create(data?: { view?: View }): void {
     achievements.start();
-    this.index = Math.max(0, CHARACTERS.findIndex((c) => !this.locked(c)));
-    const frame = this.add.graphics();
-    frame.lineStyle(2, COLORS.uiBorder, 0.65);
-    frame.lineBetween(170, 84, 790, 84);
-    frame.lineBetween(170, 116, 790, 116);
-    for (const x of [70, 890]) {
-      frame.fillStyle(COLORS.uiBorder, 0.16).fillRect(x, 165, 2, 225);
-      frame.fillRect(x - 12, 160, 26, 5).fillRect(x - 12, 390, 26, 5);
-    }
-    const title = this.add.text(GAME_WIDTH / 2, 48, 'N E K Y I A', {
-      fontFamily: 'monospace', fontSize: '52px', color: COLORS.text,
-    }).setOrigin(0.5).setShadow(0, 3, '#000000', 8);
-    this.tweens.add({ targets: title, alpha: { from: 0.82, to: 1 }, duration: 2400, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
-    this.add.text(GAME_WIDTH / 2, 100, '✦  A DESCENT THROUGH THE GREEK UNDERWORLD  ✦', {
-      fontFamily: 'monospace', fontSize: '14px', color: COLORS.textDim,
-    }).setOrigin(0.5);
+    this.view = data?.view ?? 'main';
+    this.menuIndex = 0;
+    this.charIndex = Math.max(0, CHARACTERS.findIndex((c) => !this.locked(c)));
+    drawTitle(this);
     this.root = this.add.container(0, 0);
     this.render();
 
     const kb = this.input.keyboard!;
-    kb.on('keydown-LEFT', () => this.move(-1));
-    kb.on('keydown-RIGHT', () => this.move(1));
-    kb.on('keydown-A', () => this.move(-1));
-    kb.on('keydown-D', () => this.move(1));
+    const horizontal = (dir: number) => (this.view === 'select' ? this.moveChar(dir) : undefined);
+    const vertical = (dir: number) => (this.view === 'main' ? this.moveMenu(dir) : undefined);
+    kb.on('keydown-LEFT', () => horizontal(-1));
+    kb.on('keydown-RIGHT', () => horizontal(1));
+    kb.on('keydown-A', () => horizontal(-1));
+    kb.on('keydown-D', () => horizontal(1));
+    kb.on('keydown-UP', () => vertical(-1));
+    kb.on('keydown-DOWN', () => vertical(1));
+    kb.on('keydown-W', () => vertical(-1));
+    kb.on('keydown-S', () => vertical(1));
     kb.on('keydown-R', () => {
+      if (this.view !== 'select') return;
       this.seed = Rng.randomSeed();
+      blip('move');
       this.render();
     });
-    kb.on('keydown-ENTER', () => this.start());
-    kb.on('keydown-SPACE', () => this.start());
+    kb.on('keydown-ESC', () => {
+      if (this.view === 'select') this.setView('main');
+    });
+    kb.on('keydown-ENTER', () => this.confirm());
+    kb.on('keydown-SPACE', () => this.confirm());
     this.cameras.main.fadeIn(300, 0, 0, 0);
   }
 
@@ -61,17 +79,43 @@ export class MenuScene extends Phaser.Scene {
     return !!c.unlock && !save.isUnlocked(c.unlock);
   }
 
-  private move(dir: number): void {
-    this.index = (this.index + dir + CHARACTERS.length) % CHARACTERS.length;
+  private setView(view: View): void {
+    this.view = view;
+    blip(view === 'main' ? 'advance' : 'confirm');
     this.render();
   }
 
+  private go(scene: 'challenges' | 'options'): void {
+    blip('confirm');
+    this.input.keyboard!.removeAllListeners();
+    this.scene.start(scene);
+  }
+
+  private moveMenu(dir: number): void {
+    this.menuIndex = (this.menuIndex + dir + this.entries.length) % this.entries.length;
+    blip('move');
+    this.render();
+  }
+
+  private moveChar(dir: number): void {
+    this.charIndex = (this.charIndex + dir + CHARACTERS.length) % CHARACTERS.length;
+    blip('move');
+    this.render();
+  }
+
+  private confirm(): void {
+    if (this.view === 'main') this.entries[this.menuIndex].run();
+    else this.start();
+  }
+
   private start(): void {
-    const c = CHARACTERS[this.index];
+    const c = CHARACTERS[this.charIndex];
     if (this.locked(c)) {
-      this.cameras.main.shake(120, 0.004);
+      settings.shake(this.cameras.main, 120, 0.004);
+      blip('deny');
       return;
     }
+    blip('confirm');
     const run = new RunState(this.seed, c.id);
     this.registry.set('run', run);
     if (import.meta.env.DEV) (window as unknown as { nekyia: unknown }).nekyia = { run, game: this.game };
@@ -84,10 +128,47 @@ export class MenuScene extends Phaser.Scene {
 
   private render(): void {
     this.root.removeAll(true);
-    const mono = 'monospace';
+    if (this.view === 'main') this.renderMain();
+    else this.renderSelect();
+  }
+
+  private renderMain(): void {
+    const add = (o: Phaser.GameObjects.GameObject) => this.root.add(o);
+    const cx = GAME_WIDTH / 2;
+
+    this.entries.forEach((entry, i) => {
+      const y = 215 + i * 58;
+      const selected = i === this.menuIndex;
+      const label = selected ? `▶   ${entry.label()}   ◀` : entry.label();
+      const text = this.add.text(cx, y, label, {
+        fontFamily: mono, fontSize: selected ? '26px' : '22px', color: selected ? COLORS.uiIvory : COLORS.textDim,
+      }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      if (selected) text.setShadow(0, 2, '#000000', 6);
+      text.on('pointerover', () => {
+        if (this.menuIndex !== i) {
+          this.menuIndex = i;
+          blip('move');
+          this.render();
+        }
+      });
+      text.on('pointerdown', () => entry.run());
+      add(text);
+    });
+
+    const divider = this.add.graphics();
+    divider.lineStyle(1, COLORS.uiBorder, 0.7).lineBetween(40, 450, GAME_WIDTH - 40, 450);
+    add(divider);
+    const stats = `RUNS ${save.data.runs}   WINS ${save.data.wins}   BEST FLOOR ${save.data.bestFloor}   KILLS ${save.counter('kills')}`;
+    add(this.add.text(cx, 470, stats, { fontFamily: mono, fontSize: '13px', color: COLORS.textDim }).setOrigin(0.5, 0));
+    const unlocked = CHARACTERS.filter((c) => !this.locked(c)).length;
+    add(this.add.text(cx, 492, `HEROES ${unlocked} / ${CHARACTERS.length}`, { fontFamily: mono, fontSize: '13px', color: COLORS.textDim }).setOrigin(0.5, 0));
+    add(hintText(this, ['↑ ↓  CHOOSE', 'ENTER  SELECT']));
+  }
+
+  private renderSelect(): void {
     const add = (o: Phaser.GameObjects.GameObject) => this.root.add(o);
 
-    const c = CHARACTERS[this.index];
+    const c = CHARACTERS[this.charIndex];
     const locked = this.locked(c);
     const cx = GAME_WIDTH / 2;
     const cy = 205;
@@ -101,7 +182,7 @@ export class MenuScene extends Phaser.Scene {
         .setOrigin(0.5).setInteractive({ useHandCursor: true });
       arrow.on('pointerover', () => arrow.setColor(COLORS.uiIvory).setScale(1.15));
       arrow.on('pointerout', () => arrow.setColor(COLORS.textDim).setScale(1));
-      arrow.on('pointerdown', () => this.move(dir));
+      arrow.on('pointerdown', () => this.moveChar(dir));
       add(arrow);
     }
     const portrait = this.add.image(cx, cy, `player_${c.id}`).setScale(2);
@@ -120,38 +201,19 @@ export class MenuScene extends Phaser.Scene {
         add(this.add.text(cx, cy + 194, `starts with: ${names}`, { fontFamily: mono, fontSize: '13px', color: COLORS.textDim }).setOrigin(0.5, 0));
       }
     }
-    add(this.add.text(cx, cy + 220, `${this.index + 1} / ${CHARACTERS.length}`, { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(0.5, 0));
+    add(this.add.text(cx, cy + 220, `${this.charIndex + 1} / ${CHARACTERS.length}`, { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(0.5, 0));
 
     const divider = this.add.graphics();
     divider.lineStyle(1, COLORS.uiBorder, 0.7).lineBetween(40, 450, GAME_WIDTH - 40, 450);
     add(divider);
-    const px = 52;
-    let py = 457;
-    add(this.add.text(px, py, 'CHALLENGES', { fontFamily: mono, fontSize: '13px', color: COLORS.text }));
-    py += 18;
-    const challenges = ACHIEVEMENTS.filter((a) => !a.secret || save.hasAchievement(a.id));
-    for (const a of challenges) {
-      const done = save.hasAchievement(a.id);
-      const mark = done ? '■' : '□';
-      const reward = a.rewardLabel ? `  → ${a.rewardLabel}` : '';
-      add(this.add.text(px, py, `${mark} ${a.title}: ${a.description}${reward}`, { fontFamily: mono, fontSize: '11px', color: done ? COLORS.text : COLORS.textDim }));
-      py += challenges.length > 7 ? 12 : 14;
-    }
+    const descend = this.add.text(cx, 478, locked ? 'LOCKED' : 'ENTER  ·  DESCEND', { fontFamily: mono, fontSize: '18px', color: locked ? COLORS.textDim : COLORS.text })
+      .setOrigin(0.5).setInteractive({ useHandCursor: !locked });
+    descend.on('pointerover', () => !locked && descend.setColor(COLORS.uiIvory));
+    descend.on('pointerout', () => !locked && descend.setColor(COLORS.text));
+    descend.on('pointerdown', () => this.start());
+    add(descend);
+    add(this.add.text(cx, 504, `SEED ${this.seed}`, { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(0.5));
 
-    const stats = `RUNS ${save.data.runs}   WINS ${save.data.wins}   BEST ${save.data.bestFloor}`;
-    add(this.add.text(GAME_WIDTH - 40, 457, stats, { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(1, 0));
-    add(this.add.text(GAME_WIDTH - 40, 477, `KILLS ${save.counter('kills')}   SEED ${this.seed}`, { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(1, 0));
-
-    add(
-      this.add
-        .text(GAME_WIDTH - 40, GAME_HEIGHT - 72, ['← →  CHOOSE     R  RE-ROLL', 'ENTER  DESCEND', 'WASD  MOVE     ARROWS  SHOOT'], {
-          fontFamily: mono,
-          fontSize: '12px',
-          color: COLORS.textDim,
-          align: 'right',
-          lineSpacing: 4,
-        })
-        .setOrigin(1, 0),
-    );
+    add(hintText(this, ['← →  CHOOSE     R  RE-ROLL SEED', 'ESC  BACK', 'WASD  MOVE     ARROWS  SHOOT']));
   }
 }
