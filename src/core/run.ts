@@ -27,7 +27,7 @@ export class RunState {
   readonly storyRng: Rng;
 
   /** Moral memory of the run: karma, deeds, flags, boss modifiers. */
-  readonly story = new StoryState();
+  readonly story: StoryState;
 
   items: ItemDef[] = [];
   stats: Stats;
@@ -47,6 +47,7 @@ export class RunState {
   constructor(seed: string, characterId: string) {
     this.seed = seed;
     this.character = getCharacter(characterId);
+    this.story = new StoryState(this.character.startingKarma ?? 0, this.character.storyFlags ?? []);
     this.rng = new Rng(seed);
     this.floorRng = this.rng.fork('floor');
     this.itemRng = this.rng.fork('items');
