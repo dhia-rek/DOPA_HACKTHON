@@ -73,7 +73,7 @@ for _c in ('achilles', 'atalanta', 'heracles', 'orpheus', 'kratos'):
     for _v in ('back', 'side'):
         SIZES[f'player_{_c}_{_v}'] = SIZES[f'player_{_c}']
 # gods: blessing overlay portraits
-for _g in ('zeus', 'athena', 'apollo', 'hermes', 'ares', 'poseidon'):
+for _g in ('hades', 'athena', 'apollo', 'hermes', 'ares', 'poseidon'):
     SIZES[f'god_{_g}'] = ('sprite', 160, 160, {'fill': 1.0})
 # menu portraits: hi-res version of each player sprite
 for _c in ('achilles', 'atalanta', 'heracles', 'orpheus', 'kratos'):
