@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
+import { OK_KEY } from '../core/input';
 import { music } from '../core/music';
 import type { RunState } from '../core/run';
 import { judge } from '../data/war';
@@ -55,9 +56,9 @@ export class GameOverScene extends Phaser.Scene {
       this.add.text(cx, relicsY + 64, `+ ${run.items.length - shown.length} more`, { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(0.5);
     }
 
-    const back = this.add.text(cx, GAME_HEIGHT - 40, 'ENTER  ·  RETURN TO THE SURFACE', {
+    const back = this.add.text(cx, GAME_HEIGHT - 40, `${OK_KEY}  ·  RETURN TO THE SURFACE`, {
       fontFamily: mono, fontSize: '16px', color: COLORS.text,
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    }).setOrigin(0.5).setPadding(16, 10, 16, 10).setInteractive({ useHandCursor: true });
     back.on('pointerover', () => back.setColor(COLORS.uiIvory));
     back.on('pointerout', () => back.setColor(COLORS.text));
     back.on('pointerdown', () => this.scene.start('menu'));
