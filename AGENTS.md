@@ -31,6 +31,7 @@ Phase 3 (the LLM Director that reshapes each floor) is designed in `docs/DIRECTO
 - [ ] Director: boons/curses catalog (`src/data/boons.ts`) and epithet achievements (`the Merciful`, `the Butcher`, `Oathbreaker`…)
 - [x] Director: shrine content that makes prophecies (`story.promise`), orb flags (`orb_fire`, `orb_holy`) → `earnedWeaknesses`
 - [ ] Director: tune `budgetFor()` / trait thresholds in `src/core/profile.ts`, prompt wording in `src/director/prompt.ts`
+- [x] Boss signature kits (`EnemyDef.abilities`) + `profile.character` so Director extras answer the hero (`bossKits` catalog, prompt rule 4)
 
 ### Stream B — Julien
 - [x] `DialogueScene` look & feel: speaker portrait box, typewriter text, selection sound
@@ -39,10 +40,12 @@ Phase 3 (the LLM Director that reshapes each floor) is designed in `docs/DIRECTO
 - [x] Shrine room type + altar sprite → opens a `kind: 'shrine'` dialogue
 - [x] Boss outro: trigger `boss_outro` dialogue when a boss dies (`RunScene.killEnemy`)
 - [ ] General art/feel pass (room palettes, hit feedback, menu)
-- [x] Director: prefetch `directorRequest(run, floor+1)` at boss-room entry, apply on `floor_started`; `floorTitle` + `verdict` between floors; `?director=1` overlay showing `reason`
+- [x] Director: prefetch `directorRequest(run, floor+1)` after the boss intro choice, apply on `floor_started`; `floorTitle` + `verdict` between floors; `?director=1` overlay showing `reason`
 - [x] Director: composable boss abilities (`charge`, `summon_minions`, `orbit_shields`, `call_shades`, `enrage_below`) + `Enemy.compose(BossBlueprint)` in `behaviours.ts`
 - [x] Director: mutators `palette_shift`, `haunted`, `flooded`, `arena`; `enemyWeights` in spawning
 - [x] Director: shrine offerings → `story.favour(god)`; quest tracker (`systems/quests.ts`) + HUD line (orb pickups still open)
+- [x] Bosses bigger than the hero (radius 46–58 vs 20), fluid: eased acceleration, `Enemy.pose()` body language (breathe, lean, stretch, wobble, flicker)
+- [x] Boss judgement visible in the fight (`systems/bossJudgement.ts`: aura, hp bar, banner with grudge/kit/extras) + melee swipe and slam shockwave (`systems/bossStrikes.ts`)
 
 ### Stream C — Parthiv
 - [x] `server/`: HTTP service `POST DialogueRequest -> DialogueScript` (any stack; key stays server-side)

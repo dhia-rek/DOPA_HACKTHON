@@ -7,6 +7,7 @@ import type { DialogueOption, DialogueScript } from '../dialogue/types';
 import { music } from '../core/music';
 import { voice, voiceSettings } from '../voice/provider';
 import type { VoiceProfile } from '../voice/types';
+import { mono, display } from './ui';
 
 export interface DialogueSceneData {
   script: DialogueScript;
@@ -16,7 +17,6 @@ export interface DialogueSceneData {
   voice?: VoiceProfile;
 }
 
-const mono = 'monospace';
 const BOX_H = 200;
 const BOX_X = 32;
 const PORTRAIT = 120;
@@ -124,7 +124,7 @@ export class DialogueScene extends Phaser.Scene {
       const letter = this.make.text({
         x: PORTRAIT / 2, y: PORTRAIT / 2,
         text: (script.speakerName[0] ?? '?').toUpperCase(),
-        style: { fontFamily: 'serif', fontSize: '64px', color: '#f0e6c8', fontStyle: 'bold' },
+        style: { fontFamily: display, fontSize: '64px', color: '#f0e6c8', fontStyle: 'bold' },
       }, false).setOrigin(0.5);
       rt.draw(g).draw(letter).saveTexture(key);
       g.destroy();
@@ -181,9 +181,13 @@ export class DialogueScene extends Phaser.Scene {
   private showOptions(): void {
     this.phase = 'options';
     this.body.setText('');
-    const top = GAME_HEIGHT - BOX_H - 16 + 28;
+    const top = GAME_HEIGHT - BOX_H - 16 + 24;
+    const width = GAME_WIDTH - TEXT_X - 64;
+    const longest = Math.max(...this.data_.script.options.map((o) => o.text.length));
+    const fontSize = longest > 60 || this.data_.script.options.length > 3 ? '14px' : '16px';
+    let y = top;
     this.data_.script.options.forEach((o, i) => {
-      const t = this.add.text(TEXT_X + 8, top + i * 30, `${i + 1}. ${o.text}`, { fontFamily: mono, fontSize: '16px', color: '#ccc' })
+      const t = this.add.text(TEXT_X + 8, y, `  ${i + 1}. ${o.text}`, { fontFamily: mono, fontSize, color: '#ccc', wordWrap: { width } })
         .setPadding(6, 5, 6, 5)
         .setInteractive({ useHandCursor: true });
       t.on('pointerover', () => this.setSel(i));
@@ -192,6 +196,7 @@ export class DialogueScene extends Phaser.Scene {
         this.advance();
       });
       this.optionTexts.push(t);
+      y += t.height + 6;
     });
     this.hint.setText(TOUCH ? 'TAP an answer' : '↑↓ / 1-4 choose · ENTER confirm');
     this.paintSelection();
