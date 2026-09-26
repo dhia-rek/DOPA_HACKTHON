@@ -15,6 +15,9 @@ npm run dev      # http://localhost:5173
 
 Add `?seed=ANYTHING` to the URL to force a seed (same seed = same floors and rooms).
 
+Add `?debug=1` for dev shortcuts: `G` god mode, `X` kill the room, `B` warp to the boss
+room, `N` next floor, `T` random item, `H` heal, `[` / `]` karma −25 / +25.
+
 ## Controls
 
 | Action         | Keys                          |

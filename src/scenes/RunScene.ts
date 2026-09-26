@@ -1,10 +1,11 @@
 import Phaser from 'phaser';
 import { COLORS, Dir, DIR_VECTORS, GAME_HEIGHT, GAME_WIDTH, GRID_COLS, GRID_ROWS, OPPOSITE, ROOM_COLS, ROOM_ROWS, TILE } from '../config';
+import { DEBUG, DEBUG_HELP, debugState } from '../core/debug';
 import { events } from '../core/events';
 import type { RunState } from '../core/run';
 import { KARMA } from '../core/story';
 import { EnemyDef, getEnemy } from '../data/enemies';
-import { getItem } from '../data/items';
+import { getItem, ITEMS } from '../data/items';
 import { dialogueProvider } from '../dialogue/provider';
 import type { DialogueKind, DialogueOption, DialogueScript } from '../dialogue/types';
 import type { DialogueSceneData } from './DialogueScene';
@@ -121,6 +122,8 @@ export class RunScene extends Phaser.Scene {
     events.emit('room_entered', { roomType: this.room.type, floor: this.run.floor });
     events.emit('hud_update', {});
     this.cameras.main.fadeIn(180, 0, 0, 0);
+
+    if (DEBUG) this.bindDebugKeys();
 
     if (!this.scene.isActive('hud')) this.scene.launch('hud');
     this.scene.bringToTop('hud');
@@ -513,7 +516,7 @@ export class RunScene extends Phaser.Scene {
   }
 
   private hurtPlayer(amount: number, source: string, fromX: number, fromY: number): void {
-    if (this.dead || this.player.isInvulnerable) return;
+    if (this.dead || this.player.isInvulnerable || debugState.god) return;
     if (this.run.character.passive === 'glass') amount = Math.max(amount, 2);
     const died = this.player.hurt(amount, source, fromX, fromY);
     if (died) this.die();
@@ -658,6 +661,46 @@ export class RunScene extends Phaser.Scene {
       this.scene.stop('hud');
       this.scene.start('gameover');
     });
+  }
+
+  // ------------------------------------------------------------------- debug
+
+  private bindDebugKeys(): void {
+    this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT - 10, DEBUG_HELP, { fontFamily: 'monospace', fontSize: '11px', color: '#f88', backgroundColor: '#000a' })
+      .setOrigin(0.5, 1)
+      .setDepth(500);
+    const kb = this.input.keyboard!;
+    const on = (key: string, fn: () => void): void => {
+      kb.on(`keydown-${key}`, () => {
+        if (!this.dialogueOpen && !this.transitioning && !this.dead) fn();
+      });
+    };
+    on('G', () => {
+      debugState.god = !debugState.god;
+      this.toast('God mode', debugState.god ? 'ON' : 'OFF');
+    });
+    on('X', () => this.hostiles().forEach((e) => (e.hp = 0)));
+    on('B', () => this.warpTo(this.run.floorMap!.boss));
+    on('N', () => this.descend());
+    on('T', () => {
+      const owned = new Set(this.run.items.map((i) => i.id));
+      const pool = ITEMS.filter((i) => !owned.has(i.id));
+      if (!pool.length) return;
+      const item = this.run.rng.pick(pool);
+      this.run.addItem(item.id);
+      this.toast(item.name, item.description);
+    });
+    on('H', () => this.run.heal(this.run.stats.maxHp));
+    on('OPEN_BRACKET', () => this.run.story.adjustKarma(-25));
+    on('CLOSED_BRACKET', () => this.run.story.adjustKarma(25));
+  }
+
+  private warpTo(room: RoomNode): void {
+    if (room === this.room) return;
+    this.transitioning = true;
+    this.run.room = room;
+    this.scene.restart({});
   }
 
   // ----------------------------------------------------------------- helpers

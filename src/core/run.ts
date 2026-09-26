@@ -73,9 +73,12 @@ export class RunState {
     return this.floor === STAGES.length;
   }
 
-  /** Multiplier applied to enemy hp/speed/damage in endless loops. */
+  /**
+   * Multiplier applied to enemy hp/speed/damage. Floor 1 is a quick warm-up
+   * (0.75), then it ramps per floor and jumps each endless loop.
+   */
   get difficulty(): number {
-    return 1 + this.loop * 0.35 + (this.floor - 1) * 0.06;
+    return 0.75 + (this.floor - 1) * 0.15 + this.loop * 0.35;
   }
 
   won = false;
