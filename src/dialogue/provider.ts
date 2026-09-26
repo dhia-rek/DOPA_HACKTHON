@@ -1,4 +1,5 @@
 import { Rng } from '../core/rng';
+import { bossOutroLines } from '../data/bossOutro';
 import { DialogueRequest, DialogueScript, validateScript } from './types';
 
 /**
@@ -20,7 +21,8 @@ Return ONLY JSON matching:
 {"lines": string[1-3], "options": [{"id": string, "text": string, "reply": string,
  "effects": {"karma": number, "flags": string[], "boss": {"hpMul": number, "damageMul": number, "speedMul": number}, "hp": number, "coins": number}}] (2-4 items)}
 Rules: stay in persona; react to the player's deeds (npcs killed/spared, karma, bosses slain); options must be meaningfully different (defiant / humble / cunning / merciful…);
-effects must be fair: karma -30..30, boss multipliers 0.5..2, hp -4..4. Never break character, never mention JSON.`;
+effects must be fair: karma -30..30, boss multipliers 0.5..2, hp -4..4. Never break character, never mention JSON.
+For kind "boss_outro" (the boss's dying words): 1-3 lines, "options": [] — react to how the fight was set up (defied / knelt / bargained / honoured flags, innocent blood, karma) and foreshadow the next floor.`;
 
 export class HttpDialogueProvider implements DialogueProvider {
   constructor(
@@ -86,23 +88,25 @@ export class MockDialogueProvider implements DialogueProvider {
                 id: 'kneel',
                 text: rng.pick(['Kneel and beg for passage.', '"Spare me, great one."']),
                 reply: 'Pathetic. I will be gentle, so you feel every blow.',
-                effects: { karma: -10, boss: { damageMul: 0.75, hpMul: 1.3 } },
+                effects: { karma: -10, boss: { damageMul: 0.75, hpMul: 1.3 }, flags: ['knelt_' + req.speakerId] },
               },
               {
                 id: 'honour',
                 text: rng.pick(['"Let us fight with honour, no tricks."', '"You were wronged. I fight you with respect."']),
                 reply: 'Honour… a word I had forgotten. Very well.',
-                effects: { karma: 10, boss: { speedMul: 0.85 } },
+                effects: { karma: 10, boss: { speedMul: 0.85 }, flags: ['honoured_' + req.speakerId] },
               },
               {
                 id: 'bargain',
                 text: rng.pick(['Offer your coins for a weaker foe.', '"Take my gold, take it easy on me."']),
                 reply: 'Gold buys little in the dark, but I will take it.',
-                effects: { karma: -5, coins: -10, boss: { hpMul: 0.8 } },
+                effects: { karma: -5, coins: -10, boss: { hpMul: 0.8 }, flags: ['bargained_' + req.speakerId] },
               },
             ]).slice(0, 3),
           }
-        : req.kind === 'npc'
+        : req.kind === 'boss_outro'
+          ? { lines: bossOutroLines(req, rng), options: [] }
+          : req.kind === 'npc'
           ? {
               lines: [
                 rng.pick([`Please, ${you}, I am no fighter. I only tend the goats.`, `Don't hurt me! I know a secret of this place…`]),
