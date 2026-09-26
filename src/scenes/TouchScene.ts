@@ -9,7 +9,7 @@ const TRAVEL = BASE_R - KNOB_R;
 const DEAD_ZONE = 0.18;
 /** HUD bands the stick ring must not cover (hearts/stats on top, stage/quest/karma below). */
 const HUD_TOP = 64;
-const HUD_BOTTOM = GAME_HEIGHT - 60;
+const HUD_BOTTOM = GAME_HEIGHT - 76;
 /** Where each stick sits while nobody is touching it (also its hint ring). */
 const REST: Record<Stick, { x: number; y: number; label: string }> = {
   move: { x: 130, y: GAME_HEIGHT - 130, label: 'MOVE' },
