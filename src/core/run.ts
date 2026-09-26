@@ -4,6 +4,7 @@ import { STAGES, StageDef } from '../data/stages';
 import type { RunSnapshot } from '../data/achievements';
 import { FloorMap, generateFloor, RoomNode } from '../gen/floorGen';
 import { pickItemFromPool } from '../systems/loot';
+import { debugState } from './debug';
 import { events } from './events';
 import { Rng } from './rng';
 import { computeStats, mergeFlags, ShotFlags, Stats } from './stats';
@@ -46,6 +47,7 @@ export class RunState {
 
   constructor(seed: string, characterId: string) {
     this.seed = seed;
+    debugState.god = false;
     this.character = getCharacter(characterId);
     this.story = new StoryState(this.character.startingKarma ?? 0, this.character.storyFlags ?? []);
     this.rng = new Rng(seed);
@@ -131,6 +133,7 @@ export class RunState {
 
   /** Returns true if the player died. */
   takeDamage(amount: number, source: string): boolean {
+    if (debugState.god) return false;
     this.hp = Math.max(0, this.hp - amount);
     this.damageTakenThisRun += amount;
     this.damageTakenThisFloor += amount;
