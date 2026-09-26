@@ -25,7 +25,7 @@ class AchievementSystem {
   private handle<K extends GameEventName>(name: K, payload: GameEvents[K]): void {
     this.bumpCounters(name, payload);
     if (!this.run) return;
-    const ctx = { save: save.data, run: this.run.snapshot(), story: this.run.storySnapshot() };
+    const ctx = { save: save.data, run: this.run.snapshot(), story: this.run.story };
 
     for (const a of ACHIEVEMENTS) {
       if (a.on !== name || save.hasAchievement(a.id)) continue;

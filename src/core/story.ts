@@ -52,12 +52,17 @@ export interface StorySnapshot {
 export class StoryState {
   karma = 0;
   readonly flags = new Set<string>();
+  /** Floor on which each flag was last set; flags outlive floors, some checks need the encounter. */
+  readonly flagFloors = new Map<string, number>();
   readonly deeds: Deed[] = [];
+  /** Floor of the most recent deed; flags added without a floor are attributed to it. */
+  private currentFloor = 1;
   /** Accumulated boss modifiers from dialogue outcomes; consumed per boss fight. */
   bossMods: BossMods = { hpMul: 1, damageMul: 1, speedMul: 1 };
 
   record(deed: Deed): void {
     this.deeds.push(deed);
+    this.currentFloor = deed.floor;
     if (deed.karmaDelta) this.adjustKarma(deed.karmaDelta);
   }
 
@@ -66,12 +71,18 @@ export class StoryState {
     events.emit('story_changed', { karma: this.karma });
   }
 
-  addFlag(flag: string): void {
+  addFlag(flag: string, floor = this.currentFloor): void {
     this.flags.add(flag);
+    this.flagFloors.set(flag, floor);
   }
 
   hasFlag(flag: string): boolean {
     return this.flags.has(flag);
+  }
+
+  /** True if the flag is set and was last set on the given floor. */
+  hasFlagOnFloor(flag: string, floor: number): boolean {
+    return this.flags.has(flag) && this.flagFloors.get(flag) === floor;
   }
 
   applyBossMods(mods: Partial<BossMods>): void {
