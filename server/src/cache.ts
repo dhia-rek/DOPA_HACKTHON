@@ -1,7 +1,9 @@
+import { createHash } from 'node:crypto';
 import type { DialogueRequest, DialogueScript } from '../../src/dialogue/types';
 
-/** Same seed + kind + speaker always means the same script (mirrors the mock's RNG key). */
-export const cacheKey = (req: DialogueRequest): string => `${req.seed}:${req.kind}:${req.speakerId}:${req.language ?? 'en'}`;
+/** Same seed + kind + speaker + story state always means the same script. */
+export const cacheKey = (req: DialogueRequest): string =>
+  `${req.seed}:${req.kind}:${req.speakerId}:${req.language ?? 'en'}:${createHash('sha1').update(JSON.stringify(req.story)).digest('hex')}`;
 
 /** Tiny LRU: Map keeps insertion order, so the first key is the oldest. */
 export class ScriptCache {

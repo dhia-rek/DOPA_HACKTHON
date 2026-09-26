@@ -19,6 +19,8 @@ export const CONFIG = {
   llmTimeoutMs: int(process.env.LLM_TIMEOUT_MS, 12000),
   /** Scripts cached by request seed (replays hit the cache, not the LLM). */
   cacheSize: int(process.env.CACHE_SIZE, 500),
+  /** Max LLM calls (cache misses) per client IP per minute. */
+  rateLimitPerMin: int(process.env.RATE_LIMIT_PER_MIN, 30),
   /** Comma-separated origins allowed by CORS; "*" for any. */
   corsOrigin: process.env.CORS_ORIGIN ?? '*',
 };

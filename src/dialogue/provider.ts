@@ -18,7 +18,7 @@ export interface DialogueProvider {
 export { SYSTEM_PROMPT } from './prompt';
 
 export class HttpDialogueProvider implements DialogueProvider {
-  /** Scripts (or in-flight fetches) keyed by seed, so replays and prefetches never hit the server twice. */
+  /** Live scripts (or in-flight fetches) keyed by seed + story; failed fetches are evicted so they retry next time. */
   private readonly cache = new Map<string, Promise<DialogueScript>>();
 
   constructor(
@@ -29,16 +29,17 @@ export class HttpDialogueProvider implements DialogueProvider {
   ) {}
 
   generate(req: DialogueRequest): Promise<DialogueScript> {
-    const key = `${req.seed}:${req.kind}:${req.speakerId}:${req.language ?? 'en'}`;
+    const key = `${req.seed}:${req.kind}:${req.speakerId}:${req.language ?? 'en'}:${JSON.stringify(req.story)}`;
     let pending = this.cache.get(key);
     if (!pending) {
-      pending = this.fetchWithRetry(req).catch((err) => {
-        console.warn('[dialogue] falling back to mock:', err);
-        return this.fallback.generate(req);
-      });
+      pending = this.fetchWithRetry(req);
       this.cache.set(key, pending);
+      pending.catch(() => this.cache.delete(key));
     }
-    return pending;
+    return pending.catch((err) => {
+      console.warn('[dialogue] falling back to mock:', err);
+      return this.fallback.generate(req);
+    });
   }
 
   /** Fire-and-forget warm-up (e.g. boss intro when a floor starts) so the dialogue opens instantly. */

@@ -243,8 +243,16 @@ export class RunScene extends Phaser.Scene {
   }
 
   private applyChoice(script: DialogueScript, option: DialogueOption | null, speaker: DialogueSpeaker): void {
+    if (option && option.effects.coins && option.effects.coins < 0 && this.run.coins < -option.effects.coins) {
+      this.toast('Not enough coins', 'The offering is refused.');
+      option = null;
+    }
     if (option) {
       const fx = option.effects;
+      if (fx.hp && fx.hp < 0 && this.run.takeDamage(-fx.hp, 'oath')) {
+        this.die();
+        return;
+      }
       this.run.story.record({
         kind: 'dialogue_choice',
         subject: option.id,
@@ -254,7 +262,6 @@ export class RunScene extends Phaser.Scene {
       });
       fx.flags?.forEach((f) => this.run.story.addFlag(f));
       if (fx.hp && fx.hp > 0) this.run.heal(fx.hp);
-      if (fx.hp && fx.hp < 0) this.hurtPlayer(-fx.hp, 'oath', speaker.x, speaker.y);
       if (fx.coins) this.run.addCoins(fx.coins);
       if (fx.itemId) {
         try {
@@ -520,6 +527,7 @@ export class RunScene extends Phaser.Scene {
     events.emit('enemy_killed', { enemyId: enemy.def.id, isBoss });
     if (isBoss) {
       this.cameras.main.shake(300, 0.012);
+      this.run.story.record({ kind: 'boss_killed', subject: enemy.def.id, floor: this.run.floor, karmaDelta: 0, summary: `Slew ${enemy.def.name} on floor ${this.run.floor}` });
       events.emit('boss_killed', { enemyId: enemy.def.id, floor: this.run.floor });
       this.bossOutro({ ...speakerOf(enemy), enemy: undefined });
     } else if (this.run.dropRng.chance(enemy.def.dropChance ?? 0)) {

@@ -7,6 +7,7 @@ using Google Gemini (AI Studio). It holds the API key so the browser never sees 
 POST /            body: DialogueRequest  ->  200 DialogueScript
                                              400 bad request body
                                              502 LLM failed / returned an invalid script
+                                             429 over RATE_LIMIT_PER_MIN LLM calls for this IP
                                              503 GEMINI_API_KEY not set
 GET  /health      { ok, llm, model, cached }
 ```
@@ -47,7 +48,7 @@ curl -s localhost:8787 -H 'content-type: application/json' -d '{
 }' | jq
 ```
 
-Responses are cached by `seed:kind:speakerId:language` (LRU, `CACHE_SIZE`),
+Responses are cached by `seed:kind:speakerId:language:hash(story)` (LRU, `CACHE_SIZE`),
 so replaying a run with `?seed=XXXX` reuses the same lines. `x-cache: hit|miss`
 header tells you which.
 
