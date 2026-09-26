@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
-import { COLORS, GAME_WIDTH } from '../config';
+import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import { events } from '../core/events';
+import { OK_KEY, TOUCH } from '../core/input';
+import { music } from '../core/music';
 import { Rng } from '../core/rng';
 import { RunState } from '../core/run';
 import { save } from '../core/save';
@@ -30,6 +32,7 @@ export class MenuScene extends Phaser.Scene {
   private charIndex = 0;
   private seed = new URLSearchParams(location.search).get('seed') ?? Rng.randomSeed();
   private root!: Phaser.GameObjects.Container;
+  private starting = false;
 
   private readonly entries: MenuEntry[] = [
     { label: () => 'DESCEND', run: () => this.setView('select') },
@@ -42,7 +45,9 @@ export class MenuScene extends Phaser.Scene {
   }
 
   create(data?: { view?: View }): void {
+    music.play('menu', 'menu');
     achievements.start();
+    this.starting = false;
     this.view = data?.view ?? 'main';
     this.menuIndex = 0;
     this.charIndex = Math.max(0, CHARACTERS.findIndex((c) => !this.locked(c)));
@@ -61,12 +66,7 @@ export class MenuScene extends Phaser.Scene {
     kb.on('keydown-DOWN', () => vertical(1));
     kb.on('keydown-W', () => vertical(-1));
     kb.on('keydown-S', () => vertical(1));
-    kb.on('keydown-R', () => {
-      if (this.view !== 'select') return;
-      this.seed = Rng.randomSeed();
-      blip('move');
-      this.render();
-    });
+    kb.on('keydown-R', () => this.reroll());
     kb.on('keydown-ESC', () => {
       if (this.view === 'select') this.setView('main');
     });
@@ -91,6 +91,13 @@ export class MenuScene extends Phaser.Scene {
     this.scene.start(scene);
   }
 
+  private reroll(): void {
+    if (this.view !== 'select') return;
+    this.seed = Rng.randomSeed();
+    blip('move');
+    this.render();
+  }
+
   private moveMenu(dir: number): void {
     this.menuIndex = (this.menuIndex + dir + this.entries.length) % this.entries.length;
     blip('move');
@@ -109,13 +116,16 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private start(): void {
+    if (this.starting) return;
     const c = CHARACTERS[this.charIndex];
     if (this.locked(c)) {
       settings.shake(this.cameras.main, 120, 0.004);
       blip('deny');
       return;
     }
+    this.starting = true;
     blip('confirm');
+    if (TOUCH && this.scale.fullscreen.available && !this.scale.isFullscreen) this.scale.startFullscreen();
     const run = new RunState(this.seed, c.id);
     this.registry.set('run', run);
     if (import.meta.env.DEV) (window as unknown as { nekyia: unknown }).nekyia = { run, game: this.game };
@@ -162,7 +172,7 @@ export class MenuScene extends Phaser.Scene {
     add(this.add.text(cx, 470, stats, { fontFamily: mono, fontSize: '13px', color: COLORS.textDim }).setOrigin(0.5, 0));
     const unlocked = CHARACTERS.filter((c) => !this.locked(c)).length;
     add(this.add.text(cx, 492, `HEROES ${unlocked} / ${CHARACTERS.length}`, { fontFamily: mono, fontSize: '13px', color: COLORS.textDim }).setOrigin(0.5, 0));
-    add(hintText(this, ['↑ ↓  CHOOSE', 'ENTER  SELECT']));
+    add(hintText(this, TOUCH ? ['TAP  SELECT'] : ['↑ ↓  CHOOSE', 'ENTER  SELECT']));
   }
 
   private renderSelect(): void {
@@ -177,9 +187,12 @@ export class MenuScene extends Phaser.Scene {
     card.lineStyle(1, COLORS.uiBorder, 0.8).strokeRoundedRect(cx - 248, 134, 496, 310, 8);
     card.lineStyle(2, c.color, locked ? 0.2 : 0.55).strokeCircle(cx, cy, 55);
     add(card);
+    const hit = this.add.rectangle(cx, 134 + 155, 496, 310, 0, 0).setInteractive({ useHandCursor: !locked });
+    hit.on('pointerdown', () => this.start());
+    add(hit);
     for (const [dir, x, symbol] of [[-1, cx - 290, '◀'], [1, cx + 290, '▶']] as const) {
       const arrow = this.add.text(x, cy, symbol, { fontFamily: mono, fontSize: '36px', color: COLORS.textDim })
-        .setOrigin(0.5).setInteractive({ useHandCursor: true });
+        .setOrigin(0.5).setPadding(18, 30, 18, 30).setInteractive({ useHandCursor: true });
       arrow.on('pointerover', () => arrow.setColor(COLORS.uiIvory).setScale(1.15));
       arrow.on('pointerout', () => arrow.setColor(COLORS.textDim).setScale(1));
       arrow.on('pointerdown', () => this.moveChar(dir));
@@ -206,14 +219,28 @@ export class MenuScene extends Phaser.Scene {
     const divider = this.add.graphics();
     divider.lineStyle(1, COLORS.uiBorder, 0.7).lineBetween(40, 450, GAME_WIDTH - 40, 450);
     add(divider);
-    const descend = this.add.text(cx, 478, locked ? 'LOCKED' : 'ENTER  ·  DESCEND', { fontFamily: mono, fontSize: '18px', color: locked ? COLORS.textDim : COLORS.text })
-      .setOrigin(0.5).setInteractive({ useHandCursor: !locked });
+    const descend = this.add.text(cx, 478, locked ? 'LOCKED' : `${OK_KEY}  ·  DESCEND`, { fontFamily: mono, fontSize: '18px', color: locked ? COLORS.textDim : COLORS.text })
+      .setOrigin(0.5).setPadding(16, 6, 16, 6).setInteractive({ useHandCursor: !locked });
     descend.on('pointerover', () => !locked && descend.setColor(COLORS.uiIvory));
     descend.on('pointerout', () => !locked && descend.setColor(COLORS.text));
     descend.on('pointerdown', () => this.start());
     add(descend);
-    add(this.add.text(cx, 504, `SEED ${this.seed}`, { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(0.5));
+    const seedText = this.add.text(cx, 504, `SEED ${this.seed}  ↻`, { fontFamily: mono, fontSize: '12px', color: COLORS.textDim })
+      .setOrigin(0.5).setPadding(12, 6, 12, 6).setInteractive({ useHandCursor: true });
+    seedText.on('pointerover', () => seedText.setColor(COLORS.uiIvory));
+    seedText.on('pointerout', () => seedText.setColor(COLORS.textDim));
+    seedText.on('pointerdown', () => this.reroll());
+    add(seedText);
 
-    add(hintText(this, ['← →  CHOOSE     R  RE-ROLL SEED', 'ESC  BACK', 'WASD  MOVE     ARROWS  SHOOT']));
+    const back = this.add.text(40, GAME_HEIGHT - 72, `${TOUCH ? 'TAP' : 'ESC'}  ·  BACK`, { fontFamily: mono, fontSize: '14px', color: COLORS.text })
+      .setOrigin(0, 0).setPadding(8, 8, 16, 8).setInteractive({ useHandCursor: true });
+    back.on('pointerover', () => back.setColor(COLORS.uiIvory));
+    back.on('pointerout', () => back.setColor(COLORS.text));
+    back.on('pointerdown', () => this.setView('main'));
+    add(back);
+
+    add(hintText(this, TOUCH
+      ? ['◀ ▶  CHOOSE     TAP SEED  RE-ROLL', 'LEFT THUMB  MOVE     RIGHT THUMB  SHOOT']
+      : ['← →  CHOOSE     R  RE-ROLL SEED', 'WASD  MOVE     ARROWS  SHOOT']));
   }
 }
