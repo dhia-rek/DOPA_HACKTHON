@@ -1,6 +1,8 @@
 import { ABILITY_IDS, WEAKNESS_IDS, WeaknessId } from '../data/abilities';
 import { ITEMS } from '../data/items';
-import { ENEMIES } from '../data/enemies';
+import { ENEMIES, getEnemy } from '../data/enemies';
+import { WarFaction } from '../data/lore';
+import { factionOf, Tide, tideDeltaFor } from '../data/war';
 import { MUTATOR_IDS } from '../data/mutators';
 import { QUEST_TEMPLATE_IDS } from '../data/quests';
 import { STAGES, StageDef } from '../data/stages';
@@ -157,8 +159,8 @@ export function buildProfile(run: RunState, floor = run.floor): PlayerProfile {
   const hpPct = run.hp / run.stats.maxHp;
   const skill = skillOf(run, hpPct);
   const stage = stageForFloor(floor);
-  const front = floor === run.floor ? run.currentFront : resolveFront(stage, run.story);
   const avoidBoss = floor > run.floor ? run.floorMap?.boss.bossId : run.story.deeds.filter((d) => d.kind === 'boss_killed' && d.floor === floor - 1).pop()?.subject;
+  const front = floor === run.floor ? run.currentFront : resolveFront(stage, run.story, predictedTide(run, avoidBoss));
   const bosses = front.bossPool.filter((id) => id !== avoidBoss);
   return {
     story: run.story.snapshot({
@@ -199,6 +201,18 @@ export function buildProfile(run: RunState, floor = run.floor): PlayerProfile {
       earnedWeaknesses: earnedWeaknesses(run),
     },
   };
+}
+
+/**
+ * The war tide once the player has slain the boss they are fighting: the only
+ * way to reach the next floor, and the swing that decides who holds it.
+ */
+function predictedTide(run: RunState, currentBossId: string | undefined): Tide {
+  const tide = { ...run.story.tide };
+  const lore = currentBossId ? getEnemy(currentBossId).lore : undefined;
+  const delta = tideDeltaFor({ kind: 'boss_killed', subject: currentBossId ?? '', lore, floor: run.floor, karmaDelta: 0, summary: '' }, factionOf(lore));
+  for (const f of Object.keys(delta) as WarFaction[]) tide[f] = Math.max(-100, Math.min(100, tide[f] + (delta[f] ?? 0)));
+  return tide;
 }
 
 /** Request for the floor the player is about to enter (call after the boss intro choice to prefetch floor+1). */

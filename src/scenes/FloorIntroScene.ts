@@ -27,7 +27,12 @@ export class FloorIntroScene extends Phaser.Scene {
     const waiting = this.add.text(cx, GAME_HEIGHT / 2, `The Fates weigh your deeds…`, { fontFamily: mono, fontSize: '18px', color: COLORS.textDim }).setOrigin(0.5);
     this.tweens.add({ targets: waiting, alpha: { from: 0.4, to: 1 }, duration: 700, yoyo: true, repeat: -1 });
 
-    void director.forFloor(run, run.floor).then((directive) => {
+    const judged = director.forFloor(run, run.floor).then((directive) => {
+      // Prefetched before the boss fell: if the tide swung the floor to another faction, judge again.
+      if (run.currentFront.bossPool.includes(directive.boss.archetype)) return directive;
+      return director.refetch(run, run.floor);
+    });
+    void judged.then((directive) => {
       if (!this.scene.isActive('floor_intro')) return;
       run.directive = directive;
       run.story.settleProphecies(run.floor, directive);
@@ -79,13 +84,9 @@ export class FloorIntroScene extends Phaser.Scene {
       .setOrigin(0.5, 0);
     lines.push(bossLine);
     if (DIRECTOR_DEBUG) {
-      const debug = this.add
-        .text(16, GAME_HEIGHT - 60, `[director] ${d.reason}\nabilities ${d.boss.abilities.join(', ')} · weakness ${d.boss.weakness} · spent ${d.spent}`, {
-          fontFamily: mono, fontSize: '12px', color: '#6a8a6a', wordWrap: { width: GAME_WIDTH - 32 },
-        })
-        .setOrigin(0, 1);
-      const bossBottom = bossLine.y + bossLine.height + 8;
-      if (debug.y - debug.height < bossBottom) debug.setOrigin(0, 0).setY(bossBottom);
+      this.add.text(16, 10, `[director] ${d.reason}\nabilities ${d.boss.abilities.join(', ')} · weakness ${d.boss.weakness} · spent ${d.spent}`, {
+        fontFamily: mono, fontSize: '12px', color: '#6a8a6a', wordWrap: { width: GAME_WIDTH - 32 },
+      });
     }
     for (const [i, o] of lines.entries()) {
       const t = o as Phaser.GameObjects.Text;

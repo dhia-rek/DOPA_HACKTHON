@@ -114,7 +114,7 @@ export function validateScript(raw: unknown, req: DialogueRequest): DialogueScri
       };
       options.push({
         id: typeof opt.id === 'string' ? opt.id : `opt_${options.length}`,
-        text: opt.text.slice(0, 80),
+        text: opt.text.slice(0, 120),
         effects,
         reply: typeof opt.reply === 'string' ? opt.reply : '',
       });
