@@ -5,7 +5,7 @@ import { CHARS_PER_SEC, settings } from '../core/settings';
 import { blip } from '../core/sfx';
 import type { DialogueOption, DialogueScript } from '../dialogue/types';
 import { music } from '../core/music';
-import { playRecordedVoice, stopRecordedVoice } from '../voice/clips';
+import { hasRecordedLine, playRecordedLine, playRecordedVoice, stopRecordedVoice } from '../voice/clips';
 import { voice, voiceSettings } from '../voice/provider';
 import type { VoiceProfile } from '../voice/types';
 import { mono, display } from './ui';
@@ -108,7 +108,8 @@ export class DialogueScene extends Phaser.Scene {
     }
 
     voice.stop();
-    this.introPlaying = playRecordedVoice(data.script.speakerId, () => {
+    const firstLine = data.script.lines[0];
+    this.introPlaying = !(firstLine && hasRecordedLine(data.script.speakerId, firstLine)) && playRecordedVoice(data.script.speakerId, () => {
       this.introPlaying = false;
       this.speakCurrentLine();
     });
@@ -157,7 +158,7 @@ export class DialogueScene extends Phaser.Scene {
   }
 
   private typeOut(text: string): void {
-    if (!this.introPlaying && this.data_.voice) voice.speak(text, this.data_.voice);
+    if (!this.introPlaying) this.say(text);
     this.typer?.remove(false);
     this.fullText = text;
     this.shown = 0;
@@ -186,7 +187,13 @@ export class DialogueScene extends Phaser.Scene {
   }
 
   private speakCurrentLine(): void {
-    if (this.data_.voice && this.fullText) voice.speak(this.fullText, this.data_.voice);
+    if (this.fullText) this.say(this.fullText);
+  }
+
+  /** The speaker's own pre-recorded line when there is one, otherwise the speech engine. */
+  private say(text: string): void {
+    if (playRecordedLine(this.data_.script.speakerId, text)) voice.stop();
+    else if (this.data_.voice) voice.speak(text, this.data_.voice);
   }
 
   // ---- flow ---------------------------------------------------------------
@@ -198,6 +205,7 @@ export class DialogueScene extends Phaser.Scene {
 
   private showOptions(): void {
     voice.stop();
+    stopRecordedVoice();
     this.phase = 'options';
     this.body.setText('');
     const top = GAME_HEIGHT - BOX_H - 16 + 24;

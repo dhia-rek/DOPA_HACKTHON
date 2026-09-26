@@ -1,0 +1,1067 @@
+[
+ {
+  "key": "villager/a559f8be",
+  "speakerId": "villager",
+  "text": "Don't hurt me! I know a secret of this place…"
+ },
+ {
+  "key": "villager/43c14c09",
+  "speakerId": "villager",
+  "text": "May the gods remember this."
+ },
+ {
+  "key": "villager/a7b0274b",
+  "speakerId": "villager",
+  "text": "Take it… just go."
+ },
+ {
+  "key": "villager/be034cf6",
+  "speakerId": "villager",
+  "text": "The beast below fears fire… and pride."
+ },
+ {
+  "key": "priestess/a4db3cf2",
+  "speakerId": "priestess",
+  "text": "Athena sees all you have done, Achilles. Speak, and be judged."
+ },
+ {
+  "key": "priestess/43c14c09",
+  "speakerId": "priestess",
+  "text": "May the gods remember this."
+ },
+ {
+  "key": "priestess/a7b0274b",
+  "speakerId": "priestess",
+  "text": "Take it… just go."
+ },
+ {
+  "key": "priestess/be034cf6",
+  "speakerId": "priestess",
+  "text": "The beast below fears fire… and pride."
+ },
+ {
+  "key": "child/ef3d463c",
+  "speakerId": "child",
+  "text": "The monsters took everyone. Please don't leave me here."
+ },
+ {
+  "key": "child/43c14c09",
+  "speakerId": "child",
+  "text": "May the gods remember this."
+ },
+ {
+  "key": "child/a7b0274b",
+  "speakerId": "child",
+  "text": "Take it… just go."
+ },
+ {
+  "key": "child/be034cf6",
+  "speakerId": "child",
+  "text": "The beast below fears fire… and pride."
+ },
+ {
+  "key": "wounded_soldier/bdf23c9c",
+  "speakerId": "wounded_soldier",
+  "text": "Water… or a quick end, Achilles. Either is a kindness."
+ },
+ {
+  "key": "wounded_soldier/43c14c09",
+  "speakerId": "wounded_soldier",
+  "text": "May the gods remember this."
+ },
+ {
+  "key": "wounded_soldier/a7b0274b",
+  "speakerId": "wounded_soldier",
+  "text": "Take it… just go."
+ },
+ {
+  "key": "wounded_soldier/be034cf6",
+  "speakerId": "wounded_soldier",
+  "text": "The beast below fears fire… and pride."
+ },
+ {
+  "key": "altar/87b7f841",
+  "speakerId": "altar",
+  "text": "An altar hums with divine attention. What do you offer?"
+ },
+ {
+  "key": "altar/7e617da6",
+  "speakerId": "altar",
+  "text": "Ares approves."
+ },
+ {
+  "key": "altar/0fe496ea",
+  "speakerId": "altar",
+  "text": "Hermes smiles."
+ },
+ {
+  "key": "altar/bdb5fe5c",
+  "speakerId": "altar",
+  "text": "The gods take note."
+ },
+ {
+  "key": "altar/efb36c98",
+  "speakerId": "altar",
+  "text": "The flame gutters and dies. No god will hear a godslayer's prayer."
+ },
+ {
+  "key": "altar/cd99d840",
+  "speakerId": "altar",
+  "text": "What do you offer to those who have already turned away?"
+ },
+ {
+  "key": "altar/f4bbedd4",
+  "speakerId": "altar",
+  "text": "Your blood hisses on the stone. Nothing answers."
+ },
+ {
+  "key": "altar/d578b67f",
+  "speakerId": "altar",
+  "text": "The coins slide off the altar into the dark. Spurned."
+ },
+ {
+  "key": "altar/814b387e",
+  "speakerId": "altar",
+  "text": "You need no gods. They need to fear you."
+ },
+ {
+  "key": "villager/15b08e12",
+  "speakerId": "villager",
+  "text": "Please, Achilles, I am no fighter. I only tend the goats."
+ },
+ {
+  "key": "priestess/77b5ab62",
+  "speakerId": "priestess",
+  "text": "I do not beg. The goddess weighs your deeds, not my life."
+ },
+ {
+  "key": "child/f953ddf0",
+  "speakerId": "child",
+  "text": "Are you… are you my father? You look like a hero from the stories."
+ },
+ {
+  "key": "altar/425983e5",
+  "speakerId": "altar",
+  "text": "The altar goes cold as you approach. Olympus remembers what you did, Achilles."
+ },
+ {
+  "key": "wounded_soldier/f7dea18a",
+  "speakerId": "wounded_soldier",
+  "text": "I held this line until my shield broke. I know what waits ahead."
+ },
+ {
+  "key": "villager/f7d8779a",
+  "speakerId": "villager",
+  "text": "The Titans promise a golden age. My son believed them. Have you seen him?"
+ },
+ {
+  "key": "villager/5b11ba60",
+  "speakerId": "villager",
+  "text": "The Titan below keeps its distance and blinks away when cornered. Stay close, strike when it lands."
+ },
+ {
+  "key": "priestess/dff05262",
+  "speakerId": "priestess",
+  "text": "The Titans hold these halls now. They make us burn the altars of Zeus."
+ },
+ {
+  "key": "priestess/5b11ba60",
+  "speakerId": "priestess",
+  "text": "The Titan below keeps its distance and blinks away when cornered. Stay close, strike when it lands."
+ },
+ {
+  "key": "child/dff05262",
+  "speakerId": "child",
+  "text": "The Titans hold these halls now. They make us burn the altars of Zeus."
+ },
+ {
+  "key": "child/5b11ba60",
+  "speakerId": "child",
+  "text": "The Titan below keeps its distance and blinks away when cornered. Stay close, strike when it lands."
+ },
+ {
+  "key": "wounded_soldier/dff05262",
+  "speakerId": "wounded_soldier",
+  "text": "The Titans hold these halls now. They make us burn the altars of Zeus."
+ },
+ {
+  "key": "wounded_soldier/5b11ba60",
+  "speakerId": "wounded_soldier",
+  "text": "The Titan below keeps its distance and blinks away when cornered. Stay close, strike when it lands."
+ },
+ {
+  "key": "villager/f965ae56",
+  "speakerId": "villager",
+  "text": "They took the temple and made us burn Zeus's altars. Please, I only did as I was told."
+ },
+ {
+  "key": "villager/f2730b80",
+  "speakerId": "villager",
+  "text": "Don't let them feed me to the earth…"
+ },
+ {
+  "key": "villager/426217c5",
+  "speakerId": "villager",
+  "text": "The Giant stomps before it charges. When the earth trembles, run to its side, not away."
+ },
+ {
+  "key": "priestess/ccf18a65",
+  "speakerId": "priestess",
+  "text": "The ground here is hungry. Gaia's children are close."
+ },
+ {
+  "key": "priestess/426217c5",
+  "speakerId": "priestess",
+  "text": "The Giant stomps before it charges. When the earth trembles, run to its side, not away."
+ },
+ {
+  "key": "child/ccf18a65",
+  "speakerId": "child",
+  "text": "The ground here is hungry. Gaia's children are close."
+ },
+ {
+  "key": "child/426217c5",
+  "speakerId": "child",
+  "text": "The Giant stomps before it charges. When the earth trembles, run to its side, not away."
+ },
+ {
+  "key": "wounded_soldier/ccf18a65",
+  "speakerId": "wounded_soldier",
+  "text": "The ground here is hungry. Gaia's children are close."
+ },
+ {
+  "key": "wounded_soldier/426217c5",
+  "speakerId": "wounded_soldier",
+  "text": "The Giant stomps before it charges. When the earth trembles, run to its side, not away."
+ },
+ {
+  "key": "villager/f502ddd0",
+  "speakerId": "villager",
+  "text": "The ground opened and swallowed my street, Achilles. Gaia is angry. Is it true it is your fault?"
+ },
+ {
+  "key": "trial_nemesis/6c5cc1f6",
+  "speakerId": "trial_nemesis",
+  "text": "Innocent blood. I keep the ledger, Achilles."
+ },
+ {
+  "key": "trial_nemesis/53f9920d",
+  "speakerId": "trial_nemesis",
+  "text": "Spill no more innocent blood before this floor’s master falls, and I may yet close the book."
+ },
+ {
+  "key": "trial_nemesis/73a5e3e2",
+  "speakerId": "trial_nemesis",
+  "text": "Trial: Kill no innocent this floor."
+ },
+ {
+  "key": "trial_nemesis/a78faf54",
+  "speakerId": "trial_nemesis",
+  "text": "Then it is sworn."
+ },
+ {
+  "key": "trial_nemesis/f897ba6c",
+  "speakerId": "trial_nemesis",
+  "text": "As you wish. The gods will remember."
+ },
+ {
+  "key": "trial_ares/4b60689c",
+  "speakerId": "trial_ares",
+  "text": "I like you, Achilles. The weak scatter before you."
+ },
+ {
+  "key": "trial_ares/7133057a",
+  "speakerId": "trial_ares",
+  "text": "Bring me 4 of the bandits and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/688f8ea7",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 4 bandits."
+ },
+ {
+  "key": "trial_ares/a78faf54",
+  "speakerId": "trial_ares",
+  "text": "Then it is sworn."
+ },
+ {
+  "key": "trial_ares/f897ba6c",
+  "speakerId": "trial_ares",
+  "text": "As you wish. The gods will remember."
+ },
+ {
+  "key": "trial_ares/2b53cc54",
+  "speakerId": "trial_ares",
+  "text": "Bring me 3 of the centaur archers and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/9426008f",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 3 centaur archers."
+ },
+ {
+  "key": "trial_ares/efb6eb6a",
+  "speakerId": "trial_ares",
+  "text": "Bring me 4 of the harpys and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/8deb6a7d",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 4 harpys."
+ },
+ {
+  "key": "trial_ares/24bb8869",
+  "speakerId": "trial_ares",
+  "text": "Bring me 4 of the living statues and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/85845f1e",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 4 living statues."
+ },
+ {
+  "key": "trial_ares/2604a585",
+  "speakerId": "trial_ares",
+  "text": "Bring me 3 of the harpys and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/d6f36874",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 3 harpys."
+ },
+ {
+  "key": "trial_ares/408b5561",
+  "speakerId": "trial_ares",
+  "text": "Bring me 4 of the centaur archers and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/6cc25874",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 4 centaur archers."
+ },
+ {
+  "key": "trial_ares/3829dd24",
+  "speakerId": "trial_ares",
+  "text": "Bring me 5 of the skeletons and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/bb7b6c67",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 5 skeletons."
+ },
+ {
+  "key": "trial_ares/148c7850",
+  "speakerId": "trial_ares",
+  "text": "Bring me 4 of the boars and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/45de7481",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 4 boars."
+ },
+ {
+  "key": "trial_ares/6eda7506",
+  "speakerId": "trial_ares",
+  "text": "Bring me 5 of the centaur archers and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/14989a89",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 5 centaur archers."
+ },
+ {
+  "key": "trial_ares/505dda3b",
+  "speakerId": "trial_ares",
+  "text": "Bring me 4 of the skeletons and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/5f595c06",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 4 skeletons."
+ },
+ {
+  "key": "trial_ares/821ef847",
+  "speakerId": "trial_ares",
+  "text": "Bring me 5 of the harpys and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/6c4daf66",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 5 harpys."
+ },
+ {
+  "key": "trial_ares/4d68a6a5",
+  "speakerId": "trial_ares",
+  "text": "Bring me 5 of the bandits and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/14d6d796",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 5 bandits."
+ },
+ {
+  "key": "trial_ares/a70cf4c2",
+  "speakerId": "trial_ares",
+  "text": "Bring me 3 of the living statues and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/c41074cb",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 3 living statues."
+ },
+ {
+  "key": "trial_ares/3411f1aa",
+  "speakerId": "trial_ares",
+  "text": "Bring me 3 of the skeletons and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/72d0604d",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 3 skeletons."
+ },
+ {
+  "key": "trial_ares/4577d3a0",
+  "speakerId": "trial_ares",
+  "text": "Bring me 5 of the living statues and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/122f7c11",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 5 living statues."
+ },
+ {
+  "key": "trial_ares/b782a30f",
+  "speakerId": "trial_ares",
+  "text": "Bring me 5 of the boars and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/0e5711a0",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 5 boars."
+ },
+ {
+  "key": "trial_ares/99fd347b",
+  "speakerId": "trial_ares",
+  "text": "Bring me 3 of the bandits and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/72a0e1cc",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 3 bandits."
+ },
+ {
+  "key": "trial_ares/9d69f7d9",
+  "speakerId": "trial_ares",
+  "text": "Bring me 3 of the boars and I will make the next beast bleed easier."
+ },
+ {
+  "key": "trial_ares/da1d5d12",
+  "speakerId": "trial_ares",
+  "text": "Trial: Slay 3 boars."
+ },
+ {
+  "key": "trial_athena/2f603011",
+  "speakerId": "trial_athena",
+  "text": "Your mercy is known on Olympus, Achilles. Now show me your skill."
+ },
+ {
+  "key": "trial_athena/162f18e6",
+  "speakerId": "trial_athena",
+  "text": "Cross 1 chambers and let no blade touch you."
+ },
+ {
+  "key": "trial_athena/330adfdc",
+  "speakerId": "trial_athena",
+  "text": "Trial: Clear 1 room without being hit."
+ },
+ {
+  "key": "trial_athena/a78faf54",
+  "speakerId": "trial_athena",
+  "text": "Then it is sworn."
+ },
+ {
+  "key": "trial_athena/f897ba6c",
+  "speakerId": "trial_athena",
+  "text": "As you wish. The gods will remember."
+ },
+ {
+  "key": "trial_athena/98b5422d",
+  "speakerId": "trial_athena",
+  "text": "Cross 2 chambers and let no blade touch you."
+ },
+ {
+  "key": "trial_athena/ca8257b8",
+  "speakerId": "trial_athena",
+  "text": "Trial: Clear 2 rooms without being hit."
+ },
+ {
+  "key": "trial_athena/cc4bc0c0",
+  "speakerId": "trial_athena",
+  "text": "Cross 3 chambers and let no blade touch you."
+ },
+ {
+  "key": "trial_athena/0961405d",
+  "speakerId": "trial_athena",
+  "text": "Trial: Clear 3 rooms without being hit."
+ },
+ {
+  "key": "trial_hermes/0556590d",
+  "speakerId": "trial_hermes",
+  "text": "Still undecided, Achilles? Then at least be quick."
+ },
+ {
+  "key": "trial_hermes/9348b849",
+  "speakerId": "trial_hermes",
+  "text": "Race me to the lair of this floor’s master."
+ },
+ {
+  "key": "trial_hermes/239377a2",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 91s."
+ },
+ {
+  "key": "trial_hermes/a78faf54",
+  "speakerId": "trial_hermes",
+  "text": "Then it is sworn."
+ },
+ {
+  "key": "trial_hermes/f897ba6c",
+  "speakerId": "trial_hermes",
+  "text": "As you wish. The gods will remember."
+ },
+ {
+  "key": "trial_hermes/214b86f0",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 110s."
+ },
+ {
+  "key": "trial_charon/08d6fc97",
+  "speakerId": "trial_charon",
+  "text": "Every soul pays the ferryman, hero."
+ },
+ {
+  "key": "trial_charon/ad0665e4",
+  "speakerId": "trial_charon",
+  "text": "Gather my fare before the boss falls and I will remember your face."
+ },
+ {
+  "key": "trial_charon/47a59130",
+  "speakerId": "trial_charon",
+  "text": "Trial: Gather 6 coins."
+ },
+ {
+  "key": "trial_charon/a78faf54",
+  "speakerId": "trial_charon",
+  "text": "Then it is sworn."
+ },
+ {
+  "key": "trial_charon/f897ba6c",
+  "speakerId": "trial_charon",
+  "text": "As you wish. The gods will remember."
+ },
+ {
+  "key": "trial_hermes/26875722",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 145s."
+ },
+ {
+  "key": "trial_charon/5f7f41df",
+  "speakerId": "trial_charon",
+  "text": "Trial: Gather 5 coins."
+ },
+ {
+  "key": "trial_hermes/3cb97cec",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 136s."
+ },
+ {
+  "key": "trial_hermes/1081dcba",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 127s."
+ },
+ {
+  "key": "trial_artemis/03878be6",
+  "speakerId": "trial_artemis",
+  "text": "A hunt, Achilles. Nothing more, nothing less."
+ },
+ {
+  "key": "trial_artemis/e1f7ad87",
+  "speakerId": "trial_artemis",
+  "text": "Thin the beasts of this place and I will guide your aim."
+ },
+ {
+  "key": "trial_artemis/78e2ea56",
+  "speakerId": "trial_artemis",
+  "text": "Trial: Slay 7 foes."
+ },
+ {
+  "key": "trial_artemis/a78faf54",
+  "speakerId": "trial_artemis",
+  "text": "Then it is sworn."
+ },
+ {
+  "key": "trial_artemis/f897ba6c",
+  "speakerId": "trial_artemis",
+  "text": "As you wish. The gods will remember."
+ },
+ {
+  "key": "trial_hermes/a55b4eee",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 105s."
+ },
+ {
+  "key": "trial_hermes/da70edde",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 116s."
+ },
+ {
+  "key": "trial_artemis/f601d507",
+  "speakerId": "trial_artemis",
+  "text": "Trial: Slay 8 foes."
+ },
+ {
+  "key": "trial_artemis/6dac20c1",
+  "speakerId": "trial_artemis",
+  "text": "Trial: Slay 6 foes."
+ },
+ {
+  "key": "trial_hermes/f083be9a",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 101s."
+ },
+ {
+  "key": "trial_hermes/f3a8c7d7",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 106s."
+ },
+ {
+  "key": "trial_artemis/13c9dd60",
+  "speakerId": "trial_artemis",
+  "text": "Trial: Slay 5 foes."
+ },
+ {
+  "key": "trial_charon/b5ae4889",
+  "speakerId": "trial_charon",
+  "text": "Trial: Gather 7 coins."
+ },
+ {
+  "key": "trial_hermes/29bbe3c0",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 103s."
+ },
+ {
+  "key": "trial_hermes/a5f9a095",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 126s."
+ },
+ {
+  "key": "trial_hermes/2731f75f",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 142s."
+ },
+ {
+  "key": "trial_hermes/7a8d7ebf",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 128s."
+ },
+ {
+  "key": "trial_charon/0d8570e6",
+  "speakerId": "trial_charon",
+  "text": "Trial: Gather 4 coins."
+ },
+ {
+  "key": "trial_hermes/3449201c",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 143s."
+ },
+ {
+  "key": "trial_hermes/f523b86b",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 146s."
+ },
+ {
+  "key": "trial_hermes/5f1f88c3",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 102s."
+ },
+ {
+  "key": "trial_hermes/e95df58c",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 150s."
+ },
+ {
+  "key": "trial_hermes/7e44be14",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 107s."
+ },
+ {
+  "key": "trial_hermes/4faa39b5",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 98s."
+ },
+ {
+  "key": "trial_hermes/455a368e",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 123s."
+ },
+ {
+  "key": "trial_hermes/05fab8f5",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 100s."
+ },
+ {
+  "key": "trial_hermes/1e43a5b4",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 121s."
+ },
+ {
+  "key": "trial_hermes/243e17df",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 96s."
+ },
+ {
+  "key": "trial_hermes/f1feaf2e",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 149s."
+ },
+ {
+  "key": "trial_hermes/4811e4aa",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 138s."
+ },
+ {
+  "key": "trial_hermes/58959616",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 141s."
+ },
+ {
+  "key": "trial_hermes/18f85221",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 135s."
+ },
+ {
+  "key": "trial_hermes/ff1e7063",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 124s."
+ },
+ {
+  "key": "trial_hermes/efe7e839",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 117s."
+ },
+ {
+  "key": "trial_hermes/cc353460",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 125s."
+ },
+ {
+  "key": "trial_hermes/e46faa2d",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 131s."
+ },
+ {
+  "key": "trial_hermes/63805be6",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 134s."
+ },
+ {
+  "key": "trial_hermes/721d21ef",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 137s."
+ },
+ {
+  "key": "trial_hermes/9d95925b",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 119s."
+ },
+ {
+  "key": "trial_hermes/2ef7b3f2",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 130s."
+ },
+ {
+  "key": "trial_hermes/3858a9c9",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 104s."
+ },
+ {
+  "key": "trial_hermes/d7698de2",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 109s."
+ },
+ {
+  "key": "trial_hermes/a812fd0a",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 112s."
+ },
+ {
+  "key": "trial_hermes/ce0d2791",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 140s."
+ },
+ {
+  "key": "trial_hermes/87767309",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 148s."
+ },
+ {
+  "key": "trial_hermes/fc7ce6c8",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 93s."
+ },
+ {
+  "key": "trial_hermes/3d9479fb",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 133s."
+ },
+ {
+  "key": "trial_hermes/5d88df05",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 139s."
+ },
+ {
+  "key": "trial_hermes/5ad130e9",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 122s."
+ },
+ {
+  "key": "trial_hermes/990b091d",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 90s."
+ },
+ {
+  "key": "trial_hermes/f22fd8eb",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 92s."
+ },
+ {
+  "key": "trial_hermes/3d8ac0e5",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 113s."
+ },
+ {
+  "key": "trial_hermes/b5d4c604",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 114s."
+ },
+ {
+  "key": "trial_hermes/55a1b696",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 95s."
+ },
+ {
+  "key": "trial_hermes/9bfee89d",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 144s."
+ },
+ {
+  "key": "trial_hermes/e8be0207",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 115s."
+ },
+ {
+  "key": "trial_hermes/3155409c",
+  "speakerId": "trial_hermes",
+  "text": "Trial: Reach the boss within 97s."
+ },
+ {
+  "key": "priestess/cd8ef21f",
+  "speakerId": "priestess",
+  "text": "Athena sees all you have done, Atalanta. Speak, and be judged."
+ },
+ {
+  "key": "wounded_soldier/b0331605",
+  "speakerId": "wounded_soldier",
+  "text": "Water… or a quick end, Atalanta. Either is a kindness."
+ },
+ {
+  "key": "villager/5219569f",
+  "speakerId": "villager",
+  "text": "Please, Atalanta, I am no fighter. I only tend the goats."
+ },
+ {
+  "key": "altar/381b2fe4",
+  "speakerId": "altar",
+  "text": "The altar goes cold as you approach. Olympus remembers what you did, Atalanta."
+ },
+ {
+  "key": "villager/79f71e71",
+  "speakerId": "villager",
+  "text": "The ground opened and swallowed my street, Atalanta. Gaia is angry. Is it true it is your fault?"
+ },
+ {
+  "key": "trial_nemesis/f01ca707",
+  "speakerId": "trial_nemesis",
+  "text": "Innocent blood. I keep the ledger, Atalanta."
+ },
+ {
+  "key": "trial_ares/eb375b4f",
+  "speakerId": "trial_ares",
+  "text": "I like you, Atalanta. The weak scatter before you."
+ },
+ {
+  "key": "trial_athena/f6027ae8",
+  "speakerId": "trial_athena",
+  "text": "Your mercy is known on Olympus, Atalanta. Now show me your skill."
+ },
+ {
+  "key": "trial_hermes/5baf12e8",
+  "speakerId": "trial_hermes",
+  "text": "Still undecided, Atalanta? Then at least be quick."
+ },
+ {
+  "key": "trial_artemis/aa3e7007",
+  "speakerId": "trial_artemis",
+  "text": "A hunt, Atalanta. Nothing more, nothing less."
+ },
+ {
+  "key": "priestess/3f5e8354",
+  "speakerId": "priestess",
+  "text": "Athena sees all you have done, Heracles. Speak, and be judged."
+ },
+ {
+  "key": "wounded_soldier/174d27e6",
+  "speakerId": "wounded_soldier",
+  "text": "Water… or a quick end, Heracles. Either is a kindness."
+ },
+ {
+  "key": "villager/5ba23588",
+  "speakerId": "villager",
+  "text": "Please, Heracles, I am no fighter. I only tend the goats."
+ },
+ {
+  "key": "altar/4dff881f",
+  "speakerId": "altar",
+  "text": "The altar goes cold as you approach. Olympus remembers what you did, Heracles."
+ },
+ {
+  "key": "villager/c2d9236e",
+  "speakerId": "villager",
+  "text": "The ground opened and swallowed my street, Heracles. Gaia is angry. Is it true it is your fault?"
+ },
+ {
+  "key": "trial_nemesis/af34433c",
+  "speakerId": "trial_nemesis",
+  "text": "Innocent blood. I keep the ledger, Heracles."
+ },
+ {
+  "key": "trial_ares/3f28f68a",
+  "speakerId": "trial_ares",
+  "text": "I like you, Heracles. The weak scatter before you."
+ },
+ {
+  "key": "trial_athena/5e42bfb7",
+  "speakerId": "trial_athena",
+  "text": "Your mercy is known on Olympus, Heracles. Now show me your skill."
+ },
+ {
+  "key": "trial_hermes/18bedeeb",
+  "speakerId": "trial_hermes",
+  "text": "Still undecided, Heracles? Then at least be quick."
+ },
+ {
+  "key": "trial_artemis/3cbebec4",
+  "speakerId": "trial_artemis",
+  "text": "A hunt, Heracles. Nothing more, nothing less."
+ },
+ {
+  "key": "priestess/790c760b",
+  "speakerId": "priestess",
+  "text": "Athena sees all you have done, Orpheus. Speak, and be judged."
+ },
+ {
+  "key": "wounded_soldier/4222208d",
+  "speakerId": "wounded_soldier",
+  "text": "Water… or a quick end, Orpheus. Either is a kindness."
+ },
+ {
+  "key": "villager/8e690531",
+  "speakerId": "villager",
+  "text": "Please, Orpheus, I am no fighter. I only tend the goats."
+ },
+ {
+  "key": "altar/2400214c",
+  "speakerId": "altar",
+  "text": "The altar goes cold as you approach. Olympus remembers what you did, Orpheus."
+ },
+ {
+  "key": "villager/ca1c45d9",
+  "speakerId": "villager",
+  "text": "The ground opened and swallowed my street, Orpheus. Gaia is angry. Is it true it is your fault?"
+ },
+ {
+  "key": "trial_nemesis/691422a9",
+  "speakerId": "trial_nemesis",
+  "text": "Innocent blood. I keep the ledger, Orpheus."
+ },
+ {
+  "key": "trial_ares/626edecb",
+  "speakerId": "trial_ares",
+  "text": "I like you, Orpheus. The weak scatter before you."
+ },
+ {
+  "key": "trial_athena/4f08a29a",
+  "speakerId": "trial_athena",
+  "text": "Your mercy is known on Olympus, Orpheus. Now show me your skill."
+ },
+ {
+  "key": "trial_hermes/b131d3ec",
+  "speakerId": "trial_hermes",
+  "text": "Still undecided, Orpheus? Then at least be quick."
+ },
+ {
+  "key": "trial_artemis/b67b6739",
+  "speakerId": "trial_artemis",
+  "text": "A hunt, Orpheus. Nothing more, nothing less."
+ },
+ {
+  "key": "priestess/fbbc7e71",
+  "speakerId": "priestess",
+  "text": "Athena sees all you have done, Kratos. Speak, and be judged."
+ },
+ {
+  "key": "wounded_soldier/7de8f59f",
+  "speakerId": "wounded_soldier",
+  "text": "Water… or a quick end, Kratos. Either is a kindness."
+ },
+ {
+  "key": "villager/f1d68e35",
+  "speakerId": "villager",
+  "text": "Please, Kratos, I am no fighter. I only tend the goats."
+ },
+ {
+  "key": "altar/4725f27e",
+  "speakerId": "altar",
+  "text": "The altar goes cold as you approach. Olympus remembers what you did, Kratos."
+ },
+ {
+  "key": "villager/2195dae7",
+  "speakerId": "villager",
+  "text": "The ground opened and swallowed my street, Kratos. Gaia is angry. Is it true it is your fault?"
+ },
+ {
+  "key": "trial_nemesis/674c5b15",
+  "speakerId": "trial_nemesis",
+  "text": "Innocent blood. I keep the ledger, Kratos."
+ },
+ {
+  "key": "trial_ares/c430e695",
+  "speakerId": "trial_ares",
+  "text": "I like you, Kratos. The weak scatter before you."
+ },
+ {
+  "key": "trial_athena/7f3d894e",
+  "speakerId": "trial_athena",
+  "text": "Your mercy is known on Olympus, Kratos. Now show me your skill."
+ },
+ {
+  "key": "trial_hermes/b218dbbe",
+  "speakerId": "trial_hermes",
+  "text": "Still undecided, Kratos? Then at least be quick."
+ },
+ {
+  "key": "trial_artemis/c124d155",
+  "speakerId": "trial_artemis",
+  "text": "A hunt, Kratos. Nothing more, nothing less."
+ }
+]
