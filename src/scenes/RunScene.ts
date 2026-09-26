@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { COLORS, Dir, DIR_VECTORS, GAME_HEIGHT, GAME_WIDTH, GRID_COLS, GRID_ROWS, OPPOSITE, ROOM_COLS, ROOM_ROWS, TILE } from '../config';
 import { events } from '../core/events';
 import type { RunState } from '../core/run';
+import { settings } from '../core/settings';
 import { KARMA } from '../core/story';
 import { EnemyDef, getEnemy } from '../data/enemies';
 import { getItem } from '../data/items';
@@ -526,7 +527,7 @@ export class RunScene extends Phaser.Scene {
     this.burst(enemy.x, enemy.y, enemy.def.color, isBoss ? 24 : 8);
     events.emit('enemy_killed', { enemyId: enemy.def.id, isBoss });
     if (isBoss) {
-      this.cameras.main.shake(300, 0.012);
+      settings.shake(this.cameras.main, 300, 0.012);
       this.run.story.record({ kind: 'boss_killed', subject: enemy.def.id, floor: this.run.floor, karmaDelta: 0, summary: `Slew ${enemy.def.name} on floor ${this.run.floor}` });
       events.emit('boss_killed', { enemyId: enemy.def.id, floor: this.run.floor });
       this.bossOutro({ ...speakerOf(enemy), enemy: undefined });

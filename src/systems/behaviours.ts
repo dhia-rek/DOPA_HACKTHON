@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { Rng } from '../core/rng';
+import { settings } from '../core/settings';
 import type { BehaviourName } from '../data/enemies';
 import type { Enemy } from '../entities/Enemy';
 import type { Player } from '../entities/Player';
@@ -247,7 +248,7 @@ const bossMinotaur: Behaviour = (ctx) => {
     if (!enemy.body.blocked.none || now >= m.until) {
       m.state = 3;
       m.until = now + (enraged ? 500 : 900);
-      ctx.player.scene.cameras.main.shake(150, 0.01);
+      settings.shake(ctx.player.scene.cameras.main, 150, 0.01);
       if (enraged) ring(ctx, 8, ctx.rng.float(0, Math.PI), 220);
     }
   } else {

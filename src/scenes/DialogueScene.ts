@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
+import { CHARS_PER_SEC, settings } from '../core/settings';
+import { blip } from '../core/sfx';
 import type { DialogueOption, DialogueScript } from '../dialogue/types';
 
 export interface DialogueSceneData {
@@ -13,11 +15,6 @@ const BOX_H = 200;
 const BOX_X = 32;
 const PORTRAIT = 120;
 const TEXT_X = BOX_X + PORTRAIT + 48;
-/** Typewriter speed in characters per second. */
-const CHARS_PER_SEC = 40;
-
-type Blip = 'move' | 'confirm' | 'advance';
-
 /**
  * Overlay that shows a DialogueScript: speaker lines (ENTER to advance), then
  * numbered options (1-4 or ↑↓ + ENTER). The scene that launched it is expected
@@ -34,7 +31,6 @@ export class DialogueScene extends Phaser.Scene {
   private fullText = '';
   private shown = 0;
   private typer?: Phaser.Time.TimerEvent;
-  private audioCtx?: AudioContext;
 
   constructor() {
     super('dialogue');
@@ -118,7 +114,7 @@ export class DialogueScene extends Phaser.Scene {
     this.shown = 0;
     this.body.setText('');
     this.typer = this.time.addEvent({
-      delay: 1000 / CHARS_PER_SEC,
+      delay: 1000 / CHARS_PER_SEC[settings.data.textSpeed],
       loop: true,
       callback: () => {
         this.shown++;
@@ -138,32 +134,6 @@ export class DialogueScene extends Phaser.Scene {
     this.shown = this.fullText.length;
     this.body.setText(this.fullText);
     this.hint.setText('ENTER ▸');
-  }
-
-  // ---- sound --------------------------------------------------------------
-
-  private blip(kind: Blip): void {
-    try {
-      const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (!Ctx) return;
-      this.audioCtx ??= new Ctx();
-      const ctx = this.audioCtx;
-      if (ctx.state === 'suspended') void ctx.resume();
-      const [freq, dur, type]: [number, number, OscillatorType] =
-        kind === 'move' ? [660, 0.04, 'square'] : kind === 'confirm' ? [880, 0.09, 'triangle'] : [440, 0.05, 'square'];
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, ctx.currentTime);
-      if (kind === 'confirm') osc.frequency.exponentialRampToValueAtTime(freq * 1.5, ctx.currentTime + dur);
-      gain.gain.setValueAtTime(0.05, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0005, ctx.currentTime + dur);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + dur);
-    } catch {
-      /* audio is optional */
-    }
   }
 
   // ---- flow ---------------------------------------------------------------
@@ -193,7 +163,7 @@ export class DialogueScene extends Phaser.Scene {
     if (this.phase !== 'options') return;
     const n = this.data_.script.options.length;
     this.selected = (this.selected + d + n) % n;
-    this.blip('move');
+    blip('move');
     this.paintSelection();
   }
 
@@ -204,14 +174,14 @@ export class DialogueScene extends Phaser.Scene {
       return;
     }
     if (this.phase === 'lines') {
-      this.blip('advance');
+      blip('advance');
       this.lineIndex++;
       if (this.lineIndex < script.lines.length) return this.showLine();
       if (script.options.length === 0) return this.finish(null);
       return this.showOptions();
     }
     if (this.phase === 'options') {
-      this.blip('confirm');
+      blip('confirm');
       const opt = script.options[this.selected];
       this.optionTexts.forEach((t) => t.destroy());
       this.optionTexts = [];
@@ -221,7 +191,7 @@ export class DialogueScene extends Phaser.Scene {
       this.typeOut(opt.reply);
       return;
     }
-    this.blip('advance');
+    blip('advance');
     this.finish(script.options[this.selected]);
   }
 
