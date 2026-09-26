@@ -10,6 +10,13 @@ export interface DialogueSceneData {
 
 const mono = 'monospace';
 const BOX_H = 200;
+const BOX_X = 32;
+const PORTRAIT = 120;
+const TEXT_X = BOX_X + PORTRAIT + 48;
+/** Typewriter speed in characters per second. */
+const CHARS_PER_SEC = 40;
+
+type Blip = 'move' | 'confirm' | 'advance';
 
 /**
  * Overlay that shows a DialogueScript: speaker lines (ENTER to advance), then
@@ -24,6 +31,10 @@ export class DialogueScene extends Phaser.Scene {
   private body!: Phaser.GameObjects.Text;
   private optionTexts: Phaser.GameObjects.Text[] = [];
   private hint!: Phaser.GameObjects.Text;
+  private fullText = '';
+  private shown = 0;
+  private typer?: Phaser.Time.TimerEvent;
+  private audioCtx?: AudioContext;
 
   constructor() {
     super('dialogue');
@@ -35,12 +46,18 @@ export class DialogueScene extends Phaser.Scene {
     this.selected = 0;
     this.phase = 'lines';
     this.optionTexts = [];
+    this.typer = undefined;
 
     const top = GAME_HEIGHT - BOX_H - 16;
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.35);
     this.add.rectangle(GAME_WIDTH / 2, top + BOX_H / 2, GAME_WIDTH - 64, BOX_H, 0x0d0b12, 0.96).setStrokeStyle(2, 0xc9a45c);
-    this.add.text(56, top + 12, data.script.speakerName.toUpperCase(), { fontFamily: mono, fontSize: '14px', color: COLORS.text });
-    this.body = this.add.text(56, top + 40, '', { fontFamily: mono, fontSize: '17px', color: '#eee', wordWrap: { width: GAME_WIDTH - 140 }, lineSpacing: 4 });
+
+    this.drawPortrait(BOX_X + 24 + PORTRAIT / 2, top + BOX_H / 2 - 10, data.script);
+    this.add.text(BOX_X + 24 + PORTRAIT / 2, top + BOX_H - 30, data.script.speakerName.toUpperCase(), {
+      fontFamily: mono, fontSize: '13px', color: COLORS.text, align: 'center', wordWrap: { width: PORTRAIT + 8 },
+    }).setOrigin(0.5, 0);
+
+    this.body = this.add.text(TEXT_X, top + 24, '', { fontFamily: mono, fontSize: '17px', color: '#eee', wordWrap: { width: GAME_WIDTH - TEXT_X - 64 }, lineSpacing: 4 });
     this.hint = this.add.text(GAME_WIDTH - 56, top + BOX_H - 24, '', { fontFamily: mono, fontSize: '12px', color: COLORS.textDim }).setOrigin(1, 0);
 
     const kb = this.input.keyboard!;
@@ -60,17 +77,108 @@ export class DialogueScene extends Phaser.Scene {
     this.showLine();
   }
 
-  private showLine(): void {
-    this.body.setText(this.data_.script.lines[this.lineIndex]);
+  // ---- portrait -----------------------------------------------------------
+
+  private drawPortrait(cx: number, cy: number, script: DialogueScript): void {
+    this.add.rectangle(cx, cy, PORTRAIT + 8, PORTRAIT + 8, 0x1a1522).setStrokeStyle(2, 0xc9a45c);
+    const key = [`enemy_${script.speakerId}`, `player_${script.speakerId}`].find((k) => this.textures.exists(k))
+      ?? this.makePlaceholderPortrait(script);
+    const img = this.add.image(cx, cy, key);
+    const scale = Math.min((PORTRAIT - 16) / img.width, (PORTRAIT - 16) / img.height);
+    img.setScale(scale);
+  }
+
+  private makePlaceholderPortrait(script: DialogueScript): string {
+    const key = `portrait_${script.speakerId}`;
+    if (!this.textures.exists(key)) {
+      const hue = [...script.speakerId].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
+      const color = Phaser.Display.Color.HSLToColor(hue / 360, 0.35, 0.35).color;
+      const rt = this.add.renderTexture(0, 0, PORTRAIT, PORTRAIT).setVisible(false);
+      const g = this.make.graphics({ x: 0, y: 0 }, false);
+      g.fillStyle(color, 1).fillRoundedRect(4, 4, PORTRAIT - 8, PORTRAIT - 8, 10);
+      g.lineStyle(3, 0xc9a45c, 1).strokeRoundedRect(4, 4, PORTRAIT - 8, PORTRAIT - 8, 10);
+      const letter = this.make.text({
+        x: PORTRAIT / 2, y: PORTRAIT / 2,
+        text: (script.speakerName[0] ?? '?').toUpperCase(),
+        style: { fontFamily: 'serif', fontSize: '64px', color: '#f0e6c8', fontStyle: 'bold' },
+      }, false).setOrigin(0.5);
+      rt.draw(g).draw(letter).saveTexture(key);
+      g.destroy();
+      letter.destroy();
+      rt.destroy();
+    }
+    return key;
+  }
+
+  // ---- typewriter ---------------------------------------------------------
+
+  private typeOut(text: string): void {
+    this.typer?.remove(false);
+    this.fullText = text;
+    this.shown = 0;
+    this.body.setText('');
+    this.typer = this.time.addEvent({
+      delay: 1000 / CHARS_PER_SEC,
+      loop: true,
+      callback: () => {
+        this.shown++;
+        this.body.setText(this.fullText.slice(0, this.shown));
+        if (this.shown >= this.fullText.length) this.completeLine();
+      },
+    });
+  }
+
+  private get typing(): boolean {
+    return this.typer !== undefined && this.shown < this.fullText.length;
+  }
+
+  private completeLine(): void {
+    this.typer?.remove(false);
+    this.typer = undefined;
+    this.shown = this.fullText.length;
+    this.body.setText(this.fullText);
     this.hint.setText('ENTER ▸');
+  }
+
+  // ---- sound --------------------------------------------------------------
+
+  private blip(kind: Blip): void {
+    try {
+      const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!Ctx) return;
+      this.audioCtx ??= new Ctx();
+      const ctx = this.audioCtx;
+      if (ctx.state === 'suspended') void ctx.resume();
+      const [freq, dur, type]: [number, number, OscillatorType] =
+        kind === 'move' ? [660, 0.04, 'square'] : kind === 'confirm' ? [880, 0.09, 'triangle'] : [440, 0.05, 'square'];
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      if (kind === 'confirm') osc.frequency.exponentialRampToValueAtTime(freq * 1.5, ctx.currentTime + dur);
+      gain.gain.setValueAtTime(0.05, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0005, ctx.currentTime + dur);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + dur);
+    } catch {
+      /* audio is optional */
+    }
+  }
+
+  // ---- flow ---------------------------------------------------------------
+
+  private showLine(): void {
+    this.hint.setText('ENTER ▸▸');
+    this.typeOut(this.data_.script.lines[this.lineIndex]);
   }
 
   private showOptions(): void {
     this.phase = 'options';
     this.body.setText('');
-    const top = GAME_HEIGHT - BOX_H - 16 + 44;
+    const top = GAME_HEIGHT - BOX_H - 16 + 28;
     this.data_.script.options.forEach((o, i) => {
-      const t = this.add.text(72, top + i * 30, `${i + 1}. ${o.text}`, { fontFamily: mono, fontSize: '16px', color: '#ccc' });
+      const t = this.add.text(TEXT_X + 8, top + i * 30, `${i + 1}. ${o.text}`, { fontFamily: mono, fontSize: '16px', color: '#ccc' });
       this.optionTexts.push(t);
     });
     this.hint.setText('↑↓ / 1-4 choose · ENTER confirm');
@@ -85,31 +193,40 @@ export class DialogueScene extends Phaser.Scene {
     if (this.phase !== 'options') return;
     const n = this.data_.script.options.length;
     this.selected = (this.selected + d + n) % n;
+    this.blip('move');
     this.paintSelection();
   }
 
   private advance(): void {
     const { script } = this.data_;
+    if (this.typing) {
+      this.completeLine();
+      return;
+    }
     if (this.phase === 'lines') {
+      this.blip('advance');
       this.lineIndex++;
       if (this.lineIndex < script.lines.length) return this.showLine();
       if (script.options.length === 0) return this.finish(null);
       return this.showOptions();
     }
     if (this.phase === 'options') {
+      this.blip('confirm');
       const opt = script.options[this.selected];
       this.optionTexts.forEach((t) => t.destroy());
       this.optionTexts = [];
       if (!opt.reply) return this.finish(opt);
       this.phase = 'reply';
-      this.body.setText(opt.reply);
-      this.hint.setText('ENTER ▸');
+      this.hint.setText('ENTER ▸▸');
+      this.typeOut(opt.reply);
       return;
     }
+    this.blip('advance');
     this.finish(script.options[this.selected]);
   }
 
   private finish(option: DialogueOption | null): void {
+    this.typer?.remove(false);
     const cb = this.data_.onDone;
     this.scene.stop();
     cb(option);
