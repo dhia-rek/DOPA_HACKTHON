@@ -14,39 +14,65 @@ export interface DialogueProvider {
   generate(req: DialogueRequest): Promise<DialogueScript>;
 }
 
-/** Prompt the LLM service should use as the system message. Exported so the server can import/copy it. */
-export const SYSTEM_PROMPT = `You write short in-character dialogue for a Greek-mythology roguelike.
-Return ONLY JSON matching:
-{"lines": string[1-3], "options": [{"id": string, "text": string, "reply": string,
- "effects": {"karma": number, "flags": string[], "boss": {"hpMul": number, "damageMul": number, "speedMul": number}, "hp": number, "coins": number}}] (2-4 items)}
-Rules: stay in persona; react to the player's deeds (npcs killed/spared, karma, bosses slain); options must be meaningfully different (defiant / humble / cunning / merciful…);
-effects must be fair: karma -30..30, boss multipliers 0.5..2, hp -4..4. Never break character, never mention JSON.`;
+export { SYSTEM_PROMPT } from './prompt';
 
 export class HttpDialogueProvider implements DialogueProvider {
+  /** Scripts (or in-flight fetches) keyed by seed, so replays and prefetches never hit the server twice. */
+  private readonly cache = new Map<string, Promise<DialogueScript>>();
+
   constructor(
     private readonly url: string,
     private readonly fallback: DialogueProvider,
     private readonly timeoutMs = 8000,
+    private readonly retries = 1,
   ) {}
 
-  async generate(req: DialogueRequest): Promise<DialogueScript> {
+  generate(req: DialogueRequest): Promise<DialogueScript> {
+    const key = `${req.seed}:${req.kind}:${req.speakerId}:${req.language ?? 'en'}`;
+    let pending = this.cache.get(key);
+    if (!pending) {
+      pending = this.fetchWithRetry(req).catch((err) => {
+        console.warn('[dialogue] falling back to mock:', err);
+        return this.fallback.generate(req);
+      });
+      this.cache.set(key, pending);
+    }
+    return pending;
+  }
+
+  /** Fire-and-forget warm-up (e.g. boss intro when a floor starts) so the dialogue opens instantly. */
+  prefetch(req: DialogueRequest): void {
+    void this.generate(req);
+  }
+
+  private async fetchWithRetry(req: DialogueRequest): Promise<DialogueScript> {
+    let lastErr: unknown;
+    for (let attempt = 0; attempt <= this.retries; attempt++) {
+      try {
+        return await this.fetchOnce(req);
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    throw lastErr;
+  }
+
+  private async fetchOnce(req: DialogueRequest): Promise<DialogueScript> {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), this.timeoutMs);
     try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), this.timeoutMs);
       const res = await fetch(this.url, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(req),
         signal: ctrl.signal,
       });
-      clearTimeout(timer);
       if (!res.ok) throw new Error(`dialogue service ${res.status}`);
       const script = validateScript(await res.json(), req);
       if (!script) throw new Error('dialogue service returned an invalid script');
       return script;
-    } catch (err) {
-      console.warn('[dialogue] falling back to mock:', err);
-      return this.fallback.generate(req);
+    } finally {
+      clearTimeout(timer);
     }
   }
 }
