@@ -17,39 +17,48 @@ import numpy as np
 from PIL import Image, ImageFilter
 
 TILE = 64
+# Sprites are exported at SCALE x their on-screen size (see ART_SCALE in src/art/manifest.ts).
+SCALE = 2
 OUT = Path(__file__).resolve().parents[2] / 'public' / 'art'
 
 # key -> (mode, width, height, options)
 #   sprite: chroma-key the magenta, trim, fit into the box (fill = fraction of the box the sprite may use)
+#   sprite mode is exported at SCALE x unless hires=False (props that share the 64px tile grid)
 #   tile:   crop a centered square (crop = fraction of the source kept) and scale to the box, no transparency
 SIZES = {
-    # players: PLAYER.radius * 2 + 8
-    'player_achilles': ('sprite', 48, 48, {}),
-    'player_atalanta': ('sprite', 48, 48, {}),
-    'player_heracles': ('sprite', 48, 48, {}),
-    'player_orpheus': ('sprite', 48, 48, {}),
-    'player_kratos': ('sprite', 48, 48, {}),
-    # enemies: EnemyDef.radius * 2 + 8
-    'enemy_bandit': ('sprite', 44, 44, {}),
-    'enemy_harpy': ('sprite', 40, 40, {}),
-    'enemy_centaur_archer': ('sprite', 48, 48, {}),
-    'enemy_boar': ('sprite', 52, 52, {}),
-    'enemy_skeleton': ('sprite', 44, 44, {}),
-    'enemy_living_statue': ('sprite', 52, 52, {}),
-    'enemy_minotaur': ('sprite', 76, 76, {}),
-    'enemy_hydra': ('sprite', 84, 84, {}),
-    'enemy_villager': ('sprite', 38, 38, {}),
+    # players: canvas a bit bigger than the body so the sprite reads ~1 tile tall
+    'player_achilles': ('sprite', 56, 56, {'fill': 1.0}),
+    'player_atalanta': ('sprite', 56, 56, {'fill': 1.0}),
+    'player_heracles': ('sprite', 56, 56, {'fill': 1.0}),
+    'player_orpheus': ('sprite', 56, 56, {'fill': 1.0}),
+    'player_kratos': ('sprite', 56, 56, {'fill': 1.0}),
+    # enemies: EnemyDef.radius * 2 + 16
+    'enemy_bandit': ('sprite', 52, 52, {'fill': 1.0}),
+    'enemy_harpy': ('sprite', 48, 48, {'fill': 1.0}),
+    'enemy_centaur_archer': ('sprite', 56, 56, {'fill': 1.0}),
+    'enemy_boar': ('sprite', 60, 60, {'fill': 1.0}),
+    'enemy_skeleton': ('sprite', 52, 52, {'fill': 1.0}),
+    'enemy_living_statue': ('sprite', 60, 60, {'fill': 1.0}),
+    'enemy_minotaur': ('sprite', 84, 84, {'fill': 1.0}),
+    'enemy_hydra': ('sprite', 92, 92, {'fill': 1.0}),
+    'enemy_villager': ('sprite', 46, 46, {'fill': 1.0}),
     # room
     # room tiles are toned down (Isaac floors are low-contrast so sprites pop) and
     # RunScene multiplies them by the stage palette on top.
-    'floor': ('tile', TILE, TILE, {'crop': 1.0, 'tone': (0.66, 0.55, 0.75)}),
-    'wall': ('tile', TILE, TILE, {'crop': 1.0, 'tone': (0.8, 0.8, 0.85)}),
+    # floor: one quadrant of the source per variant; RunScene mixes floor / floor_1..3 per cell
+    'floor': ('tile', TILE, TILE, {'crop': 0.5, 'tone': (0.9, 0.85, 1.0), 'at': (0.25, 0.25)}),
+    'floor_1': ('tile', TILE, TILE, {'src': 'floor', 'crop': 0.5, 'tone': (0.9, 0.85, 1.0), 'at': (0.75, 0.25)}),
+    'floor_2': ('tile', TILE, TILE, {'src': 'floor', 'crop': 0.5, 'tone': (0.9, 0.85, 1.0), 'at': (0.25, 0.75)}),
+    'floor_3': ('tile', TILE, TILE, {'src': 'floor', 'crop': 0.5, 'tone': (0.9, 0.85, 1.0), 'at': (0.75, 0.75)}),
+    'wall': ('tile', TILE, TILE, {'crop': 1.0, 'tone': (0.85, 0.85, 0.9)}),
     'pit': ('tile', TILE, TILE, {}),  # blended onto floor.png, run after 'floor'
     'door_open': ('tile', TILE, TILE, {'crop': 0.62}),
     'door_closed': ('tile', TILE, TILE, {'crop': 0.62}),
-    'rock': ('sprite', TILE, TILE, {'fill': 0.9}),
-    'pedestal': ('sprite', TILE, TILE, {'fill': 0.8}),
-    'trapdoor': ('sprite', TILE, TILE, {'fill': 0.85}),
+    'rock': ('sprite', TILE, TILE, {'fill': 0.9, 'hires': False}),
+    'pedestal': ('sprite', TILE, TILE, {'fill': 0.8, 'hires': False}),
+    'trapdoor': ('sprite', TILE, TILE, {'fill': 0.85, 'hires': False}),
+    # menu background: the key art cropped to the canvas aspect
+    'menu_bg': ('menu_bg', 960, 576, {'src': 'keyart'}),
     # pickups / HUD
     'pickup_coin': ('sprite', 22, 22, {'src': 'coin', 'fill': 1.0}),
     'heart_full': ('sprite', 26, 24, {'src': 'heart', 'fill': 1.0}),
@@ -107,10 +116,10 @@ def sprite(src: Image.Image, w: int, h: int, fill: float) -> Image.Image:
     return canvas
 
 
-def tile(src: Image.Image, w: int, h: int, crop: float, tone: tuple[float, float, float] | None) -> Image.Image:
+def tile(src: Image.Image, w: int, h: int, crop: float, tone: tuple[float, float, float] | None, at: tuple[float, float] = (0.5, 0.5)) -> Image.Image:
     im = src.convert('RGB')
     side = int(min(im.size) * crop)
-    cx, cy = im.width // 2, im.height // 2
+    cx, cy = int(im.width * at[0]), int(im.height * at[1])
     im = im.crop((cx - side // 2, cy - side // 2, cx - side // 2 + side, cy - side // 2 + side))
     im = im.resize((w, h), Image.LANCZOS)
     if tone:
@@ -132,6 +141,14 @@ def composite_pit(floor: Image.Image, pit_src: Image.Image, w: int, h: int) -> I
     mask = np.clip((0.86 - d) / 0.22, 0, 1)[..., None]
     out = np.asarray(floor).astype(float) * (1 - mask) + np.asarray(hole).astype(float) * mask
     return Image.fromarray(out.astype(np.uint8), 'RGBA')
+
+
+def menu_bg(src: Image.Image, w: int, h: int) -> Image.Image:
+    im = src.convert('RGB')
+    side_w = min(im.width, int(im.height * w / h))
+    side_h = int(side_w * h / w)
+    x0, y0 = (im.width - side_w) // 2, (im.height - side_h) // 2
+    return im.crop((x0, y0, x0 + side_w, y0 + side_h)).resize((w, h), Image.LANCZOS)
 
 
 def derive_hearts(full: Image.Image) -> None:
@@ -158,7 +175,13 @@ def main() -> None:
             print(f'skip {key}: {src_path} missing')
             continue
         src = Image.open(src_path)
-        out = sprite(src, w, h, opt.get('fill', 0.96)) if mode == 'sprite' else tile(src, w, h, opt.get('crop', 1.0), opt.get('tone'))
+        if mode == 'menu_bg':
+            menu_bg(src, w, h).save(OUT / f'{key}.jpg', quality=86, optimize=True)
+            print(f'{key}: {w}x{h} jpg')
+            continue
+        if mode == 'sprite' and opt.get('hires', True):
+            w, h = w * SCALE, h * SCALE
+        out = sprite(src, w, h, opt.get('fill', 0.96)) if mode == 'sprite' else tile(src, w, h, opt.get('crop', 1.0), opt.get('tone'), opt.get('at', (0.5, 0.5)))
         if key == 'pit':
             out = composite_pit(Image.open(OUT / 'floor.png').convert('RGBA'), src, w, h)
         out.save(OUT / f'{key}.png', optimize=True)

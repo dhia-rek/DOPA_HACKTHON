@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { ART_SCALE } from '../art/manifest';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import { events } from '../core/events';
 import { Rng } from '../core/rng';
@@ -25,6 +26,12 @@ export class MenuScene extends Phaser.Scene {
   create(): void {
     achievements.start();
     this.index = Math.max(0, CHARACTERS.findIndex((c) => !this.locked(c)));
+    if (this.textures.exists('menu_bg')) {
+      this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'menu_bg').setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+      // Darken so the text reads; heaviest at the bottom where the lists are.
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x0b0a0f, 0.45);
+      this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - 90, GAME_WIDTH, 180, 0x0b0a0f, 0.5);
+    }
     this.root = this.add.container(0, 0);
     this.render();
 
@@ -72,8 +79,8 @@ export class MenuScene extends Phaser.Scene {
     const mono = 'monospace';
     const add = (o: Phaser.GameObjects.GameObject) => this.root.add(o);
 
-    add(this.add.text(GAME_WIDTH / 2, 48, 'N E K Y I A', { fontFamily: mono, fontSize: '52px', color: COLORS.text }).setOrigin(0.5));
-    add(this.add.text(GAME_WIDTH / 2, 100, 'a descent through the Greek underworld', { fontFamily: mono, fontSize: '16px', color: COLORS.textDim }).setOrigin(0.5));
+    add(this.add.text(GAME_WIDTH / 2, 48, 'N E K Y I A', { fontFamily: mono, fontSize: '52px', color: '#e8dcc0', stroke: '#1a1410', strokeThickness: 8 }).setOrigin(0.5));
+    add(this.add.text(GAME_WIDTH / 2, 100, 'a descent through the Greek underworld', { fontFamily: mono, fontSize: '16px', color: COLORS.text, stroke: '#1a1410', strokeThickness: 4 }).setOrigin(0.5));
 
     // Character carousel.
     const c = CHARACTERS[this.index];
@@ -82,12 +89,14 @@ export class MenuScene extends Phaser.Scene {
     const cy = 205;
     add(this.add.text(cx - 200, cy, '◀', { fontFamily: mono, fontSize: '40px', color: COLORS.textDim }).setOrigin(0.5));
     add(this.add.text(cx + 200, cy, '▶', { fontFamily: mono, fontSize: '40px', color: COLORS.textDim }).setOrigin(0.5));
+    add(this.add.rectangle(cx, cy + 68, 600, 262, 0x0b0a0f, 0.55).setStrokeStyle(2, 0xc9a45c, 0.35));
+    add(this.add.image(cx, cy + 44, 'shadow').setScale(1.6, 1.1).setAlpha(0.8));
     const portrait = this.textures.exists(`portrait_${c.id}`)
-      ? this.add.image(cx, cy, `portrait_${c.id}`)
+      ? this.add.image(cx, cy, `portrait_${c.id}`).setScale(1 / ART_SCALE)
       : this.add.image(cx, cy, `player_${c.id}`).setScale(2);
     if (locked) portrait.setTint(0x333333);
     add(portrait);
-    add(this.add.text(cx, cy + 70, locked ? '???' : c.name, { fontFamily: mono, fontSize: '30px', color: locked ? '#666' : '#fff' }).setOrigin(0.5));
+    add(this.add.text(cx, cy + 70, locked ? '???' : c.name, { fontFamily: mono, fontSize: '30px', color: locked ? '#666' : '#fff', stroke: '#1a1410', strokeThickness: 6 }).setOrigin(0.5));
     add(this.add.text(cx, cy + 100, locked ? `Locked — ${c.unlockHint ?? ''}` : c.title, { fontFamily: mono, fontSize: '15px', color: COLORS.textDim }).setOrigin(0.5));
     if (!locked) {
       add(this.add.text(cx, cy + 128, c.description, { fontFamily: mono, fontSize: '14px', color: '#bbb', wordWrap: { width: 520 }, align: 'center' }).setOrigin(0.5, 0));

@@ -146,11 +146,11 @@ const charger: Behaviour = ({ enemy, player, now }) => {
     }
   } else if (state === 1) {
     enemy.moveTowards(0, 0);
-    enemy.setScale(0.9, 1.1);
+    enemy.stretch.set(0.9, 1.1);
     if (now >= m.until) {
       m.state = 2;
       m.until = now + 1500;
-      enemy.setScale(1);
+      enemy.stretch.set(1, 1);
     }
   } else if (state === 2) {
     const s = enemy.def.chargeSpeed ?? 400;

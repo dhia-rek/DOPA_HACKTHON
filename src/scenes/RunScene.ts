@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { ART_SCALE } from '../art/manifest';
 import { COLORS, Dir, DIR_VECTORS, GAME_HEIGHT, GAME_WIDTH, GRID_COLS, GRID_ROWS, OPPOSITE, ROOM_COLS, ROOM_ROWS, TILE } from '../config';
 import { events } from '../core/events';
 import type { RunState } from '../core/run';
@@ -79,6 +80,7 @@ export class RunScene extends Phaser.Scene {
 
     this.buildBorder();
     this.buildInterior();
+    this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'vignette').setDepth(6);
 
     const spawn = this.spawnPoint(data?.enterFrom);
     this.player = new Player(this, spawn.x, spawn.y, this.run, this.playerShots);
@@ -252,7 +254,8 @@ export class RunScene extends Phaser.Scene {
     for (let r = 0; r < ROOM_ROWS; r++) {
       for (let c = 0; c < ROOM_COLS; c++) {
         const { x, y } = this.tileCenter(c + 1, r + 1);
-        this.add.image(x, y, 'floor').setDepth(0).setTint(tint);
+        const variant = `floor_${(c * 3 + r * 5 + this.room.gx + this.room.gy * 2) % 4}`;
+        this.add.image(x, y, this.textures.exists(variant) ? variant : 'floor').setDepth(0).setTint(tint);
         const ch = this.room.template[r][c];
         if (ch === '#') {
           const rock = this.rocks.create(x, y, 'rock') as Phaser.Physics.Arcade.Image;
@@ -306,7 +309,7 @@ export class RunScene extends Phaser.Scene {
     if (room.type === 'treasure' && room.itemId && !room.itemTaken) {
       const slot = this.slots('I')[0] ?? { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 };
       this.pedestal = this.physics.add.staticImage(slot.x, slot.y, 'pedestal').setDepth(2);
-      const icon = this.add.image(slot.x, slot.y - 18, `item_${room.itemId}`).setDepth(3);
+      const icon = this.add.image(slot.x, slot.y - 18, `item_${room.itemId}`).setDepth(3).setScale(1 / ART_SCALE);
       this.tweens.add({ targets: icon, y: slot.y - 24, yoyo: true, repeat: -1, duration: 700, ease: 'Sine.InOut' });
       this.pedestal.setData('icon', icon);
       this.physics.add.overlap(this.player, this.pedestal, () => this.takeItem());

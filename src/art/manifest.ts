@@ -2,9 +2,21 @@ import { CHARACTERS } from '../data/characters';
 import { ENEMIES } from '../data/enemies';
 import { ITEMS } from '../data/items';
 
+/**
+ * Sprites (players, enemies, pickups, hearts, items, portraits) are authored at
+ * ART_SCALE x their on-screen size and drawn with setScale(1 / ART_SCALE) so they
+ * stay crisp when the canvas is scaled up. Room tiles are 1:1.
+ */
+export const ART_SCALE = 2;
+
+const EXT: Record<string, string> = { menu_bg: 'jpg' };
+
 /** Room, pickup and HUD textures that have (or may have) a file in public/art/. */
 export const STATIC_ART_KEYS = [
   'floor',
+  'floor_1',
+  'floor_2',
+  'floor_3',
   'wall',
   'door_open',
   'door_closed',
@@ -17,6 +29,7 @@ export const STATIC_ART_KEYS = [
   'heart_empty',
   'pickup_heart',
   'pickup_coin',
+  'menu_bg',
 ] as const;
 
 /**
@@ -39,5 +52,5 @@ export function artKeys(): string[] {
 }
 
 export function artUrl(key: string): string {
-  return `${import.meta.env.BASE_URL}art/${key}.png`;
+  return `${import.meta.env.BASE_URL}art/${key}.${EXT[key] ?? 'png'}`;
 }

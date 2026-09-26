@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { ART_SCALE } from '../art/manifest';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import type { RunState } from '../core/run';
 
@@ -29,7 +30,7 @@ export class GameOverScene extends Phaser.Scene {
       .setOrigin(0.5, 0);
 
     run.items.forEach((item, i) => {
-      this.add.image(cx - (run.items.length - 1) * 18 + i * 36, 340, `item_${item.id}`);
+      this.add.image(cx - (run.items.length - 1) * 18 + i * 36, 340, `item_${item.id}`).setScale(1 / ART_SCALE);
     });
 
     this.add.text(cx, GAME_HEIGHT - 60, 'ENTER — back to the menu', { fontFamily: mono, fontSize: '16px', color: COLORS.textDim }).setOrigin(0.5);

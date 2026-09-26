@@ -12,7 +12,7 @@ plus one accent colour per thing (red plume, green venom, purple underworld).
 
 | Rule | Why |
 |---|---|
-| Chibi: huge round head, stubby body, big sad/angry eyes | Isaac silhouette; readable at 48 px |
+| Chibi: huge round head, stubby body, big sad/angry eyes | Isaac silhouette; readable at ~50 px |
 | Thick dark-brown outline (never pure black), flat cel shading, one shadow tone | Everything reads as one set |
 | Palette: terracotta `#c4632a`, cream `#e8dcc0`, bronze `#c9a45c`, near-black `#1a1410`, marble `#d8d0c0` | Black-figure pottery mood |
 | One accent colour max per sprite | Keeps rooms calm; the accent is the "tell" (Kratos red stripe, Hydra green) |
@@ -26,16 +26,27 @@ The code only ever asks for **texture keys**. `BootScene` loads
 `public/art/<key>.png` for every key and draws a flat placeholder shape for
 any key that has no file, so new content is always playable.
 
-| Key | Size (px) | Used by |
+Sprites are exported at **2× their on-screen size** (`ART_SCALE` in
+`src/art/manifest.ts`) and drawn with `setScale(1 / ART_SCALE)`, so they stay
+crisp when the 960×576 canvas is scaled up. Room tiles are 1:1. Sizes below
+are on-screen; the PNG is twice that where marked ×2.
+
+| Key | On-screen (px) | Used by |
 |---|---|---|
-| `player_<character.id>` | 48×48 | in-room hero (physics circle r=20 centred) |
-| `portrait_<character.id>` | 96×96 | menu (falls back to `player_*` at 2×) |
-| `enemy_<enemy.id>` | `radius*2+8` square | `Enemy` (physics circle centred) |
-| `item_<item.id>` | 28×28 | HUD, pedestal, game-over |
-| `floor` `wall` `pit` `door_open` `door_closed` | 64×64 | room tiles; `floor`/`wall` are tinted by `stage.palette` (keep them light and neutral) |
+| `player_<character.id>` | 56×56 ×2 | in-room hero (physics circle r=20 centred) |
+| `portrait_<character.id>` | 96×96 ×2 | menu (falls back to `player_*` at 2×) |
+| `enemy_<enemy.id>` | `radius*2+16` square ×2 | `Enemy` (physics circle centred) |
+| `item_<item.id>` | 28×28 ×2 | HUD, pedestal, game-over |
+| `floor` `floor_1..3` | 64×64 | floor variants mixed per cell (quadrants of one source) |
+| `wall` `pit` `door_open` `door_closed` | 64×64 | room tiles; `floor*`/`wall` are tinted by `stage.palette` (keep them light and neutral) |
 | `rock` `pedestal` `trapdoor` | 64×64 (transparent) | room props |
-| `heart_full` `heart_half` `heart_empty` `pickup_heart` | 26×24 | HUD / drop |
-| `pickup_coin` | 22×22 | drop |
+| `heart_full` `heart_half` `heart_empty` `pickup_heart` | 26×24 ×2 | HUD / drop |
+| `pickup_coin` | 22×22 ×2 | drop |
+| `menu_bg` (`.jpg`) | 960×576 | menu background, cropped from the key art |
+
+Generated at boot (no file): `shadow` (soft ellipse under every actor) and
+`vignette` (room-sized darkening towards the walls). Actors bob while moving,
+squash on hit; behaviours request extra stretch via `Enemy.stretch`.
 
 Doors are authored for the **top** wall (doorway opening down into the room);
 `RunScene` rotates them for left/right and mirrors for the bottom wall.

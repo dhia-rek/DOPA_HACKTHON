@@ -4,7 +4,8 @@ import { save } from '../core/save';
 import { CHARACTERS } from '../data/characters';
 import { ENEMIES, EnemyDef } from '../data/enemies';
 import { ITEMS } from '../data/items';
-import { artKeys, artUrl } from '../art/manifest';
+import { ART_SCALE, artKeys, artUrl } from '../art/manifest';
+import { GAME_HEIGHT, GAME_WIDTH } from '../config';
 
 /**
  * Loads the real art from public/art/<key>.png (see ART.md) and generates a
@@ -39,6 +40,8 @@ export class BootScene extends Phaser.Scene {
     this.makeCoin();
     this.makePedestal();
     this.makeTrapdoor();
+    this.makeShadow();
+    this.makeVignette();
     for (const c of CHARACTERS) this.makePlayer(`player_${c.id}`, c.color, c.shadeColor);
     for (const e of ENEMIES) this.makeEnemy(e);
     for (const i of ITEMS) this.makeItemIcon(`item_${i.id}`, i.color);
@@ -53,6 +56,45 @@ export class BootScene extends Phaser.Scene {
 
   private gfx(): Phaser.GameObjects.Graphics {
     return this.make.graphics({ x: 0, y: 0 }, false);
+  }
+
+  /** Bake a placeholder drawn in on-screen pixels at the same resolution as the real sprites. */
+  private bake(g: Phaser.GameObjects.Graphics, key: string, w: number, h: number): void {
+    g.setScale(ART_SCALE);
+    g.generateTexture(key, w * ART_SCALE, h * ART_SCALE);
+    g.destroy();
+  }
+
+  private canvas(key: string, w: number, h: number, paint: (ctx: CanvasRenderingContext2D) => void): void {
+    const tex = this.textures.createCanvas(key, w, h)!;
+    paint(tex.context);
+    tex.refresh();
+  }
+
+  /** Soft ellipse drawn under every actor. */
+  private makeShadow(): void {
+    this.canvas('shadow', 64, 32, (ctx) => {
+      const grad = ctx.createRadialGradient(32, 16, 2, 32, 16, 16);
+      grad.addColorStop(0, 'rgba(0,0,0,0.55)');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.setTransform(2, 0, 0, 1, -32, 0);
+      ctx.fillRect(0, 0, 64, 32);
+    });
+  }
+
+  /** Room-sized darkening towards the walls (Isaac-style vignette). */
+  private makeVignette(): void {
+    this.canvas('vignette', GAME_WIDTH, GAME_HEIGHT, (ctx) => {
+      const cx = GAME_WIDTH / 2;
+      const cy = GAME_HEIGHT / 2;
+      const grad = ctx.createRadialGradient(cx, cy, GAME_HEIGHT * 0.25, cx, cy, GAME_WIDTH * 0.6);
+      grad.addColorStop(0, 'rgba(10,6,4,0)');
+      grad.addColorStop(0.55, 'rgba(10,6,4,0.3)');
+      grad.addColorStop(1, 'rgba(10,6,4,0.85)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    });
   }
 
   private makeFloor(): void {
@@ -152,27 +194,23 @@ export class BootScene extends Phaser.Scene {
     if (this.missing('heart_full')) {
       const full = this.gfx();
       this.heartShape(full, COLORS.heart);
-      full.generateTexture('heart_full', 26, 24);
-      full.destroy();
+      this.bake(full, 'heart_full', 26, 24);
     }
     if (this.missing('heart_empty')) {
       const empty = this.gfx();
       this.heartShape(empty, COLORS.heartEmpty);
-      empty.generateTexture('heart_empty', 26, 24);
-      empty.destroy();
+      this.bake(empty, 'heart_empty', 26, 24);
     }
     if (this.missing('heart_half')) {
       const half = this.gfx();
       this.heartShape(half, COLORS.heartEmpty);
       this.heartShape(half, COLORS.heart, true);
-      half.generateTexture('heart_half', 26, 24);
-      half.destroy();
+      this.bake(half, 'heart_half', 26, 24);
     }
     if (this.missing('pickup_heart')) {
       const pickup = this.gfx();
       this.heartShape(pickup, COLORS.heart);
-      pickup.generateTexture('pickup_heart', 26, 24);
-      pickup.destroy();
+      this.bake(pickup, 'pickup_heart', 26, 24);
     }
   }
 
@@ -182,8 +220,7 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0xa08020).fillCircle(11, 12, 9);
     g.fillStyle(COLORS.coin).fillCircle(10, 10, 9);
     g.fillStyle(0xfff0a0).fillCircle(7, 7, 3);
-    g.generateTexture('pickup_coin', 22, 22);
-    g.destroy();
+    this.bake(g, 'pickup_coin', 22, 22);
   }
 
   private makePedestal(): void {
@@ -207,7 +244,7 @@ export class BootScene extends Phaser.Scene {
 
   private makePlayer(key: string, color: number, shade: number): void {
     if (!this.missing(key)) return;
-    const size = PLAYER.radius * 2 + 8;
+    const size = PLAYER.radius * 2 + 16;
     const cx = size / 2;
     const g = this.gfx();
     g.fillStyle(shade).fillCircle(cx, cx + 3, PLAYER.radius);
@@ -215,14 +252,13 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(COLORS.playerEye);
     g.fillCircle(cx - 7, cx - 4, 3);
     g.fillCircle(cx + 7, cx - 4, 3);
-    g.generateTexture(key, size, size);
-    g.destroy();
+    this.bake(g, key, size, size);
   }
 
   private makeEnemy(def: EnemyDef): void {
     if (!this.missing(`enemy_${def.id}`)) return;
     const r = def.radius;
-    const size = r * 2 + 8;
+    const size = r * 2 + 16;
     const c = size / 2;
     const shade = Phaser.Display.Color.IntegerToColor(def.color).darken(35).color;
     const g = this.gfx();
@@ -256,8 +292,7 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0x1a1620);
     g.fillCircle(c - r * 0.35, c - r * 0.15, Math.max(2, r * 0.14));
     g.fillCircle(c + r * 0.35, c - r * 0.15, Math.max(2, r * 0.14));
-    g.generateTexture(`enemy_${def.id}`, size, size);
-    g.destroy();
+    this.bake(g, `enemy_${def.id}`, size, size);
   }
 
   private makeItemIcon(key: string, color: number): void {
@@ -266,7 +301,6 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0x1a1620).fillRoundedRect(0, 0, 28, 28, 6);
     g.fillStyle(color).fillRoundedRect(4, 4, 20, 20, 4);
     g.fillStyle(0xffffff, 0.35).fillRect(7, 7, 6, 6);
-    g.generateTexture(key, 28, 28);
-    g.destroy();
+    this.bake(g, key, 28, 28);
   }
 }

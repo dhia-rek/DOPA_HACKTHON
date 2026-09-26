@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { ART_SCALE } from '../art/manifest';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import { events, GameEvents } from '../core/events';
 import type { RunState } from '../core/run';
@@ -51,7 +52,7 @@ export class HudScene extends Phaser.Scene {
     for (let i = 0; i < maxHearts; i++) {
       const filled = run.hp - i * 2;
       const key = filled >= 2 ? 'heart_full' : filled === 1 ? 'heart_half' : 'heart_empty';
-      this.hearts.add(this.add.image(12 + i * 28, 10, key).setOrigin(0, 0));
+      this.hearts.add(this.add.image(12 + i * 28, 10, key).setOrigin(0, 0).setScale(1 / ART_SCALE));
     }
 
     this.info.setText(`◈ ${run.coins}   dmg ${run.stats.damage.toFixed(1)}  spd ${Math.round(run.stats.speed)}  rof ${run.stats.fireRate.toFixed(1)}`);
@@ -60,7 +61,7 @@ export class HudScene extends Phaser.Scene {
 
     this.items.removeAll(true);
     run.items.forEach((item, i) => {
-      this.items.add(this.add.image(i * 30, 0, `item_${item.id}`).setOrigin(0, 0).setScale(0.8));
+      this.items.add(this.add.image(i * 30, 0, `item_${item.id}`).setOrigin(0, 0).setScale(0.8 / ART_SCALE));
     });
 
     this.drawMinimap();

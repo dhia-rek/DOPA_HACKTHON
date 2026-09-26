@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { ART_SCALE } from '../art/manifest';
 import { PLAYER } from '../config';
 import { events } from '../core/events';
 import { input } from '../core/input';
@@ -20,6 +21,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private regenAccumulator = 0;
   /** Set by the scene each frame so homing shots have something to chase. */
   nearestEnemy: Phaser.Physics.Arcade.Sprite | null = null;
+  private shadow: Phaser.GameObjects.Image;
+  private squash = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number, run: RunState, shots: ProjectilePool) {
     super(scene, x, y, `player_${run.character.id}`);
@@ -28,7 +31,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
-    this.body.setCircle(PLAYER.radius, 4, 4);
+    this.setScale(1 / ART_SCALE);
+    this.shadow = scene.add.image(x, y, 'shadow').setDepth(7).setAlpha(0.7);
+    this.once(Phaser.GameObjects.Events.DESTROY, () => this.shadow.destroy());
+    const r = PLAYER.radius * ART_SCALE;
+    this.body.setCircle(r, this.width / 2 - r, this.height / 2 - r);
     this.body.setDrag(PLAYER.drag);
     this.body.setCollideWorldBounds(true);
     this.setDepth(10);
@@ -69,8 +76,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
     if (x !== 0) this.setFlipX(x < 0);
 
+    // Walk bob: stretch with speed, bounce while moving, squash briefly when hurt.
     const t = this.body.velocity.length() / this.run.stats.speed;
-    this.setScale(1 + t * 0.05, 1 - t * 0.05);
+    const bob = Math.sin(this.scene.time.now / 70) * 0.06 * t;
+    this.squash = Math.max(0, this.squash - 0.08);
+    const s = 1 / ART_SCALE;
+    this.setScale(s * (1 + t * 0.04 + this.squash * 0.3 - bob * 0.5), s * (1 - t * 0.04 - this.squash * 0.3 + bob));
+    this.shadow.setPosition(this.x, this.y + PLAYER.radius + 2).setScale(0.9 + t * 0.05, 0.8);
   }
 
   private handleShooting(): void {
@@ -122,6 +134,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
     if (this.run.character.passive === 'rage') this.rageUntil = this.scene.time.now + 3000;
 
+    this.squash = 1;
     this.scene.cameras.main.shake(120, 0.006);
     return this.run.takeDamage(amount, source);
   }
