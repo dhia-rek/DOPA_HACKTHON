@@ -82,7 +82,7 @@ export class HttpVoiceProvider implements VoiceProvider {
   }
 
   private async fetchAudio(text: string, profile: VoiceProfile): Promise<string> {
-    const key = `${profile.voice}:${profile.mood}:${text}`;
+    const key = `${profile.speakerId ?? ''}:${profile.voice}:${profile.mood}:${text}`;
     const hit = this.cache.get(key);
     if (hit) {
       this.cache.delete(key);
@@ -95,7 +95,7 @@ export class HttpVoiceProvider implements VoiceProvider {
       const res = await fetch(this.url, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text, voice: profile.voice, mood: profile.mood }),
+        body: JSON.stringify({ text, speakerId: profile.speakerId, voice: profile.voice, mood: profile.mood }),
         signal: ctrl.signal,
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

@@ -2,7 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#0b0a0f" />
     <title>Nekyia</title>
     <style>
       html,
@@ -12,21 +16,47 @@
         background: #0b0a0f;
         height: 100%;
         overflow: hidden;
+        /* No pinch-zoom, pull-to-refresh, long-press menus or text selection under the thumbs. */
+        touch-action: none;
+        overscroll-behavior: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
       }
       #game {
-        width: 100%;
-        height: 100%;
+        position: fixed;
+        inset: 0;
         display: flex;
         align-items: center;
         justify-content: center;
       }
       canvas {
         image-rendering: pixelated;
+        touch-action: none;
+      }
+      #rotate {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 24px;
+        background: #0b0a0f;
+        color: #c9a45c;
+        font: 18px/1.6 monospace;
+      }
+      /* The room is 5:3; on a phone held upright it would be a thumbnail (toggled from main.ts). */
+      body.portrait #rotate {
+        display: flex;
       }
     </style>
   </head>
   <body>
     <div id="game"></div>
+    <div id="rotate">✦<br />N E K Y I A<br /><br />Turn your phone sideways<br />to enter the underworld.</div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

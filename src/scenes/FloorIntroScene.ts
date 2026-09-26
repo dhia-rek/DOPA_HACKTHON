@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
+import { OK_KEY } from '../core/input';
 import type { RunState } from '../core/run';
 import type { FloorDirective } from '../director/types';
 import { getMutator } from '../data/mutators';
@@ -95,7 +96,7 @@ export class FloorIntroScene extends Phaser.Scene {
       this.cameras.main.fadeOut(250, 0, 0, 0);
       this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.scene.start('run', {}));
     };
-    const hint = this.add.text(cx, GAME_HEIGHT - 40, 'ENTER  ·  DESCEND', { fontFamily: mono, fontSize: '15px', color: COLORS.text }).setOrigin(0.5).setAlpha(0);
+    const hint = this.add.text(cx, GAME_HEIGHT - 40, `${OK_KEY}  ·  DESCEND`, { fontFamily: mono, fontSize: '15px', color: COLORS.text }).setOrigin(0.5).setAlpha(0);
     this.tweens.add({ targets: hint, alpha: 1, delay: 900, duration: 300 });
     this.input.keyboard!.once('keydown-ENTER', go);
     this.input.keyboard!.once('keydown-SPACE', go);

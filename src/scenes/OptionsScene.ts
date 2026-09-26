@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_WIDTH } from '../config';
+import { TOUCH } from '../core/input';
+import { music } from '../core/music';
 import { save } from '../core/save';
 import { settings, TextSpeed } from '../core/settings';
 import { blip } from '../core/sfx';
@@ -36,6 +38,15 @@ export class OptionsScene extends Phaser.Scene {
       value: () => (settings.data.sfx ? 'ON' : 'OFF'),
       change: () => settings.set('sfx', !settings.data.sfx),
       hint: 'Menu and dialogue blips.',
+    },
+    {
+      label: 'MUSIC',
+      value: () => (settings.data.music ? 'ON' : 'OFF'),
+      change: () => {
+        settings.set('music', !settings.data.music);
+        music.refresh();
+      },
+      hint: 'Room music: lyre, aulos and drums in the ancient modes.',
     },
     {
       label: 'TEXT SPEED',
@@ -91,7 +102,7 @@ export class OptionsScene extends Phaser.Scene {
       kb.removeAllListeners();
       this.scene.start('menu');
     });
-    hintText(this, ['↑ ↓  CHOOSE     ← →  CHANGE', 'ESC  BACK']);
+    hintText(this, TOUCH ? ['TAP A VALUE  CHANGE'] : ['↑ ↓  CHOOSE     ← →  CHANGE', 'ESC  BACK']);
     this.cameras.main.fadeIn(200, 0, 0, 0);
   }
 

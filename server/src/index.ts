@@ -4,6 +4,7 @@ import express from 'express';
 import { type DialogueRequest, validateScript } from '../../src/dialogue/types';
 import { cacheKey, ScriptCache } from './cache';
 import { CONFIG } from './config';
+import { gradiumConfigured, synthesizeGradium } from './gradium';
 import { directRaw, generateJson, generateRaw, llmConfigured, synthesizeSpeech } from './llm';
 import { type DirectorRequest, type FloorDirective, validateDirective } from '../../src/director/types';
 import { TRIAL_SYSTEM_PROMPT } from '../../src/trials/prompt';
@@ -61,7 +62,7 @@ app.use(cors({ origin: CONFIG.corsOrigin === '*' ? true : CONFIG.corsOrigin.spli
 app.use(express.json({ limit: '64kb' }));
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, llm: llmConfigured, model: CONFIG.model, cached: cache.size });
+  res.json({ ok: true, llm: llmConfigured, tts: gradiumConfigured ? 'gradium' : llmConfigured ? 'gemini' : null, model: CONFIG.model, cached: cache.size });
 });
 
 app.post('/', async (req, res) => {
@@ -255,11 +256,11 @@ app.post('/voice', async (req, res) => {
     res.status(400).json({ error: 'body must be a VoiceRequest' });
     return;
   }
-  if (!llmConfigured) {
-    res.status(503).json({ error: 'LLM not configured (GEMINI_API_KEY missing)' });
+  if (!gradiumConfigured && !llmConfigured) {
+    res.status(503).json({ error: 'TTS not configured (GRADIUM_API_KEY and GEMINI_API_KEY missing)' });
     return;
   }
-  const key = `${request.voice}:${request.mood}:${request.text}`;
+  const key = `${request.speakerId ?? ''}:${request.voice}:${request.mood}:${request.text}`;
   const cached = voiceCache.get(key);
   if (cached) {
     res.setHeader('x-cache', 'hit');
@@ -271,7 +272,7 @@ app.post('/voice', async (req, res) => {
     return;
   }
   try {
-    const wav = await synthesizeSpeech(request);
+    const wav = gradiumConfigured ? await synthesizeGradium(request) : await synthesizeSpeech(request);
     if (voiceCache.size >= VOICE_CACHE_MAX) voiceCache.delete(voiceCache.keys().next().value!);
     voiceCache.set(key, wav);
     res.setHeader('x-cache', 'miss');
@@ -283,5 +284,5 @@ app.post('/voice', async (req, res) => {
 });
 
 app.listen(CONFIG.port, () => {
-  console.log(`nekyia dialogue+director+trial+voice server on http://localhost:${CONFIG.port} (model ${CONFIG.model}, llm ${llmConfigured ? 'ready' : 'NOT configured'})`);
+  console.log(`nekyia dialogue+director+trial+voice server on http://localhost:${CONFIG.port} (model ${CONFIG.model}, llm ${llmConfigured ? 'ready' : 'NOT configured'}, tts ${gradiumConfigured ? 'gradium' : llmConfigured ? 'gemini' : 'NOT configured'})`);
 });
