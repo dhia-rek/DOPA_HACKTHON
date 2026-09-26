@@ -148,6 +148,7 @@ export class RunState {
     this.floorMap = generateFloor(this.floorRng.fork(`floor-${this.floor}`), {
       stage: this.stage,
       loop: this.loop,
+      avoidBossId: this.story.deeds.filter((d) => d.kind === 'boss_killed' && d.floor === this.floor - 1).pop()?.subject,
       pickItem: () => {
         const id = pickItemFromPool(this.itemRng, 'treasure', picked);
         picked.push(id);
