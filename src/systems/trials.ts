@@ -13,7 +13,8 @@ export interface ActiveTrial {
 
 /**
  * Tracks the one accepted trial per floor from game events and applies its
- * reward or penalty. Trials resolve at the latest when the floor's boss dies.
+ * reward or penalty. Trials resolve at the latest when the player enters the floor's boss room,
+ * so boss rewards/penalties land on that boss.
  */
 class TrialSystem {
   private run: RunState | null = null;
@@ -83,7 +84,7 @@ class TrialSystem {
       }
       case 'room_entered':
         this.hitThisRoom = false;
-        if (o.type === 'haste' && (payload as GameEvents['room_entered']).roomType === 'boss') this.resolve(true);
+        if ((payload as GameEvents['room_entered']).roomType === 'boss') this.resolve(o.type === 'haste' || o.type === 'spare_all');
         break;
       case 'damage_taken':
         this.hitThisRoom = true;
@@ -163,8 +164,8 @@ function describeOutcome(o: TrialOutcome): string {
   if (o.hp) parts.push(`${o.hp > 0 ? '+' : ''}${o.hp / 2} ♥`);
   if (o.coins) parts.push(`${o.coins > 0 ? '+' : ''}${o.coins} coins`);
   if (o.karma) parts.push(`${o.karma > 0 ? '+' : ''}${o.karma} karma`);
-  if (o.bossHpMul && o.bossHpMul < 1) parts.push('the next boss is weakened');
-  if (o.bossHpMul && o.bossHpMul > 1) parts.push('the next boss grows stronger');
+  if (o.bossHpMul && o.bossHpMul < 1) parts.push('the boss is weakened');
+  if (o.bossHpMul && o.bossHpMul > 1) parts.push('the boss grows stronger');
   if (o.itemId) parts.push('a gift');
   return parts.join(' · ') || 'The gods take note.';
 }
