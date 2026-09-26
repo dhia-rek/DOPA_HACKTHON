@@ -5,6 +5,9 @@ import { input, Stick } from '../core/input';
 const BASE_R = 58;
 const KNOB_R = 26;
 const DEAD_ZONE = 0.18;
+/** HUD bands the stick ring must not cover (hearts/stats on top, stage/quest/karma below). */
+const HUD_TOP = 64;
+const HUD_BOTTOM = GAME_HEIGHT - 60;
 /** Where each stick sits while nobody is touching it (also its hint ring). */
 const REST: Record<Stick, { x: number; y: number; label: string }> = {
   move: { x: 130, y: GAME_HEIGHT - 130, label: 'MOVE' },
@@ -70,7 +73,7 @@ export class TouchScene extends Phaser.Scene {
     if (v.pointerId !== null) return;
     v.pointerId = p.id;
     v.ox = Phaser.Math.Clamp(p.x, BASE_R, GAME_WIDTH - BASE_R);
-    v.oy = Phaser.Math.Clamp(p.y, BASE_R, GAME_HEIGHT - BASE_R);
+    v.oy = Phaser.Math.Clamp(p.y, HUD_TOP + BASE_R, HUD_BOTTOM - BASE_R);
     v.base.setPosition(v.ox, v.oy).setAlpha(0.85);
     v.knob.setPosition(v.ox, v.oy).setAlpha(0.95);
     v.label.setAlpha(0);

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_WIDTH } from '../config';
+import { TOUCH } from '../core/input';
 import { music } from '../core/music';
 import { save } from '../core/save';
 import { settings, TextSpeed } from '../core/settings';
@@ -101,7 +102,7 @@ export class OptionsScene extends Phaser.Scene {
       kb.removeAllListeners();
       this.scene.start('menu');
     });
-    hintText(this, ['↑ ↓  CHOOSE     ← →  CHANGE', 'ESC  BACK']);
+    hintText(this, TOUCH ? ['TAP A VALUE  CHANGE'] : ['↑ ↓  CHOOSE     ← →  CHANGE', 'ESC  BACK']);
     this.cameras.main.fadeIn(200, 0, 0, 0);
   }
 
