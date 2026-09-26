@@ -7,6 +7,7 @@ import { pickItemFromPool } from '../systems/loot';
 import { events } from './events';
 import { Rng } from './rng';
 import { computeStats, mergeFlags, ShotFlags, Stats } from './stats';
+import { StoryState, StorySnapshot } from './story';
 
 /**
  * All mutable state of a single run. Scenes read from it; systems mutate it
@@ -22,6 +23,11 @@ export class RunState {
   readonly floorRng: Rng;
   readonly itemRng: Rng;
   readonly dropRng: Rng;
+  /** Seeded stream for dialogue generation (mock provider / prompt variety). */
+  readonly storyRng: Rng;
+
+  /** Moral memory of the run: karma, deeds, flags, boss modifiers. */
+  readonly story = new StoryState();
 
   items: ItemDef[] = [];
   stats: Stats;
@@ -45,6 +51,7 @@ export class RunState {
     this.floorRng = this.rng.fork('floor');
     this.itemRng = this.rng.fork('items');
     this.dropRng = this.rng.fork('drops');
+    this.storyRng = this.rng.fork('story');
 
     this.stats = { ...this.character.stats };
     this.hp = this.stats.maxHp;
@@ -71,6 +78,16 @@ export class RunState {
   }
 
   won = false;
+
+  storySnapshot(): StorySnapshot {
+    return this.story.snapshot({
+      characterId: this.character.id,
+      characterName: this.character.name,
+      floor: this.floor,
+      stageName: this.stage.name,
+      items: this.items.map((i) => i.name),
+    });
+  }
 
   get elapsedMs(): number {
     return performance.now() - this.startedAt;

@@ -72,6 +72,24 @@ function ring(ctx: BehaviourContext, count: number, offset = 0, speed?: number):
   }
 }
 
+/** Runs from the player when close, otherwise wanders nervously (innocent NPCs). */
+const flee: Behaviour = ({ enemy, player, rng, now }) => {
+  const m = enemy.memory;
+  const away = toPlayer(enemy, player).negate();
+  if (away.length() < 220) {
+    seek(enemy, away, enemy.speed, now);
+    return;
+  }
+  if (now >= (m.nextTurn ?? 0) || enemy.body.blocked.none === false) {
+    m.nextTurn = now + rng.int(600, 1400);
+    const angle = rng.float(0, Math.PI * 2);
+    const s = enemy.speed * 0.4;
+    m.vx = Math.cos(angle) * s;
+    m.vy = Math.sin(angle) * s;
+  }
+  enemy.moveTowards(m.vx ?? 0, m.vy ?? 0);
+};
+
 /** Walks straight at the player. */
 const chaser: Behaviour = ({ enemy, player, now }) => {
   seek(enemy, toPlayer(enemy, player), enemy.speed, now);
@@ -239,6 +257,7 @@ const bossHydra: Behaviour = (ctx) => {
 export const BEHAVIOURS: Record<BehaviourName, Behaviour> = {
   chaser,
   wanderer,
+  flee,
   shooter,
   charger,
   orbiter,

@@ -9,6 +9,10 @@ export interface StageDef {
   roomCount: [number, number];
   /** Enemies per normal room, inclusive range. */
   enemiesPerRoom: [number, number];
+  /** Innocent NPC ids that may appear in normal rooms (see EnemyDef.innocent). */
+  npcPool?: string[];
+  /** Chance (0..1) that a normal room contains one NPC. */
+  npcChance?: number;
   palette: {
     floor: number;
     wall: number;
@@ -28,6 +32,8 @@ export const STAGES: StageDef[] = [
     bossPool: ['minotaur'],
     roomCount: [7, 9],
     enemiesPerRoom: [2, 4],
+    npcPool: ['villager'],
+    npcChance: 0.35,
     palette: { floor: 0xffffff, wall: 0xffffff, accent: 0xc9a45c },
   },
   {
@@ -37,6 +43,8 @@ export const STAGES: StageDef[] = [
     bossPool: ['hydra', 'minotaur'],
     roomCount: [9, 12],
     enemiesPerRoom: [3, 5],
+    npcPool: ['villager'],
+    npcChance: 0.2,
     palette: { floor: 0x9fb4d8, wall: 0x8898c0, accent: 0x7fd0ff },
   },
 ];

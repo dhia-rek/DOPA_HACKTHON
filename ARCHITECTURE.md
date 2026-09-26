@@ -17,6 +17,11 @@ src/
     run.ts                RunState: current character, floor, room, hp, items, difficulty
     save.ts               localStorage save (unlocks, achievements, counters)
     input.ts              Key bindings + key state that survives scene restarts
+    story.ts              StoryState: karma, deeds, flags, boss modifiers, LLM snapshot
+
+  dialogue/               Story layer contract (see ROADMAP.md)
+    types.ts              DialogueRequest / DialogueScript JSON + validateScript()
+    provider.ts           DialogueProvider: Mock (offline, seeded) and Http (LLM server)
 
   data/                   CONTENT. Add entries here.
     characters.ts  items.ts  enemies.ts  stages.ts  rooms.ts  achievements.ts
@@ -31,7 +36,7 @@ src/
     achievements.ts       Listens to events, evaluates AchievementDefs, grants unlocks
 
   entities/               Phaser sprites: Player, Enemy, Projectile(+Pool), Pickup
-  scenes/                 Boot → Menu → Run (+ Hud overlay) → GameOver
+  scenes/                 Boot → Menu → Run (+ Hud, Dialogue overlays) → GameOver
 ```
 
 ## The core loop
@@ -156,6 +161,17 @@ counters) and a run snapshot. Need a new fact? Emit a new event (add it to
 Append a `string[]` (7 rows × 13 chars) to the matching list in `data/rooms.ts`.
 Keep door approaches (middle of each edge) walkable.
 
+### Add an innocent NPC
+Add an `EnemyDef` with `innocent: true`, `damage: 0`, `behaviour: 'flee'` and a
+`persona`, then list its id in a stage's `npcPool`. Touching it starts an `npc`
+dialogue; shooting it records `npc_killed` (karma −15). Nothing else to wire.
+
+### Make a boss react to the story
+Give the boss a `persona`. The boss intro dialogue receives the `StorySnapshot`
+(karma, deeds, flags); the chosen option's `effects.boss` multipliers are applied
+to that boss via `Enemy.applyMods`. To branch behaviour on a flag, read
+`run.story.hasFlag('…')` inside the behaviour.
+
 ## Scenes
 
 | Scene           | Role |
@@ -164,6 +180,7 @@ Keep door approaches (middle of each edge) walkable.
 | `MenuScene`     | Character carousel (locked ones greyed with unlock hint), Kratos progress, run stats, seed |
 | `RunScene`      | One room. Restarted per room. Owns physics, spawning, doors, pickups, transitions |
 | `HudScene`      | Overlay: hearts, coins, stats, item strip, minimap, floor name, toasts |
+| `DialogueScene` | Overlay launched by `RunScene.startDialogue`: shows a `DialogueScript`, returns the chosen option |
 | `GameOverScene` | Summary of the run |
 
 ## Conventions

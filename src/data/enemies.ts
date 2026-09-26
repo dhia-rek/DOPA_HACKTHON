@@ -2,7 +2,7 @@
  * Enemy behaviours are implemented in systems/behaviours.ts.
  * New behaviours = a new function there; new enemies = a new entry here.
  */
-export type BehaviourName = 'chaser' | 'wanderer' | 'shooter' | 'charger' | 'orbiter' | 'boss_minotaur' | 'boss_hydra';
+export type BehaviourName = 'chaser' | 'wanderer' | 'flee' | 'shooter' | 'charger' | 'orbiter' | 'boss_minotaur' | 'boss_hydra';
 
 export type EnemyShape = 'circle' | 'square' | 'triangle' | 'diamond';
 
@@ -26,6 +26,13 @@ export interface EnemyDef {
   chargeSpeed?: number;
   /** Chance to drop a pickup on death. */
   dropChance?: number;
+  /**
+   * Non-hostile NPC: never damages, never blocks room clearing, talks when
+   * approached. Killing it is a deed the story remembers.
+   */
+  innocent?: boolean;
+  /** One-line personality used by dialogue generation (bosses and NPCs). */
+  persona?: string;
 }
 
 export const ENEMIES: EnemyDef[] = [
@@ -118,6 +125,7 @@ export const ENEMIES: EnemyDef[] = [
     radius: 34,
     chargeSpeed: 520,
     isBoss: true,
+    persona: 'Proud, wounded, hates being called a monster; respects honour, despises cowards.',
   },
   {
     id: 'hydra',
@@ -132,6 +140,20 @@ export const ENEMIES: EnemyDef[] = [
     fireInterval: 900,
     shotSpeed: 300,
     isBoss: true,
+    persona: 'Many-voiced, ancient, speaks in riddles; each head interrupts the others.',
+  },
+  {
+    id: 'villager',
+    name: 'Shepherd',
+    hp: 4,
+    speed: 150,
+    damage: 0,
+    behaviour: 'flee',
+    shape: 'circle',
+    color: 0xd8c8a0,
+    radius: 15,
+    innocent: true,
+    persona: 'Frightened peasant who knows local rumours; bargains for their life.',
   },
 ];
 

@@ -19,6 +19,12 @@ export interface GameEvents {
   run_won: { seed: string; characterId: string; timeMs: number };
   run_lost: { seed: string; characterId: string; floor: number; timeMs: number };
   achievement_unlocked: { achievementId: string; title: string; rewardLabel: string };
+  /** An innocent (non-hostile NPC) was killed or left alive when the room was cleared. */
+  npc_killed: { npcId: string; floor: number };
+  npc_spared: { npcId: string; floor: number };
+  /** The player picked an option in a dialogue. */
+  dialogue_choice: { dialogueId: string; kind: string; optionId: string; karmaDelta: number };
+  story_changed: { karma: number };
   hud_update: Record<string, never>;
 }
 

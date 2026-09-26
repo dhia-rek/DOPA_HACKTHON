@@ -2,8 +2,11 @@ import Phaser from 'phaser';
 import { COLORS, Dir, DIR_VECTORS, GAME_HEIGHT, GAME_WIDTH, GRID_COLS, GRID_ROWS, OPPOSITE, ROOM_COLS, ROOM_ROWS, TILE } from '../config';
 import { events } from '../core/events';
 import type { RunState } from '../core/run';
-import { getEnemy } from '../data/enemies';
+import { EnemyDef, getEnemy } from '../data/enemies';
 import { getItem } from '../data/items';
+import { dialogueProvider } from '../dialogue/provider';
+import type { DialogueKind, DialogueOption, DialogueScript } from '../dialogue/types';
+import type { DialogueSceneData } from './DialogueScene';
 import { doorsOf, neighbour, RoomNode } from '../gen/floorGen';
 import { Enemy } from '../entities/Enemy';
 import { Pickup, PickupKind } from '../entities/Pickup';
@@ -45,6 +48,7 @@ export class RunScene extends Phaser.Scene {
   private trapdoor: Phaser.Physics.Arcade.Image | null = null;
   private transitioning = false;
   private dead = false;
+  private dialogueOpen = false;
 
   constructor() {
     super('run');
@@ -53,6 +57,7 @@ export class RunScene extends Phaser.Scene {
   create(data: RunSceneData): void {
     this.transitioning = false;
     this.dead = false;
+    this.dialogueOpen = false;
     this.doorSprites = {};
     this.pedestal = null;
     this.trapdoor = null;
@@ -80,7 +85,7 @@ export class RunScene extends Phaser.Scene {
 
     this.wireCollisions();
     this.spawnRoomContents();
-    if (!this.room.cleared && this.enemies.getLength() === 0) this.room.cleared = true;
+    if (!this.room.cleared && this.hostiles().length === 0) this.room.cleared = true;
     this.refreshDoors();
 
     events.emit('room_entered', { roomType: this.room.type, floor: this.run.floor });
@@ -89,6 +94,16 @@ export class RunScene extends Phaser.Scene {
 
     if (!this.scene.isActive('hud')) this.scene.launch('hud');
     this.scene.bringToTop('hud');
+
+    if (this.room.type === 'boss' && !this.room.cleared && !this.room.dialogueDone) {
+      const boss = this.hostiles().find((e) => e.def.isBoss);
+      if (boss) this.time.delayedCall(250, () => this.startDialogue('boss_intro', boss));
+    }
+  }
+
+  /** Enemies that must die for the room to clear (innocents excluded). */
+  private hostiles(): Enemy[] {
+    return (this.enemies.getChildren() as Enemy[]).filter((e) => e.active && !e.def.innocent);
   }
 
   update(time: number, delta: number): void {
@@ -120,7 +135,92 @@ export class RunScene extends Phaser.Scene {
       });
     }
 
-    if (!this.room.cleared && alive.length === 0 && this.roomHadEnemies()) this.clearRoom();
+    if (!this.room.cleared && !alive.some((e) => !e.def.innocent) && this.roomHadEnemies()) this.clearRoom();
+  }
+
+  // ---------------------------------------------------------------- dialogue
+
+  /**
+   * Ask the provider for a script, pause the room, show it, then apply the
+   * chosen option to the story/run/speaker. Never throws: on any failure the
+   * room simply resumes.
+   */
+  private async startDialogue(kind: DialogueKind, speaker: Enemy): Promise<void> {
+    if (this.dead || this.transitioning || this.dialogueOpen || this.room.dialogueDone) return;
+    this.room.dialogueDone = true;
+    this.dialogueOpen = true;
+    const room = this.room;
+    this.scene.pause();
+    let script: DialogueScript;
+    try {
+      script = await dialogueProvider.generate({
+        kind,
+        speakerId: speaker.def.id,
+        speakerName: speaker.def.name,
+        persona: speaker.def.persona ?? '',
+        story: this.run.storySnapshot(),
+        seed: `${this.run.seed}:${this.run.floor}:${this.room.gx},${this.room.gy}`,
+      });
+    } catch (err) {
+      console.warn('[dialogue] skipped:', err);
+      this.dialogueOpen = false;
+      this.scene.resume();
+      return;
+    }
+    // Scene restarted (new room) or run ended while we were waiting.
+    if (this.room !== room || this.dead) return;
+    const data: DialogueSceneData = {
+      script,
+      onDone: (option) => {
+        this.dialogueOpen = false;
+        this.scene.resume();
+        this.applyChoice(script, option, speaker);
+      },
+    };
+    this.scene.launch('dialogue', data);
+    this.scene.bringToTop('dialogue');
+  }
+
+  private applyChoice(script: DialogueScript, option: DialogueOption | null, speaker: Enemy): void {
+    if (option) {
+      const fx = option.effects;
+      this.run.story.record({
+        kind: 'dialogue_choice',
+        subject: option.id,
+        floor: this.run.floor,
+        karmaDelta: fx.karma ?? 0,
+        summary: `Told ${script.speakerName}: ${option.text}`,
+      });
+      fx.flags?.forEach((f) => this.run.story.addFlag(f));
+      if (fx.hp && fx.hp > 0) this.run.heal(fx.hp);
+      if (fx.hp && fx.hp < 0) this.hurtPlayer(-fx.hp, 'oath', speaker.x, speaker.y);
+      if (fx.coins) this.run.addCoins(fx.coins);
+      if (fx.itemId) {
+        try {
+          this.run.addItem(fx.itemId);
+        } catch {
+          /* unknown item from the LLM: ignore */
+        }
+      }
+      if (fx.boss) this.run.story.applyBossMods(fx.boss);
+      events.emit('dialogue_choice', { dialogueId: script.id, kind: script.kind, optionId: option.id, karmaDelta: fx.karma ?? 0 });
+    }
+
+    if (script.kind === 'boss_intro' && speaker.active) {
+      speaker.applyMods(this.run.story.takeBossMods());
+    } else if (script.kind === 'npc' && speaker.active) {
+      this.spareNpc(speaker);
+    }
+    events.emit('hud_update', {});
+  }
+
+  /** The NPC walks away alive; counts as spared. */
+  private spareNpc(npc: Enemy): void {
+    this.room.npcs = this.room.npcs.filter((id) => id !== npc.def.id);
+    this.run.story.record({ kind: 'npc_spared', subject: npc.def.id, floor: this.run.floor, karmaDelta: 5, summary: `Spared the ${npc.def.name} on floor ${this.run.floor}` });
+    events.emit('npc_spared', { npcId: npc.def.id, floor: this.run.floor });
+    this.tweens.add({ targets: npc, alpha: 0, duration: 500, onComplete: () => npc.destroy() });
+    npc.body.enable = false;
   }
 
   // ---------------------------------------------------------------- building
@@ -195,6 +295,14 @@ export class RunScene extends Phaser.Scene {
       }
     }
 
+    if (room.npcs.length) {
+      const free = this.slots('.').filter((s) => Phaser.Math.Distance.Between(s.x, s.y, this.player.x, this.player.y) > TILE * 3);
+      room.npcs.forEach((id) => {
+        const s = free.length ? this.run.rng.pick(free) : { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 };
+        this.spawnEnemy(id, s.x, s.y);
+      });
+    }
+
     if (room.type === 'treasure' && room.itemId && !room.itemTaken) {
       const slot = this.slots('I')[0] ?? { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 };
       this.pedestal = this.physics.add.staticImage(slot.x, slot.y, 'pedestal').setDepth(2);
@@ -250,6 +358,10 @@ export class RunScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.enemies, (_p, e) => {
       const enemy = e as Enemy;
       if (enemy.isSpawning) return;
+      if (enemy.def.innocent) {
+        if (!this.room.dialogueDone) void this.startDialogue('npc', enemy);
+        return;
+      }
       this.hurtPlayer(enemy.contactDamage, enemy.def.id, enemy.x, enemy.y);
     });
     this.physics.add.overlap(this.player, this.pickups, (_p, pk) => this.collect(pk as Pickup));
@@ -298,6 +410,7 @@ export class RunScene extends Phaser.Scene {
   }
 
   private killEnemy(enemy: Enemy): void {
+    if (enemy.def.innocent) return this.killNpc(enemy);
     this.run.killsThisRun++;
     const isBoss = !!enemy.def.isBoss;
     this.burst(enemy.x, enemy.y, enemy.def.color, isBoss ? 24 : 8);
@@ -309,6 +422,17 @@ export class RunScene extends Phaser.Scene {
       this.dropPickup(enemy.x, enemy.y, this.run.dropRng.chance(0.4) ? 'heart' : 'coin');
     }
     enemy.destroy();
+  }
+
+  private killNpc(npc: Enemy): void {
+    const def: EnemyDef = npc.def;
+    this.room.npcs = this.room.npcs.filter((id) => id !== def.id);
+    this.burst(npc.x, npc.y, def.color, 10);
+    this.run.story.record({ kind: 'npc_killed', subject: def.id, floor: this.run.floor, karmaDelta: -15, summary: `Killed the innocent ${def.name} on floor ${this.run.floor}` });
+    this.run.story.addFlag('blood_on_hands');
+    events.emit('npc_killed', { npcId: def.id, floor: this.run.floor });
+    this.toast('Innocent blood', 'The gods have seen this.');
+    npc.destroy();
   }
 
   private dropPickup(x: number, y: number, kind: PickupKind): void {
@@ -414,7 +538,7 @@ export class RunScene extends Phaser.Scene {
     let bestD = Infinity;
     for (const child of this.enemies.getChildren()) {
       const e = child as Enemy;
-      if (!e.active || e.isSpawning) continue;
+      if (!e.active || e.isSpawning || e.def.innocent) continue;
       const d = Phaser.Math.Distance.Squared(e.x, e.y, this.player.x, this.player.y);
       if (d < bestD) {
         bestD = d;

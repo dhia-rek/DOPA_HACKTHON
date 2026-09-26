@@ -1,14 +1,15 @@
 import Phaser from 'phaser';
 import { ENEMY, PROJECTILE } from '../config';
+import type { BossMods } from '../core/story';
 import type { EnemyDef } from '../data/enemies';
 
 export class Enemy extends Phaser.Physics.Arcade.Sprite {
   declare body: Phaser.Physics.Arcade.Body;
   readonly def: EnemyDef;
   hp: number;
-  readonly maxHp: number;
-  readonly speed: number;
-  readonly contactDamage: number;
+  maxHp: number;
+  speed: number;
+  contactDamage: number;
   /** Free-form memory for the behaviour function driving this enemy. */
   memory: Record<string, number> = {};
   private spawnedAt: number;
@@ -36,6 +37,15 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.setAlpha(0);
     this.setScale(0.3);
     scene.tweens.add({ targets: this, alpha: 1, scale: 1, duration: ENEMY.spawnDelayMs, ease: 'Back.Out' });
+  }
+
+  /** Story-driven tuning (dialogue outcomes, karma). Safe to call while at full hp. */
+  applyMods(mods: BossMods): void {
+    const ratio = this.hp / this.maxHp;
+    this.maxHp = Math.round(this.maxHp * mods.hpMul);
+    this.hp = Math.round(this.maxHp * ratio);
+    this.speed *= mods.speedMul;
+    this.contactDamage = Math.max(0, Math.round(this.contactDamage * mods.damageMul));
   }
 
   get isSpawning(): boolean {

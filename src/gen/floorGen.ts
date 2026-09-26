@@ -20,6 +20,10 @@ export interface RoomNode {
   template: string[];
   /** Enemy ids to spawn, one per 'E' slot (empty once cleared). */
   enemies: string[];
+  /** Innocent NPC ids still present in the room (removed when killed, spared or talked to). */
+  npcs: string[];
+  /** Set once the room's dialogue (boss intro, npc talk) has played. */
+  dialogueDone: boolean;
   bossId?: string;
   itemId?: string;
   cleared: boolean;
@@ -116,6 +120,8 @@ export function generateFloor(rng: Rng, opts: FloorGenOptions): FloorMap {
       type,
       template,
       enemies: [],
+      npcs: [],
+      dialogueDone: false,
       cleared: type === 'start' || type === 'treasure',
       visited: type === 'start',
       itemTaken: false,
@@ -125,6 +131,7 @@ export function generateFloor(rng: Rng, opts: FloorGenOptions): FloorMap {
       const slots = countChar(template, 'E');
       const wanted = Math.min(slots, rng.int(stage.enemiesPerRoom[0], stage.enemiesPerRoom[1]) + Math.floor(loop / 2));
       for (let i = 0; i < wanted; i++) node.enemies.push(rng.pick(stage.enemyPool));
+      if (stage.npcPool?.length && rng.chance(stage.npcChance ?? 0)) node.npcs.push(rng.pick(stage.npcPool));
     } else if (type === 'boss') {
       node.bossId = rng.pick(stage.bossPool);
     } else if (type === 'treasure') {

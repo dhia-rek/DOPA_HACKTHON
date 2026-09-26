@@ -47,6 +47,10 @@ Bindings live in `src/core/input.ts`.
   poison, spectral, split shots, knockback…)
 - Hearts, coins, i-frames, knockback, HUD, game over screen
 - Achievements → unlocks, saved in `localStorage` (Kratos: Spartan + Kinslayer + Regicide)
+- **Story layer**: innocent NPCs you can talk to, rob or kill; karma; bosses that
+  speak before the fight and remember your deeds — your answer changes the boss.
+  Dialogue comes from a `DialogueProvider` (offline seeded mock by default; set
+  `VITE_DIALOGUE_API` to point at an LLM service). See [ROADMAP.md](ROADMAP.md).
 
 ## Where to change things
 
@@ -62,6 +66,10 @@ Bindings live in `src/core/input.ts`.
 | Add a challenge / unlock          | `src/data/achievements.ts`    |
 | Tune movement / i-frames / feel   | `src/config.ts`               |
 | Rebind keys                       | `src/core/input.ts`           |
+| Add an NPC / boss persona         | `src/data/enemies.ts` (`innocent`, `persona`) |
+| Change what dialogue can do       | `src/dialogue/types.ts`       |
+| Write / tune dialogue text        | `src/dialogue/provider.ts` (mock) or your LLM server |
+| Karma rules, boss modifiers       | `src/core/story.ts`           |
 
 See **[ARCHITECTURE.md](ARCHITECTURE.md)** for how the systems fit together and
 step-by-step recipes.
