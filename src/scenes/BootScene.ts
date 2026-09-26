@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { COLORS, PLAYER, PROJECTILE, TILE } from '../config';
 import { save } from '../core/save';
+import { settings } from '../core/settings';
 import { CHARACTERS } from '../data/characters';
 import { ENEMIES, EnemyDef } from '../data/enemies';
 import { ITEMS } from '../data/items';
@@ -17,6 +18,7 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     save.load();
+    settings.load();
     // Stop the page from scrolling on game keys (game-wide, all scenes).
     this.input.keyboard!.addCapture(['UP', 'DOWN', 'LEFT', 'RIGHT', 'SPACE']);
 

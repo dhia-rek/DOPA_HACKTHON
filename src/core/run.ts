@@ -4,7 +4,10 @@ import { STAGES, StageDef } from '../data/stages';
 import type { RunSnapshot } from '../data/achievements';
 import { FloorMap, generateFloor, RoomNode } from '../gen/floorGen';
 import { chapterFor, loreFor, resolveFront, ResolvedFront, warSnapshot } from '../systems/chronicle';
+import { OmenDirector } from '../omens/provider';
+import type { FloorOmen, OmenRequest } from '../omens/types';
 import { pickItemFromPool } from '../systems/loot';
+import { debugState } from './debug';
 import { events } from './events';
 import { Rng } from './rng';
 import { computeStats, mergeFlags, ShotFlags, Stats } from './stats';
@@ -51,10 +54,14 @@ export class RunState {
   itemsPickedThisRun = 0;
   damageTakenThisRun = 0;
   damageTakenThisFloor = 0;
+  /** The current floor's omen (theme, banner, generation knobs). */
+  omen: FloorOmen | null = null;
+  readonly omens = new OmenDirector();
   killsThisRun = 0;
 
   constructor(seed: string, characterId: string) {
     this.seed = seed;
+    debugState.god = false;
     this.character = getCharacter(characterId);
     this.story = new StoryState(this.character.startingKarma ?? 0, this.character.storyFlags ?? []);
     this.rng = new Rng(seed);
@@ -82,9 +89,12 @@ export class RunState {
     return this.floor === STAGES.length;
   }
 
-  /** Multiplier applied to enemy hp/speed/damage in endless loops. */
+  /**
+   * Multiplier applied to enemy hp/speed/damage. Floor 1 is a quick warm-up
+   * (0.75), then it ramps per floor and jumps each endless loop.
+   */
   get difficulty(): number {
-    return 1 + this.loop * 0.35 + (this.floor - 1) * 0.06;
+    return 0.75 + (this.floor - 1) * 0.15 + this.loop * 0.35;
   }
 
   won = false;
@@ -158,6 +168,7 @@ export class RunState {
 
   /** Returns true if the player died. */
   takeDamage(amount: number, source: string): boolean {
+    if (debugState.god) return false;
     this.hp = Math.max(0, this.hp - amount);
     this.damageTakenThisRun += amount;
     this.damageTakenThisFloor += amount;
@@ -176,12 +187,14 @@ export class RunState {
     if (this.floorMap) return this.floorMap;
     const picked: string[] = this.items.map((i) => i.id);
     const front = (this.front = resolveFront(this.stage, this.story));
+    this.omen = this.omens.get(this.omenRequest(this.floor));
     this.floorMap = generateFloor(this.floorRng.fork(`floor-${this.floor}`), {
       stage: this.stage,
       loop: this.loop,
       bossPool: front.bossPool,
       enemyPool: front.enemyPool,
       npcPool: front.npcPool,
+      omen: this.omen,
       avoidBossId: this.story.deeds.filter((d) => d.kind === 'boss_killed' && d.floor === this.floor - 1).pop()?.subject,
       pickItem: () => {
         const id = pickItemFromPool(this.itemRng, 'treasure', picked);
@@ -193,6 +206,11 @@ export class RunState {
     this.room = this.floorMap.start;
     events.emit('floor_started', { floor: this.floor, stageId: this.stage.id });
     return this.floorMap;
+  }
+
+  omenRequest(floor: number): OmenRequest {
+    const stage = STAGES[(floor - 1) % STAGES.length];
+    return { story: { ...this.storySnapshot(), floor, stageName: stage.name }, seed: `${this.seed}:${floor}:omen`, floor, stageName: stage.name, enemyPool: stage.enemyPool };
   }
 
   nextFloor(): void {
