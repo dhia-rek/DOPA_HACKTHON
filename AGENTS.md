@@ -39,7 +39,7 @@ Phase 3 (the LLM Director that reshapes each floor) is designed in `docs/DIRECTO
 - [x] Shrine room type + altar sprite → opens a `kind: 'shrine'` dialogue
 - [x] Boss outro: trigger `boss_outro` dialogue when a boss dies (`RunScene.killEnemy`)
 - [ ] General art/feel pass (room palettes, hit feedback, menu)
-- [x] Director: prefetch `directorRequest(run, floor+1)` at boss-room entry, apply on `floor_started`; `floorTitle` + `verdict` between floors; `?director=1` overlay showing `reason`
+- [x] Director: prefetch `directorRequest(run, floor+1)` after the boss intro choice, apply on `floor_started`; `floorTitle` + `verdict` between floors; `?director=1` overlay showing `reason`
 - [x] Director: composable boss abilities (`charge`, `summon_minions`, `orbit_shields`, `call_shades`, `enrage_below`) + `Enemy.compose(BossBlueprint)` in `behaviours.ts`
 - [x] Director: mutators `palette_shift`, `haunted`, `flooded`, `arena`; `enemyWeights` in spawning
 - [x] Director: shrine offerings → `story.favour(god)`; quest tracker (`systems/quests.ts`) + HUD line (orb pickups still open)

@@ -31,7 +31,7 @@ Code on `main` today (contract first, no gameplay wired yet):
 ```
  events bus ─▶ telemetry + StoryState ─▶ buildProfile(run) ─▶ PlayerProfile
                                                                   │
-                          directorProvider.direct(request)  ◀─────┘   (prefetch at boss-room entry)
+                          directorProvider.direct(request)  ◀─────┘   (prefetched after the boss intro choice)
                                                                   │
                                               FloorDirective (validated, budgeted)
                                                                   │
@@ -98,7 +98,7 @@ same `validateDirective()` and returns 502 on failure → client falls back to t
 ```
 MenuScene ──► FloorIntroScene ──► RunScene (rooms…) ──► boss room ──► trapdoor ──► FloorIntroScene ──► …
                  │                    │                     │
-                 │                    │                     └─ director.prefetch(run, floor+1)   (systems/director.ts)
+                 │                    │                     └─ boss intro choice → director.prefetch(run, floor+1)   (systems/director.ts)
                  │                    └─ run.ensureFloor() → generateFloor() → applyDirective()  (director/apply.ts)
                  └─ await director.forFloor(run, floor) → run.directive; settleProphecies; questTracker.offer
 ```
