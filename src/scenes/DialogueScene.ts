@@ -3,7 +3,7 @@ import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../config';
 import { CHARS_PER_SEC, settings } from '../core/settings';
 import { blip } from '../core/sfx';
 import type { DialogueOption, DialogueScript } from '../dialogue/types';
-import { hasRecordedVoice, playRecordedVoice, stopRecordedVoice } from '../voice/clips';
+import { playRecordedVoice, stopRecordedVoice } from '../voice/clips';
 import { voice, voiceSettings } from '../voice/provider';
 import type { VoiceProfile } from '../voice/types';
 import { mono, display } from './ui';
@@ -37,8 +37,7 @@ export class DialogueScene extends Phaser.Scene {
   private fullText = '';
   private shown = 0;
   private typer?: Phaser.Time.TimerEvent;
-  /** Speaker has a recorded clip: it plays once on open and replaces per-line TTS. */
-  private recorded = false;
+  private introPlaying = false;
 
   constructor() {
     super('dialogue');
@@ -51,7 +50,7 @@ export class DialogueScene extends Phaser.Scene {
     this.phase = 'lines';
     this.optionTexts = [];
     this.typer = undefined;
-    this.recorded = hasRecordedVoice(data.script.speakerId);
+    this.introPlaying = false;
 
     const top = GAME_HEIGHT - BOX_H - 16;
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.35);
@@ -74,6 +73,9 @@ export class DialogueScene extends Phaser.Scene {
       if (!voiceSettings.enabled) {
         voice.stop();
         stopRecordedVoice();
+        this.introPlaying = false;
+      } else if (this.phase !== 'options') {
+        this.speakCurrentLine();
       }
       this.voiceTag.setText(this.voiceLabel());
     });
@@ -88,8 +90,11 @@ export class DialogueScene extends Phaser.Scene {
       });
     }
 
-    stopRecordedVoice();
-    if (this.recorded) playRecordedVoice(data.script.speakerId);
+    voice.stop();
+    this.introPlaying = playRecordedVoice(data.script.speakerId, () => {
+      this.introPlaying = false;
+      this.speakCurrentLine();
+    });
     this.showLine();
   }
 
@@ -134,7 +139,7 @@ export class DialogueScene extends Phaser.Scene {
   }
 
   private typeOut(text: string): void {
-    if (this.data_.voice && !this.recorded) voice.speak(text, this.data_.voice);
+    if (!this.introPlaying && this.data_.voice) voice.speak(text, this.data_.voice);
     this.typer?.remove(false);
     this.fullText = text;
     this.shown = 0;
@@ -160,6 +165,10 @@ export class DialogueScene extends Phaser.Scene {
     this.shown = this.fullText.length;
     this.body.setText(this.fullText);
     this.hint.setText('ENTER ▸');
+  }
+
+  private speakCurrentLine(): void {
+    if (this.data_.voice && this.fullText) voice.speak(this.fullText, this.data_.voice);
   }
 
   // ---- flow ---------------------------------------------------------------
@@ -195,6 +204,12 @@ export class DialogueScene extends Phaser.Scene {
 
   private advance(): void {
     const { script } = this.data_;
+    if (this.introPlaying) {
+      stopRecordedVoice();
+      this.introPlaying = false;
+      this.speakCurrentLine();
+      return;
+    }
     if (this.typing) {
       this.completeLine();
       return;
