@@ -1,7 +1,13 @@
 import type { Rng } from '../core/rng';
-import type { StageDef } from '../data/stages';
 import type { FloorMap } from '../gen/floorGen';
 import type { FloorDirective } from './types';
+
+/** What may spawn on this floor: the war front's pools plus the omen's extra enemies. */
+export interface FloorPools {
+  bossPool: string[];
+  enemyPool: string[];
+  npcPool?: string[];
+}
 
 /**
  * Applies the map-level part of a FloorDirective to a freshly generated floor:
@@ -9,12 +15,12 @@ import type { FloorDirective } from './types';
  * spawns. Pure (no Phaser) so it can be simulated headless. Room-level visual
  * mutators (palette, darkness, flooded) are read by RunScene at build time.
  */
-export function applyDirective(map: FloorMap, d: FloorDirective, stage: StageDef, rng: Rng): void {
+export function applyDirective(map: FloorMap, d: FloorDirective, pools: FloorPools, rng: Rng): void {
   const normals = [...map.rooms.values()].filter((r) => r.type === 'normal');
 
-  if (stage.bossPool.includes(d.boss.archetype)) map.boss.bossId = d.boss.archetype;
+  if (pools.bossPool.includes(d.boss.archetype)) map.boss.bossId = d.boss.archetype;
 
-  const weights = stage.enemyPool.map((id) => ({ id, w: d.enemyWeights[id] ?? 1 })).filter((e) => e.w > 0);
+  const weights = [...new Set(pools.enemyPool)].map((id) => ({ id, w: d.enemyWeights[id] ?? 1 })).filter((e) => e.w > 0);
   if (weights.length && Object.keys(d.enemyWeights).length) {
     for (const room of normals) room.enemies = room.enemies.map(() => weighted(rng, weights));
   }
@@ -38,8 +44,8 @@ export function applyDirective(map: FloorMap, d: FloorDirective, stage: StageDef
     const room = empty.length ? empty.splice(rng.int(0, empty.length - 1), 1)[0] : undefined;
     if (room) room.npcs.push(id);
   }
-  if (d.mutators.includes('pilgrim_road') && stage.npcPool?.length) {
-    for (const room of empty.slice(0, 2)) room.npcs.push(rng.pick(stage.npcPool));
+  if (d.mutators.includes('pilgrim_road') && pools.npcPool?.length) {
+    for (const room of empty.slice(0, 2)) room.npcs.push(rng.pick(pools.npcPool));
   }
 }
 

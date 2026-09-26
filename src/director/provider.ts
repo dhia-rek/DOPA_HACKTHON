@@ -1,3 +1,4 @@
+import { aiEndpoint } from '../core/ai';
 import { Rng } from '../core/rng';
 import type { AbilityId } from '../data/abilities';
 import { DirectorRequest, FloorDirective, validateDirective } from './types';
@@ -110,10 +111,10 @@ export class MockDirectorProvider implements DirectorProvider {
 
 const capital = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' ');
 
-/** Pick the provider from env: set VITE_DIRECTOR_API=https://your-server/director to use the LLM. */
+/** Pick the provider from env: VITE_DIRECTOR_API, else `<VITE_DIALOGUE_API>/director`, else the offline mock. */
 export function createDirectorProvider(): DirectorProvider {
   const mock = new MockDirectorProvider();
-  const url = import.meta.env.VITE_DIRECTOR_API as string | undefined;
+  const url = (import.meta.env.VITE_DIRECTOR_API as string | undefined) || aiEndpoint('/director');
   return url ? new HttpDirectorProvider(url, mock) : mock;
 }
 

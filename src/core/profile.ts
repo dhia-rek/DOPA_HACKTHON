@@ -156,6 +156,8 @@ export function buildProfile(run: RunState, floor = run.floor): PlayerProfile {
   const skill = skillOf(run, hpPct);
   const stage = stageForFloor(floor);
   const front = floor === run.floor ? run.currentFront : resolveFront(stage, run.story);
+  const avoid = run.bossToAvoid(floor);
+  const bosses = front.bossPool.filter((id) => id !== avoid);
   return {
     story: run.story.snapshot({
       characterId: run.character.id,
@@ -188,9 +190,9 @@ export function buildProfile(run: RunState, floor = run.floor): PlayerProfile {
       abilities: [...ABILITY_IDS],
       weaknesses: [...WEAKNESS_IDS],
       quests: [...QUEST_TEMPLATE_IDS],
-      enemies: [...stage.enemyPool],
-      bosses: [...stage.bossPool],
-      npcs: [...(stage.npcPool ?? [])].filter((id) => ENEMIES.some((e) => e.id === id && e.innocent)),
+      enemies: [...new Set(front.enemyPool)],
+      bosses: bosses.length ? bosses : [...front.bossPool],
+      npcs: [...new Set(front.npcPool)].filter((id) => ENEMIES.some((e) => e.id === id && e.innocent)),
       items: ITEMS.map((i) => i.id),
       earnedWeaknesses: earnedWeaknesses(run),
     },
