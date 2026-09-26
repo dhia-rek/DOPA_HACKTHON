@@ -18,6 +18,31 @@ export interface RoomGenOptions {
 const MID_C = Math.floor(ROOM_COLS / 2);
 const MID_R = Math.floor(ROOM_ROWS / 2);
 
+/**
+ * Shrine room: an altar ('A') on a raised dais flanked by pillars. Same ASCII
+ * format as data/rooms.ts; 'A' is only meaningful in shrine rooms.
+ */
+export const SHRINE_TEMPLATES: string[][] = [
+  [
+    '.............',
+    '...#.....#...',
+    '.............',
+    '......A......',
+    '.............',
+    '...#.....#...',
+    '.............',
+  ],
+  [
+    '.............',
+    '.#.........#.',
+    '....PP.PP....',
+    '....P.A.P....',
+    '....PP.PP....',
+    '.#.........#.',
+    '.............',
+  ],
+];
+
 /** Interior tiles right in front of each door; never blocked. */
 const DOOR_APPROACHES: [number, number][] = [
   [MID_C, 0],

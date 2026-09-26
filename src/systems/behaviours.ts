@@ -72,12 +72,41 @@ function ring(ctx: BehaviourContext, count: number, offset = 0, speed?: number):
   }
 }
 
-/** Runs from the player when close, otherwise wanders nervously (innocent NPCs). */
+/** Mark an innocent as threatened: `flee` sprints away and wobbles until `now + ms`. */
+export function threaten(enemy: Enemy, now: number, ms = 2500): void {
+  if (!enemy.def.innocent) return;
+  enemy.memory.panicUntil = Math.max(enemy.memory.panicUntil ?? 0, now + ms);
+}
+
+/**
+ * Innocent NPCs: keep a polite distance from the player and wander nervously.
+ * When threatened (shot at, hit, or another innocent killed) they panic: sprint
+ * away with a zig-zag and a frightened wobble, regardless of distance.
+ */
 const flee: Behaviour = ({ enemy, player, rng, now }) => {
   const m = enemy.memory;
   const away = toPlayer(enemy, player).negate();
-  if (away.length() < 220) {
-    seek(enemy, away, enemy.speed, now);
+
+  if (enemy.isPanicking) {
+    m.wasPanicking = 1;
+    if (now >= (m.zigUntil ?? 0)) {
+      m.zigUntil = now + rng.int(180, 320);
+      m.zig = rng.float(-0.9, 0.9);
+    }
+    const dir = away.normalize().rotate(m.zig ?? 0);
+    seek(enemy, dir, enemy.speed * 1.6, now);
+    enemy.setAngle(Math.sin(now / 35) * 14);
+    enemy.setScale(1 + Math.sin(now / 60) * 0.08, 1 - Math.sin(now / 60) * 0.08);
+    return;
+  }
+  if (m.wasPanicking) {
+    m.wasPanicking = 0;
+    enemy.setAngle(0);
+    enemy.setScale(1);
+  }
+
+  if (away.length() < 200) {
+    seek(enemy, away, enemy.speed * 0.8, now);
     return;
   }
   if (now >= (m.nextTurn ?? 0) || enemy.body.blocked.none === false) {

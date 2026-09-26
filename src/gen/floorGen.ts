@@ -2,7 +2,10 @@ import { Dir } from '../config';
 import { Rng } from '../core/rng';
 import { ROOM_TEMPLATES, RoomType } from '../data/rooms';
 import { StageDef } from '../data/stages';
-import { generateRoom } from './roomGen';
+import { generateRoom, SHRINE_TEMPLATES } from './roomGen';
+
+/** Room kinds the generator can place: the data-defined ones plus the shrine (altar dialogue, no enemies). */
+export type FloorRoomType = RoomType | 'shrine';
 
 export interface FloorGenOptions {
   stage: StageDef;
@@ -11,12 +14,14 @@ export interface FloorGenOptions {
   pickItem: () => string;
   /** Share of normal rooms that use the procedural generator instead of templates. */
   proceduralShare?: number;
+  /** Chance (0..1) that a floor with a spare dead end gets a shrine room. Default 0.75. */
+  shrineChance?: number;
 }
 
 export interface RoomNode {
   gx: number;
   gy: number;
-  type: RoomType;
+  type: FloorRoomType;
   template: string[];
   /** Enemy ids to spawn, one per 'E' slot (empty once cleared). */
   enemies: string[];
@@ -98,16 +103,19 @@ export function generateFloor(rng: Rng, opts: FloorGenOptions): FloorMap {
 
   const bossCell = deadEnds[0] ?? [...cells.values()].sort((a, b) => (dist.get(key(b.gx, b.gy)) ?? 0) - (dist.get(key(a.gx, a.gy)) ?? 0))[0];
   const treasureCell = deadEnds.find((c) => c !== bossCell);
+  const spareEnds = deadEnds.filter((c) => c !== bossCell && c !== treasureCell);
+  const shrineCell = spareEnds.length && rng.chance(opts.shrineChance ?? 0.75) ? rng.pick(spareEnds) : undefined;
 
   const rooms = new Map<string, RoomNode>();
   for (const c of cells.values()) {
     const k = key(c.gx, c.gy);
-    let type: RoomType = 'normal';
+    let type: FloorRoomType = 'normal';
     if (c === startCell) type = 'start';
     else if (c === bossCell) type = 'boss';
     else if (c === treasureCell) type = 'treasure';
+    else if (c === shrineCell) type = 'shrine';
 
-    let template = rng.pick(ROOM_TEMPLATES[type]);
+    let template = rng.pick(type === 'shrine' ? SHRINE_TEMPLATES : ROOM_TEMPLATES[type]);
     if (type === 'normal' && rng.chance(proceduralShare)) {
       template = generateRoom(rng, {
         density: rng.float(0.06, 0.16),
@@ -122,7 +130,7 @@ export function generateFloor(rng: Rng, opts: FloorGenOptions): FloorMap {
       enemies: [],
       npcs: [],
       dialogueDone: false,
-      cleared: type === 'start' || type === 'treasure',
+      cleared: type === 'start' || type === 'treasure' || type === 'shrine',
       visited: type === 'start',
       itemTaken: false,
     };
