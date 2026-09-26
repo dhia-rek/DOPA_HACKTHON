@@ -1,0 +1,42 @@
+export interface StageDef {
+  id: string;
+  name: string;
+  /** Enemy ids that can spawn in normal rooms. */
+  enemyPool: string[];
+  /** Boss ids; one is picked per floor. */
+  bossPool: string[];
+  /** Number of rooms on this floor, inclusive range. */
+  roomCount: [number, number];
+  /** Enemies per normal room, inclusive range. */
+  enemiesPerRoom: [number, number];
+  palette: {
+    floor: number;
+    wall: number;
+    accent: number;
+  };
+}
+
+/**
+ * Floors are visited in order; adding a floor = adding a stage.
+ * The last stage's boss ends the run with a win.
+ */
+export const STAGES: StageDef[] = [
+  {
+    id: 'polis',
+    name: 'Ruined Polis',
+    enemyPool: ['bandit', 'harpy', 'centaur_archer', 'boar'],
+    bossPool: ['minotaur'],
+    roomCount: [7, 9],
+    enemiesPerRoom: [2, 4],
+    palette: { floor: 0xffffff, wall: 0xffffff, accent: 0xc9a45c },
+  },
+  {
+    id: 'labyrinth',
+    name: 'Labyrinth of Knossos',
+    enemyPool: ['skeleton', 'living_statue', 'boar', 'centaur_archer', 'harpy'],
+    bossPool: ['hydra', 'minotaur'],
+    roomCount: [9, 12],
+    enemiesPerRoom: [3, 5],
+    palette: { floor: 0x9fb4d8, wall: 0x8898c0, accent: 0x7fd0ff },
+  },
+];

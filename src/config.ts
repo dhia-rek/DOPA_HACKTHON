@@ -12,10 +12,30 @@ export const GAME_WIDTH = GRID_COLS * TILE;
 export const GAME_HEIGHT = GRID_ROWS * TILE;
 
 export const PLAYER = {
-  maxSpeed: 320,
-  acceleration: 2400,
-  drag: 1800,
+  /** How quickly the player reaches max speed (px/s²). */
+  acceleration: 2600,
+  /** How quickly the player stops (px/s²). */
+  drag: 2000,
   radius: 20,
+  /** Invulnerability after being hit, ms. */
+  iFramesMs: 700,
+  /** Contact damage knockback. */
+  knockback: 380,
+};
+
+export const ENEMY = {
+  /** Enemies are harmless and untargetable while spawning in. */
+  spawnDelayMs: 450,
+  hitFlashMs: 90,
+  knockbackDamping: 0.85,
+};
+
+export const PROJECTILE = {
+  playerRadius: 9,
+  enemyRadius: 8,
+  homingTurnRate: 0.08,
+  poisonDps: 1.5,
+  poisonMs: 2500,
 };
 
 export const COLORS = {
@@ -25,11 +45,19 @@ export const COLORS = {
   wallEdge: 0x1a1620,
   door: 0x7a5c3a,
   doorFrame: 0xc9a45c,
+  doorClosed: 0x3a2f2a,
   rock: 0x6b6470,
   rockShade: 0x4b4550,
-  player: 0xd9b26a,
-  playerShade: 0x8a6a2e,
   playerEye: 0x1a1620,
+  tear: 0xe8e0ff,
+  enemyTear: 0xff6a5a,
+  heart: 0xe04848,
+  heartEmpty: 0x3a2a2a,
+  coin: 0xf0c040,
+  pedestal: 0x8a8090,
+  trapdoor: 0x0b0a0f,
+  text: '#c9a45c',
+  textDim: '#8a7a5c',
 };
 
 export type Dir = 'up' | 'down' | 'left' | 'right';
@@ -39,4 +67,11 @@ export const OPPOSITE: Record<Dir, Dir> = {
   down: 'up',
   left: 'right',
   right: 'left',
+};
+
+export const DIR_VECTORS: Record<Dir, [number, number]> = {
+  up: [0, -1],
+  down: [0, 1],
+  left: [-1, 0],
+  right: [1, 0],
 };

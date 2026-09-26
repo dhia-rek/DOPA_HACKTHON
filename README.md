@@ -1,7 +1,10 @@
 # Nekyia
 
-A Greek-mythology roguelike in the spirit of *The Binding of Isaac*.
-Currently a proof of concept: one Isaac-style room, a character you can move, doors that lead to the next room.
+A Greek-mythology roguelike in the spirit of *The Binding of Isaac*: room-based
+combat, seeded procedural floors, data-driven items/enemies/characters, and an
+achievement system that unlocks content (Kratos is the first locked character).
+
+Everything is a browser game (Phaser 3 + TypeScript + Vite), deployable as static files.
 
 ## Run it
 
@@ -10,36 +13,61 @@ npm install
 npm run dev      # http://localhost:5173
 ```
 
-Controls: **WASD / arrow keys** to move. Walk into a door to change room.
+Add `?seed=ANYTHING` to the URL to force a seed (same seed = same floors and rooms).
+
+## Controls
+
+| Action         | Keys                          |
+| -------------- | ----------------------------- |
+| Move           | `W A S D`                     |
+| Shoot          | Arrow keys (or `I J K L`)     |
+| Menu           | `←/→` pick character, `Enter`/`Space` start, `R` new seed |
+| Game over      | `Enter`/`Space` back to menu   |
+
+Bindings live in `src/core/input.ts`.
 
 ## Scripts
 
-| Command             | What it does                          |
-| ------------------- | ------------------------------------- |
-| `npm run dev`       | Vite dev server with hot reload       |
+| Command             | What it does                            |
+| ------------------- | --------------------------------------- |
+| `npm run dev`       | Vite dev server with hot reload         |
 | `npm run build`     | Typecheck + production build to `dist/` |
-| `npm run preview`   | Serve the production build locally    |
-| `npm run typecheck` | `tsc --noEmit`                        |
+| `npm run preview`   | Serve the production build locally      |
+| `npm run typecheck` | `tsc --noEmit`                          |
+
+## What's in the game right now
+
+- 5 characters (Achilles, Atalanta, Heracles, Orpheus, **Kratos — locked**)
+- 2 stages (Ruined Polis, Labyrinth of Knossos) that cycle forever with rising
+  difficulty (endless mode)
+- Seeded floor generator (start / normal / treasure / boss rooms, minimap) and a
+  seeded room generator (rocks, pits, spawns — always walkable) + hand-made templates
+- 8 enemies with 5 AI behaviours + 2 bosses (Minotaur, Hydra)
+- 13 items that stack through a stat/flag pipeline (piercing, homing, triple shot,
+  poison, spectral, split shots, knockback…)
+- Hearts, coins, i-frames, knockback, HUD, game over screen
+- Achievements → unlocks, saved in `localStorage` (Kratos: Spartan + Kinslayer + Regicide)
+
+## Where to change things
+
+| I want to…                        | Edit                          |
+| --------------------------------- | ----------------------------- |
+| Add an item                       | `src/data/items.ts`           |
+| Add an enemy                      | `src/data/enemies.ts` (+ a behaviour in `src/systems/behaviours.ts` if new AI) |
+| Add a character                   | `src/data/characters.ts`      |
+| Add a stage / change enemy pools  | `src/data/stages.ts`          |
+| Add a hand-made room              | `src/data/rooms.ts`           |
+| Tweak the room generator          | `src/gen/roomGen.ts`          |
+| Tweak the floor layout            | `src/gen/floorGen.ts`         |
+| Add a challenge / unlock          | `src/data/achievements.ts`    |
+| Tune movement / i-frames / feel   | `src/config.ts`               |
+| Rebind keys                       | `src/core/input.ts`           |
+
+See **[ARCHITECTURE.md](ARCHITECTURE.md)** for how the systems fit together and
+step-by-step recipes.
 
 ## Stack
 
 - [Phaser 3](https://phaser.io/) (arcade physics, scenes, input)
 - TypeScript + [Vite](https://vite.dev/)
 - No art assets yet: placeholder textures are generated at runtime in `BootScene`.
-
-## Layout
-
-```
-src/
-  main.ts            Phaser game config
-  config.ts          Tile size, room dimensions, player tuning, palette
-  data/rooms.ts      ASCII room templates (13x7) — add a room by adding an entry
-  entities/Player.ts Player sprite + movement (acceleration/drag, WASD/arrows)
-  scenes/BootScene.ts Generates placeholder textures, then starts the room
-  scenes/RoomScene.ts Builds walls/doors/obstacles from a template, handles room transitions
-```
-
-## Tuning movement
-
-Everything about movement feel lives in `PLAYER` in `src/config.ts`:
-`maxSpeed`, `acceleration` (how fast you get going), `drag` (how fast you stop).
